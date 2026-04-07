@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
-import { ExternalLink, PlayCircle, Clock, ChevronRight } from "lucide-react";
+import { ExternalLink, PlayCircle, Clock, ChevronRight, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+// Extract YouTube video IDs from MS Learn URLs (these are the actual YouTube embeds for the Exam Readiness Zone)
 const videos = [
   {
     id: 1,
@@ -13,6 +14,7 @@ const videos = [
     domainLabel: "Prepare the Data",
     date: "Dec 13, 2024",
     url: "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-pl-300-prepare-the-data/",
+    embedUrl: "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-pl-300-prepare-the-data/player",
     thumbnail: "https://videoencodingpublic-hgeaeyeba8gycee3.b01.azurefd.net/public-3a7bceac-80d6-4542-a33a-bb215420c74e/PL300_EP_1_Thumbnail_w800.png",
     topics: [
       "Connecting to data sources and shared semantic models",
@@ -32,6 +34,7 @@ const videos = [
     domainLabel: "Model the Data",
     date: "Dec 13, 2024",
     url: "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-pl-300-model-the-data/",
+    embedUrl: "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-pl-300-model-the-data/player",
     thumbnail: "https://videoencodingpublic-hgeaeyeba8gycee3.b01.azurefd.net/public-e92bcbf2-c7fb-485d-ae5f-de18c3150abb/PL300_EP_2_Thumbnail_w800.png",
     topics: [
       "Designing star schema data models",
@@ -51,6 +54,7 @@ const videos = [
     domainLabel: "Visualize & Analyze",
     date: "Dec 13, 2024",
     url: "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-pl-300-visualize-and-analyze-the-data/",
+    embedUrl: "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-pl-300-visualize-and-analyze-the-data/player",
     thumbnail: "https://videoencodingpublic-hgeaeyeba8gycee3.b01.azurefd.net/public-d494b8df-f450-4ffe-8647-a2f5bbffec0d/PL300_EP_3_Thumbnail_w800.png",
     topics: [
       "Selecting appropriate visuals for your data",
@@ -70,6 +74,7 @@ const videos = [
     domainLabel: "Manage & Secure",
     date: "Dec 13, 2024",
     url: "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-pl-300-manage-and-secure-power-bi/",
+    embedUrl: "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-pl-300-manage-and-secure-power-bi/player",
     thumbnail: "https://videoencodingpublic-hgeaeyeba8gycee3.b01.azurefd.net/public-d11ad03e-0add-4620-88bb-879d52115719/PL300_EP_4_Thumbnail_w800.png",
     topics: [
       "Creating and configuring workspaces and apps",
@@ -85,6 +90,7 @@ const videos = [
 
 export default function ExamPrepVideos() {
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [playingId, setPlayingId] = useState<number | null>(null);
   const totalMinutes = Math.round(
     (10 * 60 + 45 + 7 * 60 + 43 + 13 * 60 + 42 + 9 * 60 + 45) / 60
   );
@@ -107,7 +113,7 @@ export default function ExamPrepVideos() {
         <div className="flex-1">
           <p className="font-semibold text-lg">Microsoft Exam Readiness Zone — PL-300</p>
           <p className="text-sm opacity-80 mt-0.5">
-            4 episodes · ~{totalMinutes} minutes total · Official Microsoft Learn content
+            4 episodes · ~{totalMinutes} minutes total · Watch inline or on Microsoft Learn
           </p>
         </div>
         <a
@@ -123,107 +129,137 @@ export default function ExamPrepVideos() {
       {/* Study tip */}
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
         <span className="font-semibold">💡 Study tip:</span> These videos are best watched after completing
-        study for each domain. Each episode includes example exam questions with explanations.
+        study for each domain. Click any video card to watch it inline — no need to leave the app.
       </div>
 
       {/* Video Cards */}
       <div className="space-y-4">
-        {videos.map((video) => (
-          <Card key={video.id} className="overflow-hidden hover:shadow-md transition-shadow">
-            <CardContent className="p-0">
-              <div className="flex flex-col sm:flex-row">
-                {/* Thumbnail */}
-                <a
-                  href={video.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative flex-shrink-0 sm:w-64 group"
-                >
-                  <img
-                    src={video.thumbnail}
-                    alt={video.title}
-                    className="w-full h-44 sm:h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-foreground/30 group-hover:bg-foreground/50 transition-colors flex items-center justify-center">
-                    <PlayCircle className="w-12 h-12 text-card opacity-90 group-hover:scale-110 transition-transform" />
-                  </div>
-                  <div className="absolute bottom-2 right-2 bg-foreground/70 text-card text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {video.duration}
-                  </div>
-                </a>
+        {videos.map((video) => {
+          const isPlaying = playingId === video.id;
 
-                {/* Content */}
-                <div className="flex-1 p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${video.badge}`}
+          return (
+            <Card key={video.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <CardContent className="p-0">
+                {/* Embedded Player */}
+                {isPlaying && (
+                  <div className="relative w-full aspect-video bg-foreground/5">
+                    <iframe
+                      src={video.embedUrl}
+                      title={video.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                      allowFullScreen
+                      className="absolute inset-0 w-full h-full"
+                    />
+                    <button
+                      onClick={() => setPlayingId(null)}
+                      className="absolute top-3 right-3 z-10 w-8 h-8 bg-foreground/70 hover:bg-foreground/90 text-card rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row">
+                  {/* Thumbnail — hidden when playing */}
+                  {!isPlaying && (
+                    <button
+                      onClick={() => setPlayingId(video.id)}
+                      className="relative flex-shrink-0 sm:w-64 group text-left"
+                    >
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        className="w-full h-44 sm:h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-foreground/30 group-hover:bg-foreground/50 transition-colors flex items-center justify-center">
+                        <PlayCircle className="w-12 h-12 text-card opacity-90 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <div className="absolute bottom-2 right-2 bg-foreground/70 text-card text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {video.duration}
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Content */}
+                  <div className="flex-1 p-5 flex flex-col justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${video.badge}`}
+                        >
+                          {video.domainLabel}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{video.part}</span>
+                        <span className="text-xs text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground">Exam weight: {video.weight}</span>
+                      </div>
+
+                      <button
+                        onClick={() => setPlayingId(isPlaying ? null : video.id)}
+                        className="block font-semibold text-foreground hover:text-primary transition-colors text-base leading-snug mb-3 text-left"
                       >
-                        {video.domainLabel}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{video.part}</span>
-                      <span className="text-xs text-muted-foreground">·</span>
-                      <span className="text-xs text-muted-foreground">Exam weight: {video.weight}</span>
+                        {video.title}
+                      </button>
+
+                      {/* Topics toggle */}
+                      <button
+                        onClick={() => setExpanded(expanded === video.id ? null : video.id)}
+                        className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <ChevronRight
+                          className={cn(
+                            "w-3.5 h-3.5 transition-transform",
+                            expanded === video.id ? "rotate-90" : ""
+                          )}
+                        />
+                        {expanded === video.id ? "Hide topics" : "Show topics covered"}
+                      </button>
+
+                      {expanded === video.id && (
+                        <ul className="mt-3 space-y-1.5">
+                          {video.topics.map((topic, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <span
+                                className={`mt-1.5 w-1.5 h-1.5 rounded-full bg-gradient-to-br ${video.gradient} flex-shrink-0`}
+                              />
+                              {topic}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
 
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block font-semibold text-foreground hover:text-primary transition-colors text-base leading-snug mb-3"
-                    >
-                      {video.title}
-                    </a>
-
-                    {/* Topics toggle */}
-                    <button
-                      onClick={() => setExpanded(expanded === video.id ? null : video.id)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                    >
-                      <ChevronRight
-                        className={cn(
-                          "w-3.5 h-3.5 transition-transform",
-                          expanded === video.id ? "rotate-90" : ""
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">{video.date}</span>
+                      <div className="flex items-center gap-3">
+                        {!isPlaying && (
+                          <button
+                            onClick={() => setPlayingId(video.id)}
+                            className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                          >
+                            <PlayCircle className="w-3.5 h-3.5" /> Watch inline
+                          </button>
                         )}
-                      />
-                      {expanded === video.id ? "Hide topics" : "Show topics covered"}
-                    </button>
-
-                    {expanded === video.id && (
-                      <ul className="mt-3 space-y-1.5">
-                        {video.topics.map((topic, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <span
-                              className={`mt-1.5 w-1.5 h-1.5 rounded-full bg-gradient-to-br ${video.gradient} flex-shrink-0`}
-                            />
-                            {topic}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{video.date}</span>
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                    >
-                      Watch on Microsoft Learn <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                        <a
+                          href={video.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Microsoft Learn <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <p className="text-xs text-muted-foreground text-center pb-4">
-        Content provided by Microsoft Learn — Exam Readiness Zone. Videos are hosted externally on Microsoft's
-        platform.
+        Content provided by Microsoft Learn — Exam Readiness Zone. Videos play inline from Microsoft's platform.
       </p>
     </div>
   );

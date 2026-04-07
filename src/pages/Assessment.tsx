@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CheckCircle2, XCircle, ChevronRight } from "lucide-react";
+import { CheckCircle2, XCircle, ChevronRight, Shuffle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Database, LineChart, Eye, Shield } from "lucide-react";
@@ -67,6 +67,8 @@ const domainLabelMap: Record<string, string> = {
   deploy_maintain: "Manage & Secure",
 };
 
+const BATCH_OPTIONS = [10, 20, 30, 50];
+
 export default function Assessment() {
   const [phase, setPhase] = useState<"select" | "quiz" | "results">("select");
   const [domainFilter, setDomainFilter] = useState("all");
@@ -75,14 +77,19 @@ export default function Assessment() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [answers, setAnswers] = useState<any[]>([]);
+  const [selectedBatchSize, setSelectedBatchSize] = useState<Record<string, number>>({});
 
   const handleStart = (domainId: string) => {
     const filtered =
       domainId === "all"
         ? [...assessmentQuestions].sort(() => Math.random() - 0.5)
         : assessmentQuestions.filter((q: any) => q.domain === domainId).sort(() => Math.random() - 0.5);
+
+    const batchSize = selectedBatchSize[domainId];
+    const limited = batchSize ? filtered.slice(0, batchSize) : filtered;
+
     setDomainFilter(domainId);
-    setQuestions(filtered);
+    setQuestions(limited);
     setCurrentIndex(0);
     setAnswers([]);
     setSelectedAnswer(null);
@@ -130,16 +137,19 @@ export default function Assessment() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {domains.map((domain) => {
             const Icon = domain.icon;
-            const count =
+            const totalCount =
               domain.id === "all"
                 ? assessmentQuestions.length
                 : assessmentQuestions.filter((q: any) => q.domain === domain.id).length;
+            const batchSize = selectedBatchSize[domain.id];
+            const activeCount = batchSize ? Math.min(batchSize, totalCount) : totalCount;
+            const availableBatches = BATCH_OPTIONS.filter((b) => b < totalCount);
+
             return (
-              <button
+              <div
                 key={domain.id}
-                onClick={() => handleStart(domain.id)}
                 className={cn(
-                  "text-left p-5 rounded-2xl border-2 bg-card transition-all duration-200 hover:shadow-md group",
+                  "text-left p-5 rounded-2xl border-2 bg-card transition-all duration-200 group",
                   domain.border
                 )}
               >
@@ -153,17 +163,69 @@ export default function Assessment() {
                     <Icon className="w-6 h-6 text-card" />
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-bold text-foreground">{domain.title}</h3>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary flex-shrink-0 transition-colors" />
-                    </div>
+                    <h3 className="font-bold text-foreground">{domain.title}</h3>
                     <p className="text-xs text-muted-foreground mb-1">
-                      {domain.subtitle} · {count} questions
+                      {domain.subtitle} · {totalCount} questions
                     </p>
                     <p className="text-sm text-muted-foreground">{domain.description}</p>
                   </div>
                 </div>
-              </button>
+
+                {/* Batch size selector */}
+                {totalCount > 15 && (
+                  <div className="mt-4 pt-3 border-t border-border/50">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Questions per session:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableBatches.map((size) => (
+                        <button
+                          key={size}
+                          onClick={() =>
+                            setSelectedBatchSize((prev) => ({
+                              ...prev,
+                              [domain.id]: prev[domain.id] === size ? undefined! : size,
+                            }))
+                          }
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors",
+                            batchSize === size
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() =>
+                          setSelectedBatchSize((prev) => {
+                            const next = { ...prev };
+                            delete next[domain.id];
+                            return next;
+                          })
+                        }
+                        className={cn(
+                          "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors",
+                          !batchSize
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                        )}
+                      >
+                        All ({totalCount})
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Start button */}
+                <button
+                  onClick={() => handleStart(domain.id)}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-colors text-sm"
+                >
+                  <Shuffle className="w-4 h-4" />
+                  Start {activeCount} Questions
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             );
           })}
         </div>
@@ -353,7 +415,13 @@ export default function Assessment() {
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <button
+          onClick={() => setPhase("select")}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          ← Back to domains
+        </button>
         <button
           onClick={handleNext}
           disabled={!showExplanation}

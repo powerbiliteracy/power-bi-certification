@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Play, Clock, CheckCircle2, XCircle, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Play, Clock, CheckCircle2, XCircle, ExternalLink, ChevronLeft, ChevronRight, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -68,6 +68,22 @@ export default function PracticeSets() {
       setCurrentQ(currentQ + 1);
       setShowExplanation(false);
     } else {
+      // Save to history before showing results
+      const finalScore = answers.filter((a, i) => a === questions[i]?.correctIndex).length;
+      try {
+        const history = JSON.parse(localStorage.getItem("exam-questions-history") || "[]");
+        history.push({
+          set: selectedSet,
+          label: setDescriptions[selectedSet]?.title || `Set ${selectedSet + 1}`,
+          score: Math.round((finalScore / questions.length) * 100),
+          correct: finalScore,
+          total: questions.length,
+          time: seconds,
+          date: new Date().toISOString(),
+        });
+        if (history.length > 50) history.splice(0, history.length - 50);
+        localStorage.setItem("exam-questions-history", JSON.stringify(history));
+      } catch {}
       setPhase("results");
     }
   };

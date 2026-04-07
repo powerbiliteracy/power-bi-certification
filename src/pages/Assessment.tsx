@@ -117,6 +117,22 @@ export default function Assessment() {
       setShowExplanation(false);
     } else {
       setAnswers(finalAnswers);
+      // Save result to history
+      const correctCount = finalAnswers.filter((a: any) => a.isCorrect).length;
+      const score = Math.round((correctCount / finalAnswers.length) * 100);
+      try {
+        const history = JSON.parse(localStorage.getItem("assessment-history") || "[]");
+        history.push({
+          label: quizLabel,
+          domain: selectedDomain,
+          score,
+          correct: correctCount,
+          total: finalAnswers.length,
+          date: new Date().toISOString(),
+        });
+        if (history.length > 50) history.splice(0, history.length - 50);
+        localStorage.setItem("assessment-history", JSON.stringify(history));
+      } catch {}
       setPhase("results");
     }
   };

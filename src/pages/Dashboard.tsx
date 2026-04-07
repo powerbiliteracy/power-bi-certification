@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { useBadges, getBadgeEmoji } from "@/hooks/useBadges";
+import { useSectionAccess } from "@/hooks/useSectionAccess";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Zap,
   Target,
@@ -15,7 +17,11 @@ import {
   Eye,
   Shield,
   Trophy,
+  CheckCircle2,
+  Lock,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 const domainIcons: Record<string, React.ElementType> = {
   prepare_data: Database,
@@ -31,9 +37,81 @@ const domainGradients: Record<string, string> = {
   deploy_maintain: "from-emerald-500 to-teal-400",
 };
 
+interface ProgressItem {
+  label: string;
+  page: string;
+  completed: number;
+  total: number;
+  icon: React.ElementType;
+  tier: string;
+  locked: boolean;
+}
+
+function getLocalStorageSet(key: string): Set<string> {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch { return new Set(); }
+}
+
+function getLocalStorageArray(key: string): any[] {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch { return []; }
+}
+
 export default function Dashboard() {
   const { badges, earnedBadges } = useBadges();
+  const { canAccess, getRequiredTier } = useSectionAccess();
+  const { profile } = useAuth();
   const recentBadges = earnedBadges.slice(-3).reverse();
+
+  const progressItems = useMemo<ProgressItem[]>(() => {
+    const syllabusTopics = pl300Syllabus.domains.flatMap(d => d.sections.flatMap(s => s.topics));
+    const completedTopics = getLocalStorageSet("pl300-completed-topics");
+    const completedScenarios = getLocalStorageSet("exam-scenarios-completed");
+    const completedTroubleshooting = getLocalStorageSet("troubleshooting-completed");
+    const completedPracticeSets = getLocalStorageArray("completed_practice_sets");
+
+    return [
+      {
+        label: "Exam Syllabus",
+        page: "Syllabus",
+        completed: syllabusTopics.filter(t => completedTopics.has(t)).length,
+        total: syllabusTopics.length,
+        icon: BookOpen,
+        tier: getRequiredTier("syllabus"),
+        locked: !canAccess("syllabus"),
+      },
+      {
+        label: "Exam Scenarios",
+        page: "ExamScenarios",
+        completed: completedScenarios.size,
+        total: 40,
+        icon: Target,
+        tier: getRequiredTier("exam-scenarios"),
+        locked: !canAccess("exam-scenarios"),
+      },
+      {
+        label: "Troubleshooting",
+        page: "Troubleshooting",
+        completed: completedTroubleshooting.size,
+        total: 30,
+        icon: Shield,
+        tier: getRequiredTier("troubleshooting"),
+        locked: !canAccess("troubleshooting"),
+      },
+      {
+        label: "Exam Questions",
+        page: "PracticeSets",
+        completed: completedPracticeSets.length,
+        total: 7,
+        icon: Brain,
+        tier: getRequiredTier("practice-sets"),
+        locked: !canAccess("practice-sets"),
+      },
+    ];
+  }, [canAccess, getRequiredTier]);
 
   return (
     <div className="space-y-8 animate-fade-in">

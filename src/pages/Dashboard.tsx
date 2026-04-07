@@ -146,11 +146,11 @@ export default function Dashboard() {
           </Link>
           <Link to={createPageUrl("Assessment")} className="flex items-center gap-3 p-3 bg-card rounded-xl hover:shadow-md transition-all border border-border">
             <Brain className="w-5 h-5 text-accent" />
-            <span className="text-sm font-medium text-foreground">Practice Assessment</span>
+            <span className="text-sm font-medium text-foreground">Topic Assessments</span>
           </Link>
           <Link to={createPageUrl("PracticeSets")} className="flex items-center gap-3 p-3 bg-card rounded-xl hover:shadow-md transition-all border border-border">
             <Zap className="w-5 h-5 text-chart-5" />
-            <span className="text-sm font-medium text-foreground">Practice Sets</span>
+            <span className="text-sm font-medium text-foreground">Exam Questions</span>
           </Link>
         </div>
       </div>

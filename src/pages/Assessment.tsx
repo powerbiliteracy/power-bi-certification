@@ -126,7 +126,7 @@ export default function Assessment() {
     return (
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">PL-300 Assessment</h1>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">Topic Assessments</h1>
           <p className="text-muted-foreground">
             Choose a domain, then pick a specific topic to test your knowledge. {assessmentQuestions.length} total questions.
           </p>

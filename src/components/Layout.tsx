@@ -48,7 +48,6 @@ const sectionKeyMap: Record<string, string> = {
 const navItems = [
   { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
   { name: "Exam Syllabus", page: "Syllabus", icon: BookOpen },
-  { name: "Assessment", page: "Assessment", icon: Brain },
   { name: "Key Terms", page: "KeyTerms", icon: BookMarked },
   { name: "Exam Prep Videos", page: "ExamPrepVideos", icon: Video },
   { name: "Learn Modules", page: "LearnModules", icon: GraduationCap },
@@ -56,7 +55,8 @@ const navItems = [
   { name: "Exam Scenarios", page: "ExamScenarios", icon: Lightbulb },
   { name: "Decision Framework", page: "DecisionFramework", icon: GitBranch },
   { name: "YouTube Playlists", page: "YouTubePlaylists", icon: Youtube },
-  { name: "Practice Sets", page: "PracticeSets", icon: Brain },
+  { name: "Topic Assessments", page: "Assessment", icon: Brain },
+  { name: "Exam Questions", page: "PracticeSets", icon: Brain },
   { name: "Badges", page: "Badges", icon: Trophy },
   { name: "Pricing", page: "Pricing", icon: CreditCard },
 ];

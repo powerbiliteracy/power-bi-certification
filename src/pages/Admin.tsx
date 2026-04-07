@@ -151,11 +151,12 @@ export default function Admin() {
           <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="w-4 h-4" /> Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="sections" className="mt-6">
+        <TabsContent value="sections" className="mt-6 space-y-6">
+          {/* Top-level sections */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5" /> Section Access Control</CardTitle>
-              <CardDescription>Set which subscription tier is required for each section, or lock sections entirely.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5" /> Page Access Control</CardTitle>
+              <CardDescription>Set which subscription tier is required for each page, or lock pages entirely.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -168,7 +169,7 @@ export default function Admin() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sections.map((section) => (
+                  {sections.filter(s => !s.section_key.includes(".")).map((section) => (
                     <TableRow key={section.id}>
                       <TableCell className="font-medium">{section.section_label}</TableCell>
                       <TableCell>
@@ -209,6 +210,84 @@ export default function Admin() {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Domain sub-sections grouped by parent */}
+          {(() => {
+            const subSections = sections.filter(s => s.section_key.includes("."));
+            const groups: Record<string, SectionRow[]> = {};
+            subSections.forEach(s => {
+              const parent = s.section_key.split(".")[0];
+              if (!groups[parent]) groups[parent] = [];
+              groups[parent].push(s);
+            });
+            const parentLabels: Record<string, string> = {
+              syllabus: "Exam Syllabus — Domain Access",
+              assessment: "Topic Assessments — Domain Access",
+              "exam-scenarios": "Exam Scenarios — Domain Access",
+              troubleshooting: "Troubleshooting — Domain Access",
+            };
+            return Object.entries(groups).map(([parent, subs]) => (
+              <Card key={parent}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Lock className="w-4 h-4" /> {parentLabels[parent] || parent}
+                  </CardTitle>
+                  <CardDescription>Control access to individual domains within this section.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Domain</TableHead>
+                        <TableHead>Required Tier</TableHead>
+                        <TableHead>Locked</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {subs.map((section) => (
+                        <TableRow key={section.id}>
+                          <TableCell className="font-medium">{section.section_label.split(" → ")[1]}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={section.required_tier}
+                              onValueChange={(val) => updateSectionTier(section.id, val as "explorer" | "pro" | "premium")}
+                              disabled={saving === section.id}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="explorer">Explorer</SelectItem>
+                                <SelectItem value="pro">Pro</SelectItem>
+                                <SelectItem value="premium">Premium</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={section.is_locked}
+                              onCheckedChange={(checked) => toggleSectionLock(section.id, checked)}
+                              disabled={saving === section.id}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {section.is_locked ? (
+                              <Badge variant="destructive" className="gap-1"><Lock className="w-3 h-3" /> Locked</Badge>
+                            ) : (
+                              <Badge variant={tierColor(section.required_tier) as any} className="gap-1">
+                                <Unlock className="w-3 h-3" /> {section.required_tier}
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ));
+          })()}
         </TabsContent>
 
         <TabsContent value="users" className="mt-6">

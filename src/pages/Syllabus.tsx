@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
+import { useSectionAccess } from "@/hooks/useSectionAccess";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { topicContent } from "@/data/TopicContent";
 import { assessmentQuestions } from "@/data/AssessmentQuestions";
@@ -27,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Lock } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 const domainIcons: Record<string, React.ElementType> = {
@@ -58,6 +60,7 @@ const menuItems = [
 ];
 
 export default function Syllabus() {
+  const { canAccess, getRequiredTier } = useSectionAccess();
   const [searchParams] = useSearchParams();
   const urlDomain = searchParams.get("domain");
   const urlSection = searchParams.get("section");
@@ -215,31 +218,46 @@ export default function Syllabus() {
 
             return (
               <div key={domain.id} className="border border-border rounded-lg bg-card overflow-hidden">
-                <button
-                  onClick={() => toggleDomain(domain.id)}
-                  className="w-full p-3 bg-secondary/30 flex items-center gap-3 hover:bg-secondary/50 transition-colors"
-                >
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br flex-shrink-0",
-                      domainColors[domain.id]
-                    )}
-                  >
-                    <Icon className="w-4 h-4 text-card" />
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <h3 className="font-semibold text-sm text-foreground truncate">{domain.title}</h3>
-                    <p className="text-xs text-muted-foreground">{domain.weight}</p>
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform",
-                      isExpanded ? "rotate-180" : ""
-                    )}
-                  />
-                </button>
+                {(() => {
+                  const domainAccessKey = `syllabus.${domain.id}`;
+                  const domainLocked = !canAccess(domainAccessKey);
+                  const requiredTier = getRequiredTier(domainAccessKey);
+                  return (
+                    <>
+                      <button
+                        onClick={() => !domainLocked && toggleDomain(domain.id)}
+                        className={cn(
+                          "w-full p-3 bg-secondary/30 flex items-center gap-3 transition-colors",
+                          domainLocked ? "opacity-60 cursor-not-allowed" : "hover:bg-secondary/50"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br flex-shrink-0",
+                            domainColors[domain.id]
+                          )}
+                        >
+                          {domainLocked ? <Lock className="w-4 h-4 text-card" /> : <Icon className="w-4 h-4 text-card" />}
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <h3 className="font-semibold text-sm text-foreground truncate">{domain.title}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {domainLocked ? `Requires ${requiredTier} tier` : domain.weight}
+                          </p>
+                        </div>
+                        {domainLocked ? (
+                          <Badge variant="outline" className="text-xs gap-1"><Lock className="w-3 h-3" /> {requiredTier}</Badge>
+                        ) : (
+                          <ChevronDown
+                            className={cn(
+                              "w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform",
+                              isExpanded ? "rotate-180" : ""
+                            )}
+                          />
+                        )}
+                      </button>
 
-                {isExpanded && (
+                      {isExpanded && !domainLocked && (
                   <div className="p-2 space-y-1">
                     {domain.sections.map((section, sectionIdx) => {
                       const sectionKey = `${domain.id}-${sectionIdx}`;
@@ -289,6 +307,9 @@ export default function Syllabus() {
                     })}
                   </div>
                 )}
+                    </>
+                  );
+                })()}
               </div>
             );
           })}

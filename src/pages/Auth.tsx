@@ -22,7 +22,22 @@ export default function Auth() {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/Dashboard", { replace: true });
+      // Check if there's a pending checkout
+      const pendingPrice = sessionStorage.getItem("pending_checkout_price");
+      if (pendingPrice) {
+        sessionStorage.removeItem("pending_checkout_price");
+        // Trigger checkout
+        supabase.functions.invoke("create-checkout", {
+          body: { priceId: pendingPrice },
+        }).then(({ data, error }) => {
+          if (!error && data?.url) {
+            window.open(data.url, "_blank");
+          }
+          navigate("/Dashboard", { replace: true });
+        });
+      } else {
+        navigate("/Dashboard", { replace: true });
+      }
     }
   }, [user, authLoading, navigate]);
 

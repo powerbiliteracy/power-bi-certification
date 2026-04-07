@@ -135,6 +135,21 @@ export default function Admin() {
     if (data) setAnnouncements(data as Announcement[]);
   };
 
+  const fetchStudentProgress = async () => {
+    const { data } = await supabase.from("user_progress").select("user_id, item_type, item_id") as { data: { user_id: string; item_type: string; item_id: string }[] | null };
+    if (!data) return;
+    const grouped: Record<string, { type: string; count: number }[]> = {};
+    const counts: Record<string, Record<string, number>> = {};
+    data.forEach((row) => {
+      if (!counts[row.user_id]) counts[row.user_id] = {};
+      counts[row.user_id][row.item_type] = (counts[row.user_id][row.item_type] || 0) + 1;
+    });
+    for (const [uid, types] of Object.entries(counts)) {
+      grouped[uid] = Object.entries(types).map(([type, count]) => ({ type, count }));
+    }
+    setStudentProgress(grouped);
+  };
+
   const updateSectionTier = async (id: string, tier: "explorer" | "pro" | "premium") => {
     setSaving(id);
     const { error } = await supabase.from("section_access").update({ required_tier: tier }).eq("id", id);

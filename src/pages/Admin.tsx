@@ -89,6 +89,18 @@ export default function Admin() {
     setSaving(null);
   };
 
+  const toggleAdminOnly = async (id: string, adminOnly: boolean) => {
+    setSaving(id);
+    const { error } = await supabase.from("section_access").update({ admin_only: adminOnly } as any).eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setSections((prev) => prev.map((s) => (s.id === id ? { ...s, admin_only: adminOnly } : s)));
+      toast({ title: "Updated", description: adminOnly ? "Section set to admin-only." : "Section visible to all." });
+    }
+    setSaving(null);
+  };
+
   const updateUserTier = async (userId: string, tier: "explorer" | "pro" | "premium") => {
     setSaving(userId);
     const { error } = await supabase.from("profiles").update({ subscription_tier: tier }).eq("user_id", userId);

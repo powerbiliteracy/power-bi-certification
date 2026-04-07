@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { useBadges, getBadgeEmoji } from "@/hooks/useBadges";
+import { useSectionAccess } from "@/hooks/useSectionAccess";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Zap,
   Target,
@@ -15,7 +17,11 @@ import {
   Eye,
   Shield,
   Trophy,
+  CheckCircle2,
+  Lock,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 const domainIcons: Record<string, React.ElementType> = {
   prepare_data: Database,
@@ -31,9 +37,81 @@ const domainGradients: Record<string, string> = {
   deploy_maintain: "from-emerald-500 to-teal-400",
 };
 
+interface ProgressItem {
+  label: string;
+  page: string;
+  completed: number;
+  total: number;
+  icon: React.ElementType;
+  tier: string;
+  locked: boolean;
+}
+
+function getLocalStorageSet(key: string): Set<string> {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch { return new Set(); }
+}
+
+function getLocalStorageArray(key: string): any[] {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch { return []; }
+}
+
 export default function Dashboard() {
   const { badges, earnedBadges } = useBadges();
+  const { canAccess, getRequiredTier } = useSectionAccess();
+  const { profile } = useAuth();
   const recentBadges = earnedBadges.slice(-3).reverse();
+
+  const progressItems = useMemo<ProgressItem[]>(() => {
+    const syllabusTopics = pl300Syllabus.domains.flatMap(d => d.sections.flatMap(s => s.topics));
+    const completedTopics = getLocalStorageSet("pl300-completed-topics");
+    const completedScenarios = getLocalStorageSet("exam-scenarios-completed");
+    const completedTroubleshooting = getLocalStorageSet("troubleshooting-completed");
+    const completedPracticeSets = getLocalStorageArray("completed_practice_sets");
+
+    return [
+      {
+        label: "Exam Syllabus",
+        page: "Syllabus",
+        completed: syllabusTopics.filter(t => completedTopics.has(t)).length,
+        total: syllabusTopics.length,
+        icon: BookOpen,
+        tier: getRequiredTier("syllabus"),
+        locked: !canAccess("syllabus"),
+      },
+      {
+        label: "Exam Scenarios",
+        page: "ExamScenarios",
+        completed: completedScenarios.size,
+        total: 40,
+        icon: Target,
+        tier: getRequiredTier("exam-scenarios"),
+        locked: !canAccess("exam-scenarios"),
+      },
+      {
+        label: "Troubleshooting",
+        page: "Troubleshooting",
+        completed: completedTroubleshooting.size,
+        total: 30,
+        icon: Shield,
+        tier: getRequiredTier("troubleshooting"),
+        locked: !canAccess("troubleshooting"),
+      },
+      {
+        label: "Exam Questions",
+        page: "PracticeSets",
+        completed: completedPracticeSets.length,
+        total: 7,
+        icon: Brain,
+        tier: getRequiredTier("practice-sets"),
+        locked: !canAccess("practice-sets"),
+      },
+    ];
+  }, [canAccess, getRequiredTier]);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -74,6 +152,50 @@ export default function Dashboard() {
               <p className="text-lg font-bold text-foreground">{item.value}</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Progress Tracking */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Your Progress</h2>
+          <Badge variant="outline" className="capitalize">{profile?.subscription_tier || "explorer"} tier</Badge>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {progressItems.map((item) => {
+            const pct = item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.label}
+                to={item.locked ? createPageUrl("Pricing") : createPageUrl(item.page)}
+                className="bg-card rounded-2xl border border-border p-5 hover:shadow-lg hover:border-primary/30 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold text-foreground">{item.label}</h3>
+                  </div>
+                  {item.locked ? (
+                    <Badge variant="outline" className="gap-1 text-xs"><Lock className="w-3 h-3" /> {item.tier}</Badge>
+                  ) : item.tier !== "explorer" ? (
+                    <Badge variant="outline" className="text-xs capitalize">{item.tier}</Badge>
+                  ) : null}
+                </div>
+                {item.locked ? (
+                  <p className="text-sm text-muted-foreground">Upgrade to {item.tier} to access</p>
+                ) : (
+                  <>
+                    <Progress value={pct} className="h-2 mb-2" />
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{item.completed}/{item.total} completed</span>
+                      <span className="font-semibold text-foreground">{pct}%</span>
+                    </div>
+                  </>
+                )}
+              </Link>
+            );
+          })}
         </div>
       </div>
 

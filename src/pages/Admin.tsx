@@ -72,6 +72,7 @@ export default function Admin() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
+  const [studentProgress, setStudentProgress] = useState<Record<string, { type: string; count: number }[]>>({});
 
   // Invite form
   const [inviteEmail, setInviteEmail] = useState("");

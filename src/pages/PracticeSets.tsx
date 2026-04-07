@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Play, Clock, CheckCircle2, XCircle, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Play, Clock, CheckCircle2, XCircle, ExternalLink, ChevronLeft, ChevronRight, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -68,6 +68,22 @@ export default function PracticeSets() {
       setCurrentQ(currentQ + 1);
       setShowExplanation(false);
     } else {
+      // Save to history before showing results
+      const finalScore = answers.filter((a, i) => a === questions[i]?.correctIndex).length;
+      try {
+        const history = JSON.parse(localStorage.getItem("exam-questions-history") || "[]");
+        history.push({
+          set: selectedSet,
+          label: setDescriptions[selectedSet]?.title || `Set ${selectedSet + 1}`,
+          score: Math.round((finalScore / questions.length) * 100),
+          correct: finalScore,
+          total: questions.length,
+          time: seconds,
+          date: new Date().toISOString(),
+        });
+        if (history.length > 50) history.splice(0, history.length - 50);
+        localStorage.setItem("exam-questions-history", JSON.stringify(history));
+      } catch {}
       setPhase("results");
     }
   };
@@ -134,6 +150,47 @@ export default function PracticeSets() {
             </Card>
           ))}
         </div>
+
+        {/* Results History */}
+        {(() => {
+          let history: any[] = [];
+          try { history = JSON.parse(localStorage.getItem("exam-questions-history") || "[]"); } catch {}
+          if (history.length === 0) return null;
+          return (
+            <Card className="bg-card border-border">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <History className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold text-foreground">Results History</h3>
+                  </div>
+                  <button
+                    onClick={() => { localStorage.removeItem("exam-questions-history"); setPhase("select"); }}
+                    className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" /> Clear
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {[...history].reverse().map((entry: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-secondary/50">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{entry.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(entry.date).toLocaleDateString()} · {entry.correct}/{entry.total} correct
+                          {entry.time > 0 && ` · ${Math.floor(entry.time / 60)}m ${entry.time % 60}s`}
+                        </p>
+                      </div>
+                      <span className={`text-lg font-bold ${entry.score >= 70 ? "text-chart-4" : "text-chart-5"}`}>
+                        {entry.score}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
       </div>
     );
   }

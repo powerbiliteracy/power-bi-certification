@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3 } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, EyeOff } from "lucide-react";
 import { Navigate } from "react-router-dom";
 
 interface SectionRow {
@@ -18,6 +18,7 @@ interface SectionRow {
   section_label: string;
   required_tier: "explorer" | "pro" | "premium";
   is_locked: boolean;
+  admin_only: boolean;
 }
 
 interface ProfileRow {

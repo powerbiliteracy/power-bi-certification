@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, EyeOff } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3 } from "lucide-react";
 import { Navigate } from "react-router-dom";
 
 interface SectionRow {
@@ -263,6 +263,7 @@ export default function Admin() {
                       <TableRow>
                         <TableHead>Domain</TableHead>
                         <TableHead>Required Tier</TableHead>
+                        <TableHead>Admin Only</TableHead>
                         <TableHead>Locked</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
@@ -289,13 +290,22 @@ export default function Admin() {
                           </TableCell>
                           <TableCell>
                             <Switch
+                              checked={section.admin_only}
+                              onCheckedChange={(checked) => toggleAdminOnly(section.id, checked)}
+                              disabled={saving === section.id}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Switch
                               checked={section.is_locked}
                               onCheckedChange={(checked) => toggleSectionLock(section.id, checked)}
                               disabled={saving === section.id}
                             />
                           </TableCell>
                           <TableCell>
-                            {section.is_locked ? (
+                            {section.admin_only ? (
+                              <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" /> Admin Only</Badge>
+                            ) : section.is_locked ? (
                               <Badge variant="destructive" className="gap-1"><Lock className="w-3 h-3" /> Locked</Badge>
                             ) : (
                               <Badge variant={tierColor(section.required_tier) as any} className="gap-1">

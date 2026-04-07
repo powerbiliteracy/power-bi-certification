@@ -292,6 +292,24 @@ export default function Assessment() {
       if (a.isCorrect) domainScores[a.domain].correct++;
     });
 
+    // Save to history
+    React.useEffect(() => {
+      try {
+        const history = JSON.parse(localStorage.getItem("assessment-history") || "[]");
+        history.push({
+          label: quizLabel,
+          domain: selectedDomain,
+          score,
+          correct: correctCount,
+          total: answers.length,
+          date: new Date().toISOString(),
+        });
+        // Keep last 50 entries
+        if (history.length > 50) history.splice(0, history.length - 50);
+        localStorage.setItem("assessment-history", JSON.stringify(history));
+      } catch {}
+    }, []);
+
     return (
       <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
         <div

@@ -7,10 +7,14 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  viewingAsUser: boolean;
+  setViewingAsUser: (v: boolean) => void;
   profile: {
     display_name: string | null;
     subscription_tier: "explorer" | "pro" | "premium";
     email: string | null;
+    first_name: string | null;
+    last_name: string | null;
   } | null;
   signOut: () => Promise<void>;
 }
@@ -20,6 +24,8 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   isAdmin: false,
+  viewingAsUser: false,
+  setViewingAsUser: () => {},
   profile: null,
   signOut: async () => {},
 });
@@ -29,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [viewingAsUser, setViewingAsUser] = useState(false);
   const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
 
   const fetchUserData = useCallback(async (userId: string) => {
@@ -36,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const [profileResult, adminResult] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, subscription_tier, email")
+          .select("display_name, subscription_tier, email, first_name, last_name")
           .eq("user_id", userId)
           .maybeSingle(),
         supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
@@ -88,8 +95,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAdmin(false);
   };
 
+  const effectiveIsAdmin = isAdmin && !viewingAsUser;
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, profile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin: effectiveIsAdmin, viewingAsUser, setViewingAsUser, profile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

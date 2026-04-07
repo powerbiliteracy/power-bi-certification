@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ChevronDown, ChevronRight, Lightbulb, AlertCircle, CheckCircle2, Database, LineChart, Eye, Shield } from "lucide-react";
+import { ChevronDown, ChevronRight, Lightbulb, AlertCircle, CheckCircle2, Database, LineChart, Eye, Shield, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1178,6 +1178,23 @@ export default function ExamScenarios() {
   });
   const [filterDifficulty, setFilterDifficulty] = useState("all");
 
+  const [completed, setCompleted] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("exam-scenarios-completed");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  const toggleComplete = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCompleted(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("exam-scenarios-completed", JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
   const toggleDomain = (domain: string) => {
     setExpandedDomains((prev) => ({ ...prev, [domain]: !prev[domain] }));
   };
@@ -1204,6 +1221,7 @@ export default function ExamScenarios() {
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Exam Scenario Questions</h1>
         <p className="text-muted-foreground">Real-world scenarios with step-by-step guidance on solving them</p>
+        <p className="text-sm text-primary font-medium mt-1">{completed.size}/{scenarios.length} completed</p>
       </div>
 
       <div className="flex gap-2">
@@ -1239,7 +1257,7 @@ export default function ExamScenarios() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-semibold text-foreground">{domainLabels[domain]}</h2>
-                  <p className="text-xs text-muted-foreground">{domainScenarios.length} scenario{domainScenarios.length !== 1 ? "s" : ""}</p>
+                  <p className="text-xs text-muted-foreground">{domainScenarios.filter(s => completed.has(s.id)).length}/{domainScenarios.length} completed</p>
                 </div>
                 <ChevronDown className={cn("w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform", isDomainOpen ? "rotate-180" : "")} />
               </button>
@@ -1249,7 +1267,7 @@ export default function ExamScenarios() {
                   {domainScenarios.map((scenario) => {
                     const isExpanded = expandedScenario === scenario.id;
                     return (
-                      <Card key={scenario.id} className="overflow-hidden">
+                      <Card key={scenario.id} className={cn("overflow-hidden", completed.has(scenario.id) && "border-chart-4/40")}>
                         <button
                           onClick={() => setExpandedScenario(isExpanded ? null : scenario.id)}
                           className="w-full p-4 text-left hover:bg-secondary/50 transition-colors flex items-start justify-between gap-4"
@@ -1257,8 +1275,9 @@ export default function ExamScenarios() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <Badge className={getDifficultyColor(scenario.difficulty)}>{scenario.difficulty}</Badge>
+                              {completed.has(scenario.id) && <Badge className="bg-chart-4/10 text-chart-4">✓ Done</Badge>}
                             </div>
-                            <h3 className="font-semibold text-foreground text-lg">{scenario.title}</h3>
+                            <h3 className={cn("font-semibold text-lg", completed.has(scenario.id) ? "text-muted-foreground" : "text-foreground")}>{scenario.title}</h3>
                             <p className="text-sm text-muted-foreground mt-2">{scenario.context}</p>
                           </div>
                           {isExpanded ? (
@@ -1318,6 +1337,19 @@ export default function ExamScenarios() {
                                 ))}
                               </ul>
                             </div>
+
+                            <button
+                              onClick={(e) => toggleComplete(scenario.id, e)}
+                              className={cn(
+                                "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                                completed.has(scenario.id)
+                                  ? "bg-chart-4/10 text-chart-4 hover:bg-destructive/10 hover:text-destructive"
+                                  : "bg-primary/10 text-primary hover:bg-primary/20"
+                              )}
+                            >
+                              <Check className="w-4 h-4" />
+                              {completed.has(scenario.id) ? "Completed — click to undo" : "Mark as Complete"}
+                            </button>
 
                             <div>
                               <h4 className="font-semibold text-foreground mb-3">Related Syllabus Topics</h4>

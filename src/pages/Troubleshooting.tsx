@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { AlertTriangle, Zap, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { AlertTriangle, Zap, ChevronDown, ChevronRight, ExternalLink, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -529,6 +529,22 @@ export default function Troubleshooting() {
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
   const [filterDomain, setFilterDomain] = useState("all");
   const [filterSeverity, setFilterSeverity] = useState("all");
+  const [completed, setCompleted] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("troubleshooting-completed");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  const toggleComplete = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCompleted(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("troubleshooting-completed", JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
 
   const filtered = issues.filter(
     (issue) =>
@@ -541,6 +557,7 @@ export default function Troubleshooting() {
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Power BI Troubleshooting</h1>
         <p className="text-muted-foreground">Common challenges and solutions for Power BI developers</p>
+        <p className="text-sm text-primary font-medium mt-1">{completed.size}/{issues.length} completed</p>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -575,7 +592,7 @@ export default function Troubleshooting() {
         {filtered.map((issue) => {
           const isExpanded = expandedIssue === issue.id;
           return (
-            <Card key={issue.id} className="overflow-hidden">
+            <Card key={issue.id} className={cn("overflow-hidden", completed.has(issue.id) && "border-chart-4/40")}>
               <button
                 onClick={() => setExpandedIssue(isExpanded ? null : issue.id)}
                 className="w-full p-4 text-left hover:bg-secondary/50 transition-colors flex items-start justify-between gap-4"
@@ -592,8 +609,9 @@ export default function Troubleshooting() {
                     <Badge variant="outline" className="text-xs">
                       {issue.severity === "high" ? "High Priority" : "Medium Priority"}
                     </Badge>
+                    {completed.has(issue.id) && <Badge className="bg-chart-4/10 text-chart-4">✓ Done</Badge>}
                   </div>
-                  <h3 className="font-semibold text-foreground">{issue.title}</h3>
+                  <h3 className={cn("font-semibold", completed.has(issue.id) ? "text-muted-foreground" : "text-foreground")}>{issue.title}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{issue.description}</p>
                 </div>
                 {isExpanded ? (
@@ -619,6 +637,19 @@ export default function Troubleshooting() {
                       ))}
                     </ul>
                   </div>
+
+                  <button
+                    onClick={(e) => toggleComplete(issue.id, e)}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                      completed.has(issue.id)
+                        ? "bg-chart-4/10 text-chart-4 hover:bg-destructive/10 hover:text-destructive"
+                        : "bg-primary/10 text-primary hover:bg-primary/20"
+                    )}
+                  >
+                    <Check className="w-4 h-4" />
+                    {completed.has(issue.id) ? "Completed — click to undo" : "Mark as Complete"}
+                  </button>
 
                   <div>
                     <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">

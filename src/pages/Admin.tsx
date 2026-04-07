@@ -726,6 +726,46 @@ export default function Admin() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Student Progress */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5" /> Student Progress</CardTitle>
+              <CardDescription>Completion data synced from student activity</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Syllabus Topics</TableHead>
+                    <TableHead>Scenarios</TableHead>
+                    <TableHead>Practice Sets</TableHead>
+                    <TableHead>Troubleshooting</TableHead>
+                    <TableHead>Total Items</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((u) => {
+                    const progress = studentProgress[u.user_id] || [];
+                    const getCount = (type: string) => progress.find((p) => p.type === type)?.count || 0;
+                    const total = progress.reduce((sum, p) => sum + p.count, 0);
+                    const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.display_name || u.email || "—";
+                    return (
+                      <TableRow key={u.user_id}>
+                        <TableCell className="font-medium">{name}</TableCell>
+                        <TableCell>{getCount("syllabus_topic")}</TableCell>
+                        <TableCell>{getCount("scenario")}</TableCell>
+                        <TableCell>{getCount("practice_set")}</TableCell>
+                        <TableCell>{getCount("troubleshooting")}</TableCell>
+                        <TableCell><Badge variant={total > 0 ? "default" : "secondary"}>{total}</Badge></TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

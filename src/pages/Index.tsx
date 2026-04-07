@@ -57,9 +57,9 @@ export default function LandingPage() {
             <span className="font-bold text-lg text-foreground">PL-300 Coach Pro</span>
           </div>
           <div className="flex items-center gap-3">
-            <Link to={createPageUrl("Pricing")}>
+            <a href="#pricing">
               <Button variant="ghost" size="sm" className="text-muted-foreground">Pricing</Button>
-            </Link>
+            </a>
             <Link to={createPageUrl("Dashboard")}>
               <Button size="sm" className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
                 Start Studying <ArrowRight className="w-4 h-4 ml-1" />
@@ -91,11 +91,11 @@ export default function LandingPage() {
                 Start Free <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Link to={createPageUrl("Pricing")}>
+            <a href="#pricing">
               <Button variant="outline" size="lg" className="rounded-xl px-8 text-base">
                 View Plans
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -140,7 +140,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="py-20 px-6 bg-secondary/20">
+      <section id="pricing" className="py-20 px-6 bg-secondary/20 scroll-mt-20">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-foreground">Choose your study plan</h2>

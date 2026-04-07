@@ -177,6 +177,7 @@ export default function Admin() {
                   <TableRow>
                     <TableHead>Section</TableHead>
                     <TableHead>Required Tier</TableHead>
+                    <TableHead>Admin Only</TableHead>
                     <TableHead>Locked</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>

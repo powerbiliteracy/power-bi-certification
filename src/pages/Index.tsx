@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
+import PricingCards from "@/components/PricingCards";
 import {
   Zap,
   BookOpen,
@@ -138,6 +139,19 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section className="py-20 px-6 bg-secondary/20">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-foreground">Choose your study plan</h2>
+            <p className="text-muted-foreground mt-3 text-lg max-w-xl mx-auto">
+              From free essentials to premium coaching — pick the plan that fits your PL-300 prep journey.
+            </p>
+          </div>
+          <PricingCards compact />
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-20 px-6">
         <div className="max-w-3xl mx-auto text-center bg-gradient-to-br from-primary/5 to-accent/5 rounded-3xl border border-primary/10 p-10">
@@ -149,11 +163,6 @@ export default function LandingPage() {
             <Link to={createPageUrl("Dashboard")}>
               <Button size="lg" className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 px-8">
                 Get Started Free
-              </Button>
-            </Link>
-            <Link to={createPageUrl("Pricing")}>
-              <Button variant="outline" size="lg" className="rounded-xl px-8">
-                Compare Plans <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
           </div>

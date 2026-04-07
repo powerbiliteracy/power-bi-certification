@@ -134,21 +134,19 @@ export default function Layout({ children }: LayoutProps) {
                 <item.icon className={cn("w-5 h-5", isActive && "text-[hsl(var(--indigo-light))]")} />
                 <span className="flex-1">{item.name}</span>
                 {!hasAccess && <Lock className="w-3.5 h-3.5 text-[hsl(var(--indigo-light)/0.5)]" />}
-                {requiredTier !== "explorer" && (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-[10px] border-[hsl(var(--indigo-light)/0.3)]",
-                      requiredTier === "premium"
-                        ? "text-amber-400 border-amber-400/30"
-                        : requiredTier === "pro"
-                        ? "text-[hsl(var(--indigo-light))] border-[hsl(var(--indigo-light)/0.3)]"
-                        : "text-[hsl(var(--indigo-light)/0.6)]"
-                    )}
-                  >
-                    {requiredTier === "premium" ? "★ Premium" : requiredTier === "pro" ? "Pro" : requiredTier}
-                  </Badge>
-                )}
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px] border-[hsl(var(--indigo-light)/0.3)]",
+                    requiredTier === "premium"
+                      ? "text-amber-400 border-amber-400/30"
+                      : requiredTier === "pro"
+                      ? "text-[hsl(var(--indigo-light))] border-[hsl(var(--indigo-light)/0.3)]"
+                      : "text-[hsl(var(--indigo-light)/0.4)] border-[hsl(var(--indigo-light)/0.15)]"
+                  )}
+                >
+                  {requiredTier === "premium" ? "★ Premium" : requiredTier === "pro" ? "Pro" : "Free"}
+                </Badge>
                 {isActive && <ChevronRight className="w-4 h-4 text-[hsl(var(--indigo-light))]" />}
               </Link>
             );

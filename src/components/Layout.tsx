@@ -48,7 +48,7 @@ const sectionKeyMap: Record<string, string> = {
 const navItems = [
   { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
   { name: "Exam Syllabus", page: "Syllabus", icon: BookOpen },
-  { name: "Key Terms", page: "KeyTerms", icon: BookMarked },
+  { name: "Key Terms & Features", page: "KeyTerms", icon: BookMarked },
   { name: "Exam Prep Videos", page: "ExamPrepVideos", icon: Video },
   { name: "Learn Modules", page: "LearnModules", icon: GraduationCap },
   { name: "Troubleshooting", page: "Troubleshooting", icon: AlertTriangle },

@@ -79,6 +79,7 @@ export type Database = {
       }
       section_access: {
         Row: {
+          admin_only: boolean
           id: string
           is_locked: boolean
           required_tier: Database["public"]["Enums"]["subscription_tier"]
@@ -87,6 +88,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_only?: boolean
           id?: string
           is_locked?: boolean
           required_tier?: Database["public"]["Enums"]["subscription_tier"]
@@ -95,6 +97,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_only?: boolean
           id?: string
           is_locked?: boolean
           required_tier?: Database["public"]["Enums"]["subscription_tier"]

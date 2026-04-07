@@ -17,13 +17,13 @@ import set7 from "@/data/practiceSets/set7";
 const allSets = [set1, set2, set3, set4, set5, set6, set7];
 
 const setDescriptions = [
-  { title: "Practice Set 1", description: "Connect to data, DirectLake vs DirectQuery vs Import, parameters, data profiling, transformations", topics: ["Data Sources", "Storage Modes", "Power Query", "Data Quality"] },
-  { title: "Practice Set 2", description: "Data modeling, DAX calculations, time intelligence, calculation groups, performance", topics: ["Star Schema", "CALCULATE", "Time Intelligence", "Optimization"] },
-  { title: "Practice Set 3", description: "Report creation, Copilot, visuals, bookmarks, drillthrough, mobile, accessibility", topics: ["Copilot", "Bookmarks", "Drillthrough", "Accessibility"] },
-  { title: "Practice Set 4", description: "AI visuals, forecasting, anomaly detection, paginated reports, themes, export settings", topics: ["Key Influencers", "Decomposition Tree", "Forecasting", "Paginated Reports"] },
-  { title: "Practice Set 5", description: "Workspace roles, RLS, sensitivity labels, gateway, subscriptions, distribution methods", topics: ["Workspace Roles", "Row-Level Security", "Sensitivity Labels", "Gateway"] },
-  { title: "Practice Set 6", description: "Shared semantic models, incremental refresh, visual interactions, Copilot insights, DAX", topics: ["Semantic Models", "DAX Statistics", "Calculated Tables", "Incremental Refresh"] },
-  { title: "Practice Set 7", description: "Advanced scenarios across all four exam domains — full end-to-end coverage", topics: ["DirectLake", "Visual Calculations", "Deployment Pipelines", "Governance"] },
+  { title: "Exam Set 1", description: "Connect to data, DirectLake vs DirectQuery vs Import, parameters, data profiling, transformations", topics: ["Data Sources", "Storage Modes", "Power Query", "Data Quality"] },
+  { title: "Exam Set 2", description: "Data modeling, DAX calculations, time intelligence, calculation groups, performance", topics: ["Star Schema", "CALCULATE", "Time Intelligence", "Optimization"] },
+  { title: "Exam Set 3", description: "Report creation, Copilot, visuals, bookmarks, drillthrough, mobile, accessibility", topics: ["Copilot", "Bookmarks", "Drillthrough", "Accessibility"] },
+  { title: "Exam Set 4", description: "AI visuals, forecasting, anomaly detection, paginated reports, themes, export settings", topics: ["Key Influencers", "Decomposition Tree", "Forecasting", "Paginated Reports"] },
+  { title: "Exam Set 5", description: "Workspace roles, RLS, sensitivity labels, gateway, subscriptions, distribution methods", topics: ["Workspace Roles", "Row-Level Security", "Sensitivity Labels", "Gateway"] },
+  { title: "Exam Set 6", description: "Shared semantic models, incremental refresh, visual interactions, Copilot insights, DAX", topics: ["Semantic Models", "DAX Statistics", "Calculated Tables", "Incremental Refresh"] },
+  { title: "Exam Set 7", description: "Advanced scenarios across all four exam domains — full end-to-end coverage", topics: ["DirectLake", "Visual Calculations", "Deployment Pipelines", "Governance"] },
 ];
 
 type Phase = "select" | "quiz" | "results";
@@ -80,7 +80,7 @@ export default function PracticeSets() {
     return (
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Practice Sets</h1>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Exam Questions</h1>
           <p className="text-muted-foreground mt-1">7 sets • 12 questions each • Real-world scenarios</p>
         </div>
 

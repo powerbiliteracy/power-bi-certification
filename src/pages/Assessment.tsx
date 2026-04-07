@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { CheckCircle2, XCircle, ChevronRight, ArrowLeft } from "lucide-react";
+import { CheckCircle2, XCircle, ChevronRight, ArrowLeft, History, Trash2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Database, LineChart, Eye, Shield, BookOpen } from "lucide-react";
@@ -202,6 +202,45 @@ export default function Assessment() {
             );
           })}
         </div>
+
+        {/* Results History */}
+        {(() => {
+          let history: any[] = [];
+          try { history = JSON.parse(localStorage.getItem("assessment-history") || "[]"); } catch {}
+          if (history.length === 0) return null;
+          return (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold text-foreground">Results History</h3>
+                </div>
+                <button
+                  onClick={() => { localStorage.removeItem("assessment-history"); setPhase("domains"); }}
+                  className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" /> Clear
+                </button>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {[...history].reverse().map((entry: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-secondary/50">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{entry.label}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString()} · {entry.correct}/{entry.total} correct</p>
+                    </div>
+                    <span className={cn(
+                      "text-lg font-bold",
+                      entry.score >= 70 ? "text-chart-4" : "text-chart-5"
+                    )}>
+                      {entry.score}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   }

@@ -71,7 +71,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const currentPage = location.pathname.replace("/", "") || "Dashboard";
   const { user, isAdmin, profile, signOut, loading } = useAuth();
-  const { canAccess, getRequiredTier } = useSectionAccess();
+  const { canAccess, getRequiredTier, isVisible, isAdminOnly } = useSectionAccess();
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -110,6 +110,10 @@ export default function Layout({ children }: LayoutProps) {
             const sectionKey = sectionKeyMap[item.page];
             const hasAccess = canAccess(sectionKey);
             const requiredTier = getRequiredTier(sectionKey);
+            const adminOnly = isAdminOnly(sectionKey);
+
+            // Hide admin-only sections from non-admins
+            if (!isVisible(sectionKey)) return null;
 
             return (
               <Link
@@ -138,14 +142,16 @@ export default function Layout({ children }: LayoutProps) {
                   variant="outline"
                   className={cn(
                     "text-[10px] border-[hsl(var(--indigo-light)/0.3)]",
-                    requiredTier === "premium"
+                    adminOnly
+                      ? "text-red-400 border-red-400/30"
+                      : requiredTier === "premium"
                       ? "text-amber-400 border-amber-400/30"
                       : requiredTier === "pro"
                       ? "text-[hsl(var(--indigo-light))] border-[hsl(var(--indigo-light)/0.3)]"
                       : "text-[hsl(var(--indigo-light)/0.4)] border-[hsl(var(--indigo-light)/0.15)]"
                   )}
                 >
-                  {requiredTier === "premium" ? "★ Premium" : requiredTier === "pro" ? "Pro" : "Free"}
+                  {adminOnly ? "🔒 Admin" : requiredTier === "premium" ? "★ Premium" : requiredTier === "pro" ? "Pro" : "Free"}
                 </Badge>
                 {isActive && <ChevronRight className="w-4 h-4 text-[hsl(var(--indigo-light))]" />}
               </Link>

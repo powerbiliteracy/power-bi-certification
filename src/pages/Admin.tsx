@@ -18,6 +18,7 @@ interface SectionRow {
   section_label: string;
   required_tier: "explorer" | "pro" | "premium";
   is_locked: boolean;
+  admin_only: boolean;
 }
 
 interface ProfileRow {
@@ -84,6 +85,18 @@ export default function Admin() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       setSections((prev) => prev.map((s) => (s.id === id ? { ...s, is_locked: locked } : s)));
+    }
+    setSaving(null);
+  };
+
+  const toggleAdminOnly = async (id: string, adminOnly: boolean) => {
+    setSaving(id);
+    const { error } = await supabase.from("section_access").update({ admin_only: adminOnly } as any).eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setSections((prev) => prev.map((s) => (s.id === id ? { ...s, admin_only: adminOnly } : s)));
+      toast({ title: "Updated", description: adminOnly ? "Section set to admin-only." : "Section visible to all." });
     }
     setSaving(null);
   };
@@ -164,6 +177,7 @@ export default function Admin() {
                   <TableRow>
                     <TableHead>Section</TableHead>
                     <TableHead>Required Tier</TableHead>
+                    <TableHead>Admin Only</TableHead>
                     <TableHead>Locked</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
@@ -190,13 +204,22 @@ export default function Admin() {
                       </TableCell>
                       <TableCell>
                         <Switch
+                          checked={section.admin_only}
+                          onCheckedChange={(checked) => toggleAdminOnly(section.id, checked)}
+                          disabled={saving === section.id}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Switch
                           checked={section.is_locked}
                           onCheckedChange={(checked) => toggleSectionLock(section.id, checked)}
                           disabled={saving === section.id}
                         />
                       </TableCell>
                       <TableCell>
-                        {section.is_locked ? (
+                        {section.admin_only ? (
+                          <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" /> Admin Only</Badge>
+                        ) : section.is_locked ? (
                           <Badge variant="destructive" className="gap-1"><Lock className="w-3 h-3" /> Locked</Badge>
                         ) : (
                           <Badge variant={tierColor(section.required_tier) as any} className="gap-1">
@@ -240,6 +263,7 @@ export default function Admin() {
                       <TableRow>
                         <TableHead>Domain</TableHead>
                         <TableHead>Required Tier</TableHead>
+                        <TableHead>Admin Only</TableHead>
                         <TableHead>Locked</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
@@ -266,13 +290,22 @@ export default function Admin() {
                           </TableCell>
                           <TableCell>
                             <Switch
+                              checked={section.admin_only}
+                              onCheckedChange={(checked) => toggleAdminOnly(section.id, checked)}
+                              disabled={saving === section.id}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Switch
                               checked={section.is_locked}
                               onCheckedChange={(checked) => toggleSectionLock(section.id, checked)}
                               disabled={saving === section.id}
                             />
                           </TableCell>
                           <TableCell>
-                            {section.is_locked ? (
+                            {section.admin_only ? (
+                              <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" /> Admin Only</Badge>
+                            ) : section.is_locked ? (
                               <Badge variant="destructive" className="gap-1"><Lock className="w-3 h-3" /> Locked</Badge>
                             ) : (
                               <Badge variant={tierColor(section.required_tier) as any} className="gap-1">

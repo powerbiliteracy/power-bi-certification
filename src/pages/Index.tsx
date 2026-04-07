@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,7 @@ import {
   Zap,
   BookOpen,
   Brain,
-  Target,
   CheckCircle,
-  Star,
   ArrowRight,
   Video,
   GraduationCap,
@@ -23,6 +21,19 @@ import {
   BookMarked,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+import imgDashboard from "@/assets/features/dashboard.jpg";
+import imgSyllabus from "@/assets/features/syllabus.jpg";
+import imgKeyTerms from "@/assets/features/key-terms.jpg";
+import imgExamVideos from "@/assets/features/exam-videos.jpg";
+import imgLearnModules from "@/assets/features/learn-modules.jpg";
+import imgTroubleshooting from "@/assets/features/troubleshooting.jpg";
+import imgExamScenarios from "@/assets/features/exam-scenarios.jpg";
+import imgDecisionFramework from "@/assets/features/decision-framework.jpg";
+import imgYoutubePlaylists from "@/assets/features/youtube-playlists.jpg";
+import imgTopicAssessments from "@/assets/features/topic-assessments.jpg";
+import imgExamQuestions from "@/assets/features/exam-questions.jpg";
+import imgBadges from "@/assets/features/badges.jpg";
 
 const stats = [
   { value: "200+", label: "Practice Questions" },
@@ -37,72 +48,84 @@ const appSections = [
     name: "Dashboard",
     description: "Track your study progress, view completion stats, and see your overall readiness.",
     tier: "explorer",
+    image: imgDashboard,
   },
   {
     icon: BookOpen,
     name: "Exam Syllabus",
     description: "Browse every PL-300 exam topic organized by the four official domains with detailed content.",
     tier: "explorer",
+    image: imgSyllabus,
   },
   {
     icon: BookMarked,
     name: "Key Terms & Features",
     description: "Searchable glossary of essential Power BI terms, DAX functions, and exam-relevant features.",
     tier: "pro",
+    image: imgKeyTerms,
   },
   {
     icon: Video,
     name: "Exam Prep Videos",
     description: "Curated Microsoft Exam Readiness Zone videos with embedded player for each domain.",
     tier: "explorer",
+    image: imgExamVideos,
   },
   {
     icon: GraduationCap,
     name: "Learn Modules",
     description: "Direct links to official Microsoft Learn modules mapped to PL-300 exam objectives.",
     tier: "explorer",
+    image: imgLearnModules,
   },
   {
     icon: AlertTriangle,
     name: "Troubleshooting",
     description: "Real-world troubleshooting scenarios with step-by-step solutions and progress tracking.",
     tier: "premium",
+    image: imgTroubleshooting,
   },
   {
     icon: Lightbulb,
     name: "Exam Scenarios",
     description: "Scenario-based practice that simulates real exam case studies with completion tracking.",
     tier: "premium",
+    image: imgExamScenarios,
   },
   {
     icon: GitBranch,
     name: "Decision Framework",
     description: "Learn how to choose between Power BI tools, visuals, and approaches for exam questions.",
     tier: "premium",
+    image: imgDecisionFramework,
   },
   {
     icon: Youtube,
     name: "YouTube Playlists",
     description: "Curated YouTube playlists from top Power BI educators organized by exam domain.",
     tier: "explorer",
+    image: imgYoutubePlaylists,
   },
   {
     icon: Brain,
     name: "Topic Assessments",
     description: "Domain-specific quizzes with explanations and a full results history to track improvement.",
     tier: "pro",
+    image: imgTopicAssessments,
   },
   {
     icon: Brain,
     name: "Exam Questions",
     description: "200+ practice questions in timed sets simulating the real PL-300 exam experience.",
     tier: "pro",
+    image: imgExamQuestions,
   },
   {
     icon: Trophy,
     name: "Badges",
     description: "Earn achievement badges as you complete sections and hit study milestones.",
     tier: "explorer",
+    image: imgBadges,
   },
 ];
 
@@ -112,7 +135,15 @@ const tierConfig = {
   premium: { label: "★ Premium", className: "text-amber-400 border-amber-400/30" },
 };
 
+type TierFilter = "all" | "explorer" | "pro" | "premium";
+
 export default function LandingPage() {
+  const [tierFilter, setTierFilter] = useState<TierFilter>("all");
+
+  const filteredSections = tierFilter === "all"
+    ? appSections
+    : appSections.filter((s) => s.tier === tierFilter);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
@@ -186,39 +217,70 @@ export default function LandingPage() {
       {/* Features by Section */}
       <section id="features" className="py-20 px-6 scroll-mt-20">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-foreground">Everything you need to pass</h2>
             <p className="text-muted-foreground mt-3 text-lg max-w-xl mx-auto">
               Explore every section of the platform and see what's included with each plan.
             </p>
-            <div className="flex items-center justify-center gap-4 mt-4 text-xs">
-              {Object.entries(tierConfig).map(([key, config]) => (
-                <span key={key} className={cn("flex items-center gap-1.5", config.className.split(" ")[0])}>
-                  <span className={cn("inline-block w-2 h-2 rounded-full", key === "explorer" ? "bg-muted-foreground" : key === "pro" ? "bg-primary" : "bg-amber-400")} />
-                  {config.label}
-                </span>
-              ))}
-            </div>
+          </div>
+
+          {/* Tier filter buttons */}
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {([
+              { key: "all", label: "All Features" },
+              { key: "explorer", label: "Free" },
+              { key: "pro", label: "Pro" },
+              { key: "premium", label: "Premium" },
+            ] as const).map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setTierFilter(filter.key)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
+                  tierFilter === filter.key
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {appSections.map((section) => {
+            {filteredSections.map((section) => {
               const config = tierConfig[section.tier as keyof typeof tierConfig];
               return (
                 <div
                   key={section.name}
-                  className="bg-card rounded-2xl border border-border p-5 hover:shadow-lg hover:border-primary/20 transition-all duration-200 flex flex-col"
+                  className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all duration-200 flex flex-col"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-                      <section.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <Badge variant="outline" className={cn("text-[10px]", config.className)}>
+                  <div className="relative h-40 overflow-hidden">
+                    <img
+                      src={section.image}
+                      alt={section.name}
+                      loading="lazy"
+                      width={768}
+                      height={512}
+                      className="w-full h-full object-cover"
+                    />
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "absolute top-3 right-3 text-[10px] backdrop-blur-md bg-background/60",
+                        config.className
+                      )}
+                    >
                       {config.label}
                     </Badge>
                   </div>
-                  <h3 className="font-bold text-foreground">{section.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1.5 flex-1">{section.description}</p>
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <section.icon className="w-4 h-4 text-primary" />
+                      <h3 className="font-bold text-foreground">{section.name}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground flex-1">{section.description}</p>
+                  </div>
                 </div>
               );
             })}

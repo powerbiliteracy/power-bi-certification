@@ -49,6 +49,7 @@ const appSections = [
     description: "Track your study progress, view completion stats, and see your overall readiness.",
     tier: "explorer",
     image: imgDashboard,
+    metric: "Real-time progress tracking",
   },
   {
     icon: BookOpen,
@@ -56,6 +57,7 @@ const appSections = [
     description: "Browse every PL-300 exam topic organized by the four official domains with detailed content.",
     tier: "explorer",
     image: imgSyllabus,
+    metric: "21 topics across 4 domains",
   },
   {
     icon: BookMarked,
@@ -63,6 +65,7 @@ const appSections = [
     description: "Searchable glossary of essential Power BI terms, DAX functions, and exam-relevant features.",
     tier: "pro",
     image: imgKeyTerms,
+    metric: "80+ terms & features explained",
   },
   {
     icon: Video,
@@ -70,6 +73,7 @@ const appSections = [
     description: "Curated Microsoft Exam Readiness Zone videos with embedded player for each domain.",
     tier: "explorer",
     image: imgExamVideos,
+    metric: "4 official readiness videos",
   },
   {
     icon: GraduationCap,
@@ -77,6 +81,7 @@ const appSections = [
     description: "Direct links to official Microsoft Learn modules mapped to PL-300 exam objectives.",
     tier: "explorer",
     image: imgLearnModules,
+    metric: "10 Microsoft Learn modules",
   },
   {
     icon: AlertTriangle,
@@ -84,6 +89,7 @@ const appSections = [
     description: "Real-world troubleshooting scenarios with step-by-step solutions and progress tracking.",
     tier: "premium",
     image: imgTroubleshooting,
+    metric: "30+ troubleshooting scenarios",
   },
   {
     icon: Lightbulb,
@@ -91,6 +97,7 @@ const appSections = [
     description: "Scenario-based practice that simulates real exam case studies with completion tracking.",
     tier: "premium",
     image: imgExamScenarios,
+    metric: "40+ case study scenarios",
   },
   {
     icon: GitBranch,
@@ -98,6 +105,7 @@ const appSections = [
     description: "Learn how to choose between Power BI tools, visuals, and approaches for exam questions.",
     tier: "premium",
     image: imgDecisionFramework,
+    metric: "14 decision frameworks",
   },
   {
     icon: Youtube,
@@ -105,6 +113,7 @@ const appSections = [
     description: "Curated YouTube playlists from top Power BI educators organized by exam domain.",
     tier: "explorer",
     image: imgYoutubePlaylists,
+    metric: "19 curated playlists",
   },
   {
     icon: Brain,
@@ -112,6 +121,7 @@ const appSections = [
     description: "Domain-specific quizzes with explanations and a full results history to track improvement.",
     tier: "pro",
     image: imgTopicAssessments,
+    metric: "315 domain-specific questions",
   },
   {
     icon: Brain,
@@ -119,6 +129,7 @@ const appSections = [
     description: "200+ practice questions in timed sets simulating the real PL-300 exam experience.",
     tier: "pro",
     image: imgExamQuestions,
+    metric: "7 timed practice sets",
   },
   {
     icon: Trophy,
@@ -126,6 +137,7 @@ const appSections = [
     description: "Earn achievement badges as you complete sections and hit study milestones.",
     tier: "explorer",
     image: imgBadges,
+    metric: "Achievement milestones",
   },
 ];
 

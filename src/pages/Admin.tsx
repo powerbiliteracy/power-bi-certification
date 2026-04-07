@@ -106,6 +106,7 @@ export default function Admin() {
       fetchRoles();
       fetchPromoCodes();
       fetchAnnouncements();
+      fetchStudentProgress();
     }
   }, [realIsAdmin]);
 

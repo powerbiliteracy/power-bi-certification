@@ -162,11 +162,11 @@ export default function LandingPage() {
             <a href="#pricing">
               <Button variant="ghost" size="sm" className="text-muted-foreground">Pricing</Button>
             </a>
-            <Link to={createPageUrl("Dashboard")}>
+            <a href="#pricing">
               <Button size="sm" className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
                 Start Studying <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
       </nav>
@@ -188,11 +188,11 @@ export default function LandingPage() {
             Your comprehensive coaching platform for the Microsoft Power BI Data Analyst certification. Study smarter with structured content, practice assessments, and expert guidance.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 animate-fade-in-delay">
-            <Link to={createPageUrl("Dashboard")}>
+            <a href="#pricing">
               <Button size="lg" className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 px-8 text-base">
                 Start Free <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-            </Link>
+            </a>
             <a href="#features">
               <Button variant="outline" size="lg" className="rounded-xl px-8 text-base">
                 View Features
@@ -298,6 +298,15 @@ export default function LandingPage() {
             </p>
           </div>
           <PricingCards compact />
+
+          {/* FAQ */}
+          <div className="max-w-2xl mx-auto text-center bg-secondary/30 rounded-2xl border border-border p-6 mt-10">
+            <h3 className="font-semibold text-foreground mb-2">🎯 Which plan is right for me?</h3>
+            <p className="text-sm text-muted-foreground">
+              <strong>Explorer</strong> is perfect for getting an overview. <strong>Pro</strong> is ideal for serious exam prep with full question banks.
+              <strong> Premium</strong> adds AI coaching and simulation tools for the most thorough preparation.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -309,11 +318,11 @@ export default function LandingPage() {
             Join thousands of Power BI developers preparing for their certification.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
-            <Link to={createPageUrl("Dashboard")}>
+            <a href="#pricing">
               <Button size="lg" className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 px-8">
                 Get Started Free
               </Button>
-            </Link>
+            </a>
           </div>
           <div className="flex items-center justify-center gap-4 mt-6 text-sm text-muted-foreground">
             <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4 text-primary" /> Free tier available</span>

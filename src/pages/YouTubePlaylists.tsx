@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ExternalLink, Play, Youtube, ChevronRight, X } from "lucide-react";
+import { ExternalLink, Play, Youtube, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLahhVEj9XNTdg4FnhAo_OQ-bSDd86VBcH";

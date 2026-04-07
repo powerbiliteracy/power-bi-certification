@@ -162,6 +162,9 @@ export default function LandingPage() {
             <a href="#pricing">
               <Button variant="ghost" size="sm" className="text-muted-foreground">Pricing</Button>
             </a>
+            <Link to="/auth">
+              <Button variant="ghost" size="sm" className="text-muted-foreground">Log In</Button>
+            </Link>
             <a href="#pricing">
               <Button size="sm" className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
                 Start Studying <ArrowRight className="w-4 h-4 ml-1" />

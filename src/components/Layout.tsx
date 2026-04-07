@@ -25,6 +25,7 @@ import {
   LogIn,
   LogOut,
   User,
+  Heart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,7 @@ const sectionKeyMap: Record<string, string> = {
   PracticeSets: "practice-sets",
   Badges: "badges",
   Pricing: "pricing",
+  MyList: "my-list",
 };
 
 const navItems = [
@@ -57,6 +59,7 @@ const navItems = [
   { name: "YouTube Playlists", page: "YouTubePlaylists", icon: Youtube },
   { name: "Topic Assessments", page: "Assessment", icon: Brain },
   { name: "Exam Questions", page: "PracticeSets", icon: Brain },
+  { name: "My List", page: "MyList", icon: Heart },
   { name: "Badges", page: "Badges", icon: Trophy },
   { name: "Pricing", page: "Pricing", icon: CreditCard },
 ];

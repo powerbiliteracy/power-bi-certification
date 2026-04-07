@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ExternalLink, Play, Youtube, ChevronRight } from "lucide-react";
+import { ExternalLink, Play, Youtube, ChevronRight, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLahhVEj9XNTdg4FnhAo_OQ-bSDd86VBcH";
@@ -41,44 +41,68 @@ const domainBadgeColors: Record<string, string> = {
   "Manage & Secure": "bg-green-100 text-green-800",
 };
 
-function VideoCard({ video, index }: { video: Video; index: number }) {
-  const url = `https://www.youtube.com/watch?v=${video.videoId}&list=PLahhVEj9XNTdg4FnhAo_OQ-bSDd86VBcH&index=${index + 1}`;
+function VideoCard({
+  video,
+  index,
+  isPlaying,
+  onPlay,
+}: {
+  video: Video;
+  index: number;
+  isPlaying: boolean;
+  onPlay: () => void;
+}) {
   const thumb = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
   const badgeClass = domainBadgeColors[video.domain] || domainBadgeColors["Foundation"];
 
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex gap-3 p-3 rounded-xl hover:bg-secondary/50 transition-colors group"
-    >
-      <div className="relative flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden bg-muted">
-        <img src={thumb} alt={video.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-foreground/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-          <Play className="w-6 h-6 text-card fill-card" />
+    <div className="space-y-0">
+      <button
+        onClick={onPlay}
+        className={`w-full flex gap-3 p-3 rounded-xl hover:bg-secondary/50 transition-colors group text-left ${isPlaying ? "bg-primary/5 border border-primary/20" : ""}`}
+      >
+        <div className="relative flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden bg-muted">
+          <img src={thumb} alt={video.title} className="w-full h-full object-cover" />
+          <div className={`absolute inset-0 ${isPlaying ? "bg-primary/40" : "bg-foreground/30 opacity-0 group-hover:opacity-100"} flex items-center justify-center transition-opacity`}>
+            <Play className="w-6 h-6 text-card fill-card" />
+          </div>
+          <div className="absolute bottom-1 right-1 bg-foreground/70 text-card text-xs px-1 rounded">
+            {video.duration}
+          </div>
         </div>
-        <div className="absolute bottom-1 right-1 bg-foreground/70 text-card text-xs px-1 rounded">
-          {video.duration}
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-medium leading-snug line-clamp-2 transition-colors ${isPlaying ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
+            {video.title}
+          </p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-xs text-muted-foreground">#{index + 1}</span>
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${badgeClass}`}>
+              {video.domain}
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-          {video.title}
-        </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-xs text-muted-foreground">#{index + 1}</span>
-          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${badgeClass}`}>
-            {video.domain}
-          </span>
+      </button>
+
+      {isPlaying && (
+        <div className="px-3 pb-3">
+          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-foreground/5">
+            <iframe
+              src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&rel=0`}
+              title={video.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full"
+            />
+          </div>
         </div>
-      </div>
-    </a>
+      )}
+    </div>
   );
 }
 
 export default function YouTubePlaylists() {
   const [expanded, setExpanded] = useState<string | null>("pl300-microsoft-learn");
+  const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -108,7 +132,10 @@ export default function YouTubePlaylists() {
       <Card className="overflow-hidden">
         <div
           className="p-5 flex items-start gap-4 cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => setExpanded(expanded === "pl300-microsoft-learn" ? null : "pl300-microsoft-learn")}
+          onClick={() => {
+            setExpanded(expanded === "pl300-microsoft-learn" ? null : "pl300-microsoft-learn");
+            if (expanded === "pl300-microsoft-learn") setPlayingVideoId(null);
+          }}
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center flex-shrink-0">
             <Youtube className="w-5 h-5 text-card" />
@@ -120,6 +147,8 @@ export default function YouTubePlaylists() {
               <span className="flex items-center gap-1"><Youtube className="w-3 h-3" /> Microsoft Learn</span>
               <span>·</span>
               <span>18 videos</span>
+              <span>·</span>
+              <span>Click any video to watch inline</span>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -140,7 +169,13 @@ export default function YouTubePlaylists() {
           <CardContent className="p-3 pt-0 border-t border-border">
             <div className="divide-y divide-border/50">
               {videos.map((video, idx) => (
-                <VideoCard key={video.id} video={video} index={idx} />
+                <VideoCard
+                  key={video.id}
+                  video={video}
+                  index={idx}
+                  isPlaying={playingVideoId === video.id}
+                  onPlay={() => setPlayingVideoId(playingVideoId === video.id ? null : video.id)}
+                />
               ))}
             </div>
           </CardContent>

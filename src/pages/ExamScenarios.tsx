@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import FavoriteButton from "@/components/FavoriteButton";
 import { createPageUrl } from "@/utils";
 import { ChevronDown, ChevronRight, Lightbulb, AlertCircle, CheckCircle2, Database, LineChart, Eye, Shield, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -1276,6 +1277,7 @@ export default function ExamScenarios() {
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <Badge className={getDifficultyColor(scenario.difficulty)}>{scenario.difficulty}</Badge>
                               {completed.has(scenario.id) && <Badge className="bg-chart-4/10 text-chart-4">✓ Done</Badge>}
+                              <FavoriteButton itemType="scenario" itemId={scenario.id} />
                             </div>
                             <h3 className={cn("font-semibold text-lg", completed.has(scenario.id) ? "text-muted-foreground" : "text-foreground")}>{scenario.title}</h3>
                             <p className="text-sm text-muted-foreground mt-2">{scenario.context}</p>

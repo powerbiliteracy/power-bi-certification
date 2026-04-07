@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { useBadges, getBadgeEmoji } from "@/hooks/useBadges";
@@ -65,6 +66,13 @@ export default function Dashboard() {
   const { canAccess, getRequiredTier } = useSectionAccess();
   const { profile } = useAuth();
   const recentBadges = earnedBadges.slice(-3).reverse();
+  const [announcements, setAnnouncements] = useState<{ id: string; title: string; message: string; type: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("announcements").select("id, title, message, type").eq("is_active", true).then(({ data }) => {
+      if (data) setAnnouncements(data);
+    });
+  }, []);
 
   const progressItems = useMemo<ProgressItem[]>(() => {
     const syllabusTopics = pl300Syllabus.domains.flatMap(d => d.sections.flatMap(s => s.topics));
@@ -115,6 +123,27 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {/* Announcements */}
+      {announcements.length > 0 && (
+        <div className="space-y-3">
+          {announcements.map((ann) => {
+            const typeStyles: Record<string, string> = {
+              info: "border-primary/30 bg-primary/5 text-primary",
+              promo: "border-chart-5/30 bg-chart-5/5 text-chart-5",
+              warning: "border-destructive/30 bg-destructive/5 text-destructive",
+              update: "border-accent/30 bg-accent/5 text-accent-foreground",
+            };
+            const typeEmoji: Record<string, string> = { info: "ℹ️", promo: "🎉", warning: "⚠️", update: "🚀" };
+            return (
+              <div key={ann.id} className={`rounded-xl border p-4 ${typeStyles[ann.type] || typeStyles.info}`}>
+                <p className="font-semibold text-sm">{typeEmoji[ann.type] || "📢"} {ann.title}</p>
+                <p className="text-sm mt-1 opacity-80">{ann.message}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>

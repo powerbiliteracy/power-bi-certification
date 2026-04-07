@@ -9,7 +9,6 @@ import {
   BookOpen,
   Brain,
   Target,
-  ChevronRight,
   CheckCircle,
   Star,
   ArrowRight,
@@ -22,32 +21,8 @@ import {
   Trophy,
   LayoutDashboard,
   BookMarked,
-  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const features = [
-  {
-    icon: BookOpen,
-    title: "Complete Syllabus",
-    description: "Browse every PL-300 exam topic organized by domain with official Microsoft content.",
-  },
-  {
-    icon: Brain,
-    title: "Practice Assessments",
-    description: "Test your knowledge with domain-specific questions and detailed explanations.",
-  },
-  {
-    icon: Target,
-    title: "Key Terms Glossary",
-    description: "Master essential Power BI terms, features, and exam tips for each domain.",
-  },
-  {
-    icon: Star,
-    title: "Exam Prep Videos",
-    description: "Official Microsoft Exam Readiness Zone videos covering all four domains.",
-  },
-];
 
 const stats = [
   { value: "200+", label: "Practice Questions" },

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
+import FavoriteButton from "@/components/FavoriteButton";
 import { Search, ChevronDown, ChevronRight, Lightbulb, CheckCircle, ExternalLink, Zap, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -267,7 +268,10 @@ function TermCard({ term, def, speed, tip, practice, colors }: TermData & { colo
       <button onClick={() => setExpanded(!expanded)} className="w-full text-left p-3">
         <div className="flex items-start justify-between gap-2">
           <p className="text-xs font-bold text-foreground leading-snug">{term}</p>
-          <ChevronRight className={cn("w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-muted-foreground transition-transform", expanded && "rotate-90")} />
+          <div className="flex items-center gap-1.5">
+            <FavoriteButton itemType="key_term" itemId={term} size="sm" />
+            <ChevronRight className={cn("w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-muted-foreground transition-transform", expanded && "rotate-90")} />
+          </div>
         </div>
         {!expanded && (
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{def}</p>

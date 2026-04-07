@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
+import FavoriteButton from "@/components/FavoriteButton";
 import { useSectionAccess } from "@/hooks/useSectionAccess";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { topicContent } from "@/data/TopicContent";
@@ -333,9 +334,12 @@ export default function Syllabus() {
             {/* Topic Header */}
             <Card className="mb-4">
               <CardContent className="p-4 flex items-start justify-between">
-                <div>
-                  <Badge className="mb-2">{selectedSection}</Badge>
-                  <h2 className="text-xl font-bold text-foreground">{selectedTopic}</h2>
+                <div className="flex items-start gap-3">
+                  <FavoriteButton itemType="syllabus_topic" itemId={selectedTopic} size="md" className="mt-1" />
+                  <div>
+                    <Badge className="mb-2">{selectedSection}</Badge>
+                    <h2 className="text-xl font-bold text-foreground">{selectedTopic}</h2>
+                  </div>
                 </div>
                 <button
                   onClick={() => toggleCompletion(selectedTopic)}

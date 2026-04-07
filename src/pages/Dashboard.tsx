@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useProgress } from "@/hooks/useProgress";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { useBadges, getBadgeEmoji } from "@/hooks/useBadges";
 import { useSectionAccess } from "@/hooks/useSectionAccess";
@@ -65,6 +66,7 @@ export default function Dashboard() {
   const { badges, earnedBadges } = useBadges();
   const { canAccess, getRequiredTier } = useSectionAccess();
   const { profile } = useAuth();
+  useProgress(); // Syncs localStorage progress to DB for admin visibility
   const recentBadges = earnedBadges.slice(-3).reverse();
   const [announcements, setAnnouncements] = useState<{ id: string; title: string; message: string; type: string }[]>([]);
 

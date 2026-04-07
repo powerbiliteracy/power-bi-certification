@@ -72,6 +72,7 @@ export default function Admin() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
+  const [studentProgress, setStudentProgress] = useState<Record<string, { type: string; count: number }[]>>({});
 
   // Invite form
   const [inviteEmail, setInviteEmail] = useState("");
@@ -105,6 +106,7 @@ export default function Admin() {
       fetchRoles();
       fetchPromoCodes();
       fetchAnnouncements();
+      fetchStudentProgress();
     }
   }, [realIsAdmin]);
 
@@ -131,6 +133,21 @@ export default function Admin() {
   const fetchAnnouncements = async () => {
     const { data } = await supabase.from("announcements").select("*").order("created_at", { ascending: false });
     if (data) setAnnouncements(data as Announcement[]);
+  };
+
+  const fetchStudentProgress = async () => {
+    const { data } = await supabase.from("user_progress").select("user_id, item_type, item_id") as { data: { user_id: string; item_type: string; item_id: string }[] | null };
+    if (!data) return;
+    const grouped: Record<string, { type: string; count: number }[]> = {};
+    const counts: Record<string, Record<string, number>> = {};
+    data.forEach((row) => {
+      if (!counts[row.user_id]) counts[row.user_id] = {};
+      counts[row.user_id][row.item_type] = (counts[row.user_id][row.item_type] || 0) + 1;
+    });
+    for (const [uid, types] of Object.entries(counts)) {
+      grouped[uid] = Object.entries(types).map(([type, count]) => ({ type, count }));
+    }
+    setStudentProgress(grouped);
   };
 
   const updateSectionTier = async (id: string, tier: "explorer" | "pro" | "premium") => {
@@ -707,6 +724,46 @@ export default function Admin() {
                   );
                 })}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Student Progress */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5" /> Student Progress</CardTitle>
+              <CardDescription>Completion data synced from student activity</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Syllabus Topics</TableHead>
+                    <TableHead>Scenarios</TableHead>
+                    <TableHead>Practice Sets</TableHead>
+                    <TableHead>Troubleshooting</TableHead>
+                    <TableHead>Total Items</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((u) => {
+                    const progress = studentProgress[u.user_id] || [];
+                    const getCount = (type: string) => progress.find((p) => p.type === type)?.count || 0;
+                    const total = progress.reduce((sum, p) => sum + p.count, 0);
+                    const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.display_name || u.email || "—";
+                    return (
+                      <TableRow key={u.user_id}>
+                        <TableCell className="font-medium">{name}</TableCell>
+                        <TableCell>{getCount("syllabus_topic")}</TableCell>
+                        <TableCell>{getCount("scenario")}</TableCell>
+                        <TableCell>{getCount("practice_set")}</TableCell>
+                        <TableCell>{getCount("troubleshooting")}</TableCell>
+                        <TableCell><Badge variant={total > 0 ? "default" : "secondary"}>{total}</Badge></TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>

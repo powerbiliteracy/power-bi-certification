@@ -295,6 +295,7 @@ export default function LandingPage() {
                       <h3 className="font-bold text-foreground">{section.name}</h3>
                     </div>
                     <p className="text-sm text-muted-foreground flex-1">{section.description}</p>
+                    <p className="text-xs font-medium text-primary mt-3">{section.metric}</p>
                   </div>
                 </div>
               );

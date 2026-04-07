@@ -2,8 +2,21 @@ import React, { useState } from "react";
 import { Check, Zap, Crown, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+const STRIPE_PRICES = {
+  pro: {
+    monthly: "price_1TJiRbGfR936pbAmdrVoB4NC",
+    annual: "price_1TJiViGfR936pbAmWBgrEiGL",
+  },
+  premium: {
+    monthly: "price_1TJiVOGfR936pbAmaTIVsLKx",
+    annual: "price_1TJiW2GfR936pbAmIscPKxWF",
+  },
+};
 
 const tiers = [
   {
@@ -81,6 +94,50 @@ interface PricingCardsProps {
 
 export default function PricingCards({ compact = false }: PricingCardsProps) {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleSubscribe = async (tierId: string) => {
+    if (tierId === "free") {
+      if (!user) {
+        navigate("/auth");
+      } else {
+        navigate("/Dashboard");
+      }
+      return;
+    }
+
+    if (!user) {
+      // Store intended plan in sessionStorage so we can redirect after auth
+      const priceId = STRIPE_PRICES[tierId as keyof typeof STRIPE_PRICES]?.[isAnnual ? "annual" : "monthly"];
+      sessionStorage.setItem("pending_checkout_price", priceId);
+      navigate("/auth");
+      return;
+    }
+
+    const priceId = STRIPE_PRICES[tierId as keyof typeof STRIPE_PRICES]?.[isAnnual ? "annual" : "monthly"];
+    if (!priceId) return;
+
+    setLoadingTier(tierId);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Checkout Error",
+        description: err.message || "Failed to start checkout",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTier(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -156,17 +213,17 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
                 ))}
               </ul>
 
-              <Link to={tier.id === "free" ? createPageUrl("Dashboard") : createPageUrl("Pricing")}>
-                <Button
-                  variant={tier.popular ? "default" : "outline"}
-                  className={cn(
-                    "w-full rounded-xl font-semibold",
-                    tier.popular && "shadow-lg shadow-primary/20"
-                  )}
-                >
-                  {tier.cta}
-                </Button>
-              </Link>
+              <Button
+                variant={tier.popular ? "default" : "outline"}
+                className={cn(
+                  "w-full rounded-xl font-semibold",
+                  tier.popular && "shadow-lg shadow-primary/20"
+                )}
+                disabled={loadingTier === tier.id}
+                onClick={() => handleSubscribe(tier.id)}
+              >
+                {loadingTier === tier.id ? "Loading..." : tier.cta}
+              </Button>
             </div>
           );
         })}

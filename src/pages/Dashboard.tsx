@@ -155,6 +155,50 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Progress Tracking */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Your Progress</h2>
+          <Badge variant="outline" className="capitalize">{profile?.subscription_tier || "explorer"} tier</Badge>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {progressItems.map((item) => {
+            const pct = item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.label}
+                to={item.locked ? createPageUrl("Pricing") : createPageUrl(item.page)}
+                className="bg-card rounded-2xl border border-border p-5 hover:shadow-lg hover:border-primary/30 transition-all duration-200 group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold text-foreground">{item.label}</h3>
+                  </div>
+                  {item.locked ? (
+                    <Badge variant="outline" className="gap-1 text-xs"><Lock className="w-3 h-3" /> {item.tier}</Badge>
+                  ) : item.tier !== "explorer" ? (
+                    <Badge variant="outline" className="text-xs capitalize">{item.tier}</Badge>
+                  ) : null}
+                </div>
+                {item.locked ? (
+                  <p className="text-sm text-muted-foreground">Upgrade to {item.tier} to access</p>
+                ) : (
+                  <>
+                    <Progress value={pct} className="h-2 mb-2" />
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{item.completed}/{item.total} completed</span>
+                      <span className="font-semibold text-foreground">{pct}%</span>
+                    </div>
+                  </>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Domain Cards */}
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-4">Exam Domains</h2>

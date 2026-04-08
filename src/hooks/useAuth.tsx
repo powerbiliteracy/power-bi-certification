@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewingAsUser, setViewingAsUser] = useState(false);
+  const [simulatedTier, setSimulatedTier] = useState<"explorer" | "pro" | "premium" | null>(null);
   const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
 
   const fetchUserData = useCallback(async (userId: string) => {

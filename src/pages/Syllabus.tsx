@@ -48,15 +48,15 @@ const domainColors: Record<string, string> = {
 
 const menuItems = [
   { id: "overview", label: "Overview", icon: BookOpen },
-  { id: "bestPractices", label: "Best Practices", icon: CheckCircle },
-  { id: "commonMistakes", label: "Common Mistakes", icon: AlertTriangle },
+  { id: "keyDefinitions", label: "Key Definitions", icon: Lightbulb },
   { id: "keySteps", label: "Key Steps", icon: List },
   { id: "keyDecisions", label: "Key Decisions", icon: GitBranch },
-  { id: "keyDefinitions", label: "Key Definitions", icon: Lightbulb },
+  { id: "commonMistakes", label: "Common Mistakes", icon: AlertTriangle },
   { id: "risks", label: "Risks & Limitations", icon: ShieldAlert },
-  { id: "faqs", label: "FAQs", icon: HelpCircle },
+  { id: "bestPractices", label: "Best Practices", icon: CheckCircle },
   { id: "examTips", label: "Exam Tips", icon: Target },
   { id: "resources", label: "Microsoft Resources", icon: ExternalLink },
+  { id: "faqs", label: "FAQs", icon: HelpCircle },
   { id: "quiz", label: "Quiz", icon: Zap },
 ];
 

@@ -6,7 +6,7 @@ export const pl300Syllabus = {
     passingScore: "700/1000",
     questionCount: "40-60",
     duration: "100 minutes",
-    lastUpdated: "January 15, 2026"
+    lastUpdated: "April 20, 2026"
   },
   domains: [
     {

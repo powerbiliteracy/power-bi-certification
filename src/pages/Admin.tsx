@@ -424,7 +424,10 @@ export default function Admin() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sections.filter(s => !s.section_key.includes(".")).map((section) => (
+                  {sections.filter(s => !s.section_key.includes(".")).sort((a, b) => {
+                    const tierOrder = { explorer: 0, pro: 1, premium: 2 };
+                    return tierOrder[a.required_tier] - tierOrder[b.required_tier] || a.section_label.localeCompare(b.section_label);
+                  }).map((section) => (
                     <TableRow key={section.id}>
                       <TableCell className="font-medium">{section.section_label}</TableCell>
                       <TableCell>

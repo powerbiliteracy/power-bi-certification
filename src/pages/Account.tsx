@@ -7,12 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { User, Lock, CreditCard, Receipt, ExternalLink } from "lucide-react";
+import { User, Lock, CreditCard, ExternalLink } from "lucide-react";
 
 export default function Account() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const [currentPassword, setCurrentPassword] = useState("");
+  const [_currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);

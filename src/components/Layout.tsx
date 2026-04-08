@@ -111,7 +111,8 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    explorer: true,
+    profile: true,
+    free: true,
     pro: true,
     premium: true,
   });

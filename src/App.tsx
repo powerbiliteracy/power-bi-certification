@@ -24,6 +24,7 @@ import Admin from "./pages/Admin";
 import PracticeSets from "./pages/PracticeSets";
 import Badges from "./pages/Badges";
 import MyList from "./pages/MyList";
+import Account from "./pages/Account";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/PracticeSets" element={<LayoutWrapper><PracticeSets /></LayoutWrapper>} />
             <Route path="/Badges" element={<LayoutWrapper><Badges /></LayoutWrapper>} />
             <Route path="/MyList" element={<LayoutWrapper><MyList /></LayoutWrapper>} />
+            <Route path="/Account" element={<LayoutWrapper><Account /></LayoutWrapper>} />
             <Route path="/Admin" element={<LayoutWrapper><Admin /></LayoutWrapper>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -64,7 +64,7 @@ interface Announcement {
 }
 
 export default function Admin() {
-  const { isAdmin, loading, user, viewingAsUser, setViewingAsUser } = useAuth();
+  const { isAdmin, loading, user, viewingAsUser, setViewingAsUser, simulatedTier, setSimulatedTier } = useAuth();
   const { toast } = useToast();
   const [sections, setSections] = useState<SectionRow[]>([]);
   const [users, setUsers] = useState<ProfileRow[]>([]);

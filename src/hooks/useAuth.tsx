@@ -9,6 +9,8 @@ interface AuthContextType {
   isAdmin: boolean;
   viewingAsUser: boolean;
   setViewingAsUser: (v: boolean) => void;
+  simulatedTier: "explorer" | "pro" | "premium" | null;
+  setSimulatedTier: (tier: "explorer" | "pro" | "premium" | null) => void;
   profile: {
     display_name: string | null;
     subscription_tier: "explorer" | "pro" | "premium";

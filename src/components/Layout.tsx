@@ -49,20 +49,23 @@ const sectionKeyMap: Record<string, string> = {
 };
 
 const navItems = [
+  // Explorer (Free) tier
   { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
-  { name: "Exam Syllabus", page: "Syllabus", icon: BookOpen },
-  { name: "Key Terms & Features", page: "KeyTerms", icon: BookMarked },
-  { name: "Exam Prep Videos", page: "ExamPrepVideos", icon: Video },
-  { name: "Learn Modules", page: "LearnModules", icon: GraduationCap },
-  { name: "Troubleshooting", page: "Troubleshooting", icon: AlertTriangle },
-  { name: "Exam Scenarios", page: "ExamScenarios", icon: Lightbulb },
-  { name: "Decision Framework", page: "DecisionFramework", icon: GitBranch },
-  { name: "YouTube Playlists", page: "YouTubePlaylists", icon: Youtube },
-  { name: "Topic Assessments", page: "Assessment", icon: Brain },
-  { name: "Exam Questions", page: "PracticeSets", icon: Brain },
-  { name: "My List", page: "MyList", icon: Heart },
   { name: "Badges", page: "Badges", icon: Trophy },
   { name: "Pricing", page: "Pricing", icon: CreditCard },
+  { name: "Exam Syllabus", page: "Syllabus", icon: BookOpen },
+  { name: "Exam Prep Videos", page: "ExamPrepVideos", icon: Video },
+  { name: "Learn Modules", page: "LearnModules", icon: GraduationCap },
+  { name: "YouTube Playlists", page: "YouTubePlaylists", icon: Youtube },
+  { name: "My List", page: "MyList", icon: Heart },
+  // Pro tier
+  { name: "Key Terms & Features", page: "KeyTerms", icon: BookMarked },
+  { name: "Exam Scenarios", page: "ExamScenarios", icon: Lightbulb },
+  { name: "Topic Assessments", page: "Assessment", icon: Brain },
+  // Premium tier
+  { name: "Troubleshooting", page: "Troubleshooting", icon: AlertTriangle },
+  { name: "Decision Framework", page: "DecisionFramework", icon: GitBranch },
+  { name: "Exam Questions", page: "PracticeSets", icon: Brain },
 ];
 
 interface LayoutProps {

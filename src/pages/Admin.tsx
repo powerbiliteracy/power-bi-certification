@@ -371,11 +371,19 @@ export default function Admin() {
             {viewingAsUser ? <><EyeOff className="w-4 h-4" /> Exit User View</> : <><Eye className="w-4 h-4" /> Show as User</>}
           </Button>
           {viewingAsUser && (
-            <Select value={simulatedTier || "explorer"} onValueChange={(v) => setSimulatedTier(v as "explorer" | "pro" | "premium")}>
+            <Select value={simulatedTier || "explorer"} onValueChange={(v) => {
+              if (v === "admin") {
+                setViewingAsUser(false);
+                setSimulatedTier(null);
+              } else {
+                setSimulatedTier(v as "explorer" | "pro" | "premium");
+              }
+            }}>
               <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="explorer">Explorer (Free)</SelectItem>
                 <SelectItem value="pro">Pro</SelectItem>
                 <SelectItem value="premium">Premium</SelectItem>

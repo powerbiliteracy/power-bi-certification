@@ -13,7 +13,7 @@ interface SectionAccess {
 const tierLevel = { explorer: 0, pro: 1, premium: 2 };
 
 export function useSectionAccess() {
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, simulatedTier } = useAuth();
   const [sections, setSections] = useState<SectionAccess[]>([]);
 
   useEffect(() => {
@@ -35,10 +35,9 @@ export function useSectionAccess() {
     if (!section) return true;
     if (section.admin_only) return false;
     if (section.is_locked) return false;
-    const userTier = profile?.subscription_tier ?? "explorer";
-    const result = tierLevel[userTier] >= tierLevel[section.required_tier];
-    console.log(`[ACCESS] ${sectionKey}: userTier=${userTier}, required=${section.required_tier}, access=${result}, profileExists=${!!profile}`);
-    return result;
+    // Use simulatedTier if set (admin previewing), otherwise use profile tier
+    const userTier = simulatedTier || profile?.subscription_tier || "explorer";
+    return tierLevel[userTier] >= tierLevel[section.required_tier];
   };
 
   const isVisible = (sectionKey: string): boolean => {

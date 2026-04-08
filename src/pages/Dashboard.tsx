@@ -193,7 +193,7 @@ export default function Dashboard() {
           <Badge variant="outline" className="capitalize">{profile?.subscription_tier || "explorer"} tier</Badge>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
-          {progressItems.map((item) => {
+          {progressItems.filter(item => !item.locked).map((item) => {
             const pct = item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0;
             const Icon = item.icon;
             return (

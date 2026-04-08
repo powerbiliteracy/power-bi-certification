@@ -28,6 +28,8 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   viewingAsUser: false,
   setViewingAsUser: () => {},
+  simulatedTier: null,
+  setSimulatedTier: () => {},
   profile: null,
   signOut: async () => {},
 });

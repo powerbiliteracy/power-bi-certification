@@ -73,8 +73,9 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPage = location.pathname.replace("/", "") || "Dashboard";
-  const { user, isAdmin, profile, signOut, loading } = useAuth();
+  const { user, isAdmin, profile, signOut, loading, viewingAsUser, setViewingAsUser, simulatedTier, setSimulatedTier } = useAuth();
   const { canAccess, getRequiredTier, isVisible, isAdminOnly } = useSectionAccess();
+  const realIsAdmin = useAuth().isAdmin || viewingAsUser; // true admin even when viewing as user
 
   return (
     <div className="min-h-screen bg-background flex">

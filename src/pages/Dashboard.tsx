@@ -301,18 +301,29 @@ export default function Dashboard() {
       <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-2xl border border-primary/10 p-6">
         <h2 className="font-semibold text-foreground mb-3">Quick Start</h2>
         <div className="grid sm:grid-cols-3 gap-3">
-          <Link to={createPageUrl("Syllabus")} className="flex items-center gap-3 p-3 bg-card rounded-xl hover:shadow-md transition-all border border-border">
-            <BookOpen className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-foreground">Study Syllabus</span>
-          </Link>
-          <Link to={createPageUrl("Assessment")} className="flex items-center gap-3 p-3 bg-card rounded-xl hover:shadow-md transition-all border border-border">
-            <Brain className="w-5 h-5 text-accent" />
-            <span className="text-sm font-medium text-foreground">Topic Assessments</span>
-          </Link>
-          <Link to={createPageUrl("PracticeSets")} className="flex items-center gap-3 p-3 bg-card rounded-xl hover:shadow-md transition-all border border-border">
-            <Zap className="w-5 h-5 text-chart-5" />
-            <span className="text-sm font-medium text-foreground">Exam Questions</span>
-          </Link>
+          {[
+            { label: "Study Syllabus", page: "Syllabus", sectionKey: "syllabus", icon: BookOpen, color: "text-primary" },
+            { label: "Topic Assessments", page: "Assessment", sectionKey: "assessment", icon: Brain, color: "text-accent" },
+            { label: "Exam Questions", page: "PracticeSets", sectionKey: "practice-sets", icon: Zap, color: "text-chart-5" },
+          ].map((link) => {
+            const hasAccess = canAccess(link.sectionKey);
+            return (
+              <Link
+                key={link.page}
+                to={hasAccess ? createPageUrl(link.page) : createPageUrl("Pricing")}
+                className="flex items-center gap-3 p-3 bg-card rounded-xl hover:shadow-md transition-all border border-border"
+              >
+                {hasAccess ? (
+                  <link.icon className={cn("w-5 h-5", link.color)} />
+                ) : (
+                  <Lock className="w-5 h-5 text-muted-foreground" />
+                )}
+                <span className={cn("text-sm font-medium", hasAccess ? "text-foreground" : "text-muted-foreground")}>
+                  {link.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

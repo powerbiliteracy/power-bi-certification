@@ -22,6 +22,9 @@ import {
   Trophy,
   CheckCircle2,
   Lock,
+  GraduationCap,
+  Youtube,
+  Video,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -83,6 +86,9 @@ export default function Dashboard() {
     const completedScenarios = getLocalStorageSet("exam-scenarios-completed");
     const completedTroubleshooting = getLocalStorageSet("troubleshooting-completed");
     const completedPracticeSets = getLocalStorageArray("completed_practice_sets");
+    const completedModules = getLocalStorageArray("learn-modules-completed");
+    const completedYouTube = getLocalStorageArray("youtube-playlists-completed");
+    const completedPrepVideos = getLocalStorageArray("exam-prep-videos-completed");
 
     return [
       {
@@ -93,6 +99,33 @@ export default function Dashboard() {
         icon: BookOpen,
         tier: getRequiredTier("syllabus"),
         locked: !canAccess("syllabus"),
+      },
+      {
+        label: "Microsoft Modules",
+        page: "LearnModules",
+        completed: completedModules.length,
+        total: 5,
+        icon: GraduationCap,
+        tier: getRequiredTier("learn-modules"),
+        locked: !canAccess("learn-modules"),
+      },
+      {
+        label: "YouTube Playlists",
+        page: "YouTubePlaylists",
+        completed: completedYouTube.length,
+        total: 18,
+        icon: Youtube,
+        tier: getRequiredTier("youtube-playlists"),
+        locked: !canAccess("youtube-playlists"),
+      },
+      {
+        label: "Exam Prep Videos",
+        page: "ExamPrepVideos",
+        completed: completedPrepVideos.length,
+        total: 4,
+        icon: Video,
+        tier: getRequiredTier("exam-prep-videos"),
+        locked: !canAccess("exam-prep-videos"),
       },
       {
         label: "Exam Scenarios",

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { ExternalLink, Play, Youtube, ChevronRight } from "lucide-react";
+import { ExternalLink, Play, Youtube, ChevronRight, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLahhVEj9XNTdg4FnhAo_OQ-bSDd86VBcH";
 
@@ -41,47 +42,66 @@ const domainBadgeColors: Record<string, string> = {
   "Manage & Secure": "bg-green-100 text-green-800",
 };
 
+function getCompletedVideos(): Set<number> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem("youtube-playlists-completed") || "[]"));
+  } catch { return new Set(); }
+}
+
 function VideoCard({
   video,
   index,
   isPlaying,
+  isComplete,
   onPlay,
+  onToggleComplete,
 }: {
   video: Video;
   index: number;
   isPlaying: boolean;
+  isComplete: boolean;
   onPlay: () => void;
+  onToggleComplete: () => void;
 }) {
   const thumb = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
   const badgeClass = domainBadgeColors[video.domain] || domainBadgeColors["Foundation"];
 
   return (
     <div className="space-y-0">
-      <button
-        onClick={onPlay}
-        className={`w-full flex gap-3 p-3 rounded-xl hover:bg-secondary/50 transition-colors group text-left ${isPlaying ? "bg-primary/5 border border-primary/20" : ""}`}
-      >
-        <div className="relative flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden bg-muted">
-          <img src={thumb} alt={video.title} className="w-full h-full object-cover" />
-          <div className={`absolute inset-0 ${isPlaying ? "bg-primary/40" : "bg-foreground/30 opacity-0 group-hover:opacity-100"} flex items-center justify-center transition-opacity`}>
-            <Play className="w-6 h-6 text-card fill-card" />
+      <div className={cn("w-full flex gap-3 p-3 rounded-xl transition-colors group", isPlaying ? "bg-primary/5 border border-primary/20" : "hover:bg-secondary/50", isComplete && !isPlaying && "bg-emerald-500/5")}>
+        <button
+          onClick={onToggleComplete}
+          className={cn("flex-shrink-0 mt-1 transition-colors", isComplete ? "text-emerald-500" : "text-muted-foreground/40 hover:text-muted-foreground")}
+          title={isComplete ? "Mark as incomplete" : "Mark as complete"}
+        >
+          <CheckCircle className={cn("w-5 h-5", !isComplete && "opacity-30")} />
+        </button>
+        <button
+          onClick={onPlay}
+          className="flex-1 flex gap-3 text-left"
+        >
+          <div className="relative flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden bg-muted">
+            <img src={thumb} alt={video.title} className="w-full h-full object-cover" />
+            <div className={`absolute inset-0 ${isPlaying ? "bg-primary/40" : "bg-foreground/30 opacity-0 group-hover:opacity-100"} flex items-center justify-center transition-opacity`}>
+              <Play className="w-6 h-6 text-card fill-card" />
+            </div>
+            <div className="absolute bottom-1 right-1 bg-foreground/70 text-card text-xs px-1 rounded">
+              {video.duration}
+            </div>
           </div>
-          <div className="absolute bottom-1 right-1 bg-foreground/70 text-card text-xs px-1 rounded">
-            {video.duration}
+          <div className="flex-1 min-w-0">
+            <p className={cn("text-sm font-medium leading-snug line-clamp-2 transition-colors", isPlaying ? "text-primary" : "text-foreground group-hover:text-primary", isComplete && "line-through opacity-70")}>
+              {video.title}
+            </p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-xs text-muted-foreground">#{index + 1}</span>
+              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${badgeClass}`}>
+                {video.domain}
+              </span>
+            </div>
           </div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium leading-snug line-clamp-2 transition-colors ${isPlaying ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
-            {video.title}
-          </p>
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-xs text-muted-foreground">#{index + 1}</span>
-            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${badgeClass}`}>
-              {video.domain}
-            </span>
-          </div>
-        </div>
-      </button>
+        </button>
+      </div>
 
       {isPlaying && (
         <div className="px-3 pb-3">
@@ -103,6 +123,16 @@ function VideoCard({
 export default function YouTubePlaylists() {
   const [expanded, setExpanded] = useState<string | null>("pl300-microsoft-learn");
   const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
+  const [completed, setCompleted] = useState<Set<number>>(getCompletedVideos);
+
+  const toggleComplete = (id: number) => {
+    setCompleted(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("youtube-playlists-completed", JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -117,7 +147,7 @@ export default function YouTubePlaylists() {
         </div>
         <div className="flex-1">
           <p className="font-semibold text-lg">Official Microsoft Learn — PL-300 Course</p>
-          <p className="text-red-100 text-sm mt-0.5">18 videos · Free · By Microsoft Learn on YouTube</p>
+          <p className="text-red-100 text-sm mt-0.5">18 videos · Free · By Microsoft Learn on YouTube · {completed.size}/{videos.length} completed</p>
         </div>
         <a
           href={PLAYLIST_URL}
@@ -148,7 +178,7 @@ export default function YouTubePlaylists() {
               <span>·</span>
               <span>18 videos</span>
               <span>·</span>
-              <span>Click any video to watch inline</span>
+              <span>{completed.size}/{videos.length} completed</span>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -174,7 +204,9 @@ export default function YouTubePlaylists() {
                   video={video}
                   index={idx}
                   isPlaying={playingVideoId === video.id}
+                  isComplete={completed.has(video.id)}
                   onPlay={() => setPlayingVideoId(playingVideoId === video.id ? null : video.id)}
+                  onToggleComplete={() => toggleComplete(video.id)}
                 />
               ))}
             </div>

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { ExternalLink, BookOpen, Clock, GraduationCap, ChevronRight, CheckCircle } from "lucide-react";
+import { ExternalLink, BookOpen, Clock, GraduationCap, ChevronRight, CheckCircle, Circle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const learningPaths = [
   {
-    id: 1,
+    id: "lp-1",
     title: "Get started with Microsoft data analytics",
     url: "https://learn.microsoft.com/training/paths/data-analytics-microsoft/",
     duration: "1 hr 46 min",
@@ -22,7 +22,7 @@ const learningPaths = [
     ],
   },
   {
-    id: 2,
+    id: "lp-2",
     title: "Prepare data for analysis with Power BI",
     url: "https://learn.microsoft.com/training/paths/prepare-data-power-bi/",
     duration: "4 hr 33 min",
@@ -41,7 +41,7 @@ const learningPaths = [
     ],
   },
   {
-    id: 3,
+    id: "lp-3",
     title: "Model data with Power BI",
     url: "https://learn.microsoft.com/training/paths/model-data-power-bi/",
     duration: "6 hr 59 min",
@@ -62,7 +62,7 @@ const learningPaths = [
     ],
   },
   {
-    id: 4,
+    id: "lp-4",
     title: "Design effective reports in Power BI",
     url: "https://learn.microsoft.com/training/paths/power-bi-effective/",
     duration: "5 hr 7 min",
@@ -83,7 +83,7 @@ const learningPaths = [
     ],
   },
   {
-    id: 5,
+    id: "lp-5",
     title: "Manage and secure Power BI",
     url: "https://learn.microsoft.com/training/paths/manage-secure-power-bi/",
     duration: "2 hr 48 min",
@@ -105,8 +105,24 @@ const learningPaths = [
   },
 ];
 
+function getCompletedModules(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem("learn-modules-completed") || "[]"));
+  } catch { return new Set(); }
+}
+
 export default function LearnModules() {
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<Set<string>>(getCompletedModules);
+
+  const toggleComplete = (id: string) => {
+    setCompleted(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("learn-modules-completed", JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -125,7 +141,7 @@ export default function LearnModules() {
         <div className="flex-1">
           <p className="font-semibold text-lg">PL-300: Power BI Data Analyst Associate</p>
           <p className="text-sm opacity-80 mt-0.5">
-            5 learning paths · 21 hr 13 min total · 23 modules · Free on Microsoft Learn
+            5 learning paths · 21 hr 13 min total · 23 modules · Free on Microsoft Learn · {completed.size}/{learningPaths.length} completed
           </p>
         </div>
         <a
@@ -146,87 +162,97 @@ export default function LearnModules() {
 
       {/* Learning Paths */}
       <div className="space-y-4">
-        {learningPaths.map((path, index) => (
-          <Card key={path.id} className="overflow-hidden hover:shadow-md transition-shadow">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-4">
-                {/* Step number */}
-                <div
-                  className={`w-10 h-10 rounded-xl bg-gradient-to-br ${path.domainColor} flex items-center justify-center flex-shrink-0 text-card font-bold text-sm shadow-sm`}
-                >
-                  {index + 1}
-                </div>
+        {learningPaths.map((path, index) => {
+          const isComplete = completed.has(path.id);
+          return (
+            <Card key={path.id} className={cn("overflow-hidden hover:shadow-md transition-shadow", isComplete && "border-emerald-500/30 bg-emerald-500/5")}>
+              <CardContent className="p-5">
+                <div className="flex items-start gap-4">
+                  {/* Step number / complete toggle */}
+                  <button
+                    onClick={() => toggleComplete(path.id)}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm shadow-sm transition-colors ${
+                      isComplete
+                        ? "bg-emerald-500 text-card"
+                        : `bg-gradient-to-br ${path.domainColor} text-card`
+                    }`}
+                    title={isComplete ? "Mark as incomplete" : "Mark as complete"}
+                  >
+                    {isComplete ? <CheckCircle className="w-5 h-5" /> : index + 1}
+                  </button>
 
-                <div className="flex-1 min-w-0">
-                  {/* Badges */}
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${path.badge}`}
+                  <div className="flex-1 min-w-0">
+                    {/* Badges */}
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${path.badge}`}>
+                        {path.domain}
+                      </span>
+                      {path.examWeight && (
+                        <span className="text-xs text-muted-foreground">Exam weight: {path.examWeight}</span>
+                      )}
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" /> {path.duration}
+                      </span>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs text-muted-foreground">{path.modules} modules</span>
+                      {isComplete && (
+                        <>
+                          <span className="text-xs text-muted-foreground">·</span>
+                          <span className="text-xs text-emerald-600 font-medium">✓ Completed</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Title */}
+                    <a
+                      href={path.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block font-semibold text-foreground hover:text-primary transition-colors text-base leading-snug mb-1"
                     >
-                      {path.domain}
-                    </span>
-                    {path.examWeight && (
-                      <span className="text-xs text-muted-foreground">Exam weight: {path.examWeight}</span>
+                      {path.title}
+                    </a>
+
+                    <p className="text-sm text-muted-foreground mb-3">{path.description}</p>
+
+                    {/* Topics toggle */}
+                    <button
+                      onClick={() => setExpanded(expanded === path.id ? null : path.id)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                    >
+                      <ChevronRight
+                        className={cn("w-3.5 h-3.5 transition-transform", expanded === path.id ? "rotate-90" : "")}
+                      />
+                      {expanded === path.id ? "Hide topics" : `Show ${path.topics.length} topics covered`}
+                    </button>
+
+                    {expanded === path.id && (
+                      <ul className="mt-3 space-y-1.5">
+                        {path.topics.map((topic, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                            {topic}
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                    <span className="text-xs text-muted-foreground">·</span>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" /> {path.duration}
-                    </span>
-                    <span className="text-xs text-muted-foreground">·</span>
-                    <span className="text-xs text-muted-foreground">{path.modules} modules</span>
                   </div>
 
-                  {/* Title */}
+                  {/* Action */}
                   <a
                     href={path.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block font-semibold text-foreground hover:text-primary transition-colors text-base leading-snug mb-1"
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg text-xs font-medium transition-colors"
                   >
-                    {path.title}
+                    Start <ExternalLink className="w-3 h-3" />
                   </a>
-
-                  <p className="text-sm text-muted-foreground mb-3">{path.description}</p>
-
-                  {/* Topics toggle */}
-                  <button
-                    onClick={() => setExpanded(expanded === path.id ? null : path.id)}
-                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                  >
-                    <ChevronRight
-                      className={cn(
-                        "w-3.5 h-3.5 transition-transform",
-                        expanded === path.id ? "rotate-90" : ""
-                      )}
-                    />
-                    {expanded === path.id ? "Hide topics" : `Show ${path.topics.length} topics covered`}
-                  </button>
-
-                  {expanded === path.id && (
-                    <ul className="mt-3 space-y-1.5">
-                      {path.topics.map((topic, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                          {topic}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                 </div>
-
-                {/* Action */}
-                <a
-                  href={path.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-primary/5 hover:bg-primary/10 text-primary rounded-lg text-xs font-medium transition-colors"
-                >
-                  Start <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Practice Assessment CTA */}

@@ -26,6 +26,7 @@ import {
   LogOut,
   User,
   Heart,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";

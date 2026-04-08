@@ -102,8 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const effectiveIsAdmin = isAdmin && !viewingAsUser;
 
+  const effectiveProfile = simulatedTier && profile
+    ? { ...profile, subscription_tier: simulatedTier }
+    : profile;
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin: effectiveIsAdmin, viewingAsUser, setViewingAsUser, profile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin: effectiveIsAdmin, viewingAsUser, setViewingAsUser, simulatedTier, setSimulatedTier, profile: effectiveProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

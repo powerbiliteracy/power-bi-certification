@@ -354,20 +354,44 @@ export default function Admin() {
             <p className="text-sm text-muted-foreground">Manage sections, users, and platform settings</p>
           </div>
         </div>
-        <Button
-          variant={viewingAsUser ? "default" : "outline"}
-          className="gap-2"
-          onClick={() => setViewingAsUser(!viewingAsUser)}
-        >
-          {viewingAsUser ? <><EyeOff className="w-4 h-4" /> Exit User View</> : <><Eye className="w-4 h-4" /> Show as User</>}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewingAsUser ? "default" : "outline"}
+            className="gap-2"
+            onClick={() => {
+              if (viewingAsUser) {
+                setViewingAsUser(false);
+                setSimulatedTier(null);
+              } else {
+                setViewingAsUser(true);
+                setSimulatedTier("explorer");
+              }
+            }}
+          >
+            {viewingAsUser ? <><EyeOff className="w-4 h-4" /> Exit User View</> : <><Eye className="w-4 h-4" /> Show as User</>}
+          </Button>
+          {viewingAsUser && (
+            <Select value={simulatedTier || "explorer"} onValueChange={(v) => setSimulatedTier(v as "explorer" | "pro" | "premium")}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="explorer">Explorer (Free)</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="premium">Premium</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {viewingAsUser && (
         <Card className="border-amber-500/50 bg-amber-500/5">
           <CardContent className="py-3 flex items-center gap-2 text-amber-400">
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-sm font-medium">You are viewing the platform as a regular user. Admin features are hidden in other pages.</span>
+            <span className="text-sm font-medium">
+              Viewing as <strong className="capitalize">{simulatedTier || "explorer"}</strong> tier user. Navigate to other pages to see their experience. Admin features are hidden.
+            </span>
           </CardContent>
         </Card>
       )}

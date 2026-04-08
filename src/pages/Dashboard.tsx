@@ -152,11 +152,19 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-foreground tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Track your PL-300 exam preparation progress</p>
         </div>
-        <Link to={createPageUrl("Assessment")}>
-          <Button className="bg-primary hover:bg-primary/90 rounded-xl gap-2 shadow-lg shadow-primary/20">
-            <Target className="w-4 h-4" /> Take Assessment
-          </Button>
-        </Link>
+        {canAccess("assessment") ? (
+          <Link to={createPageUrl("Assessment")}>
+            <Button className="bg-primary hover:bg-primary/90 rounded-xl gap-2 shadow-lg shadow-primary/20">
+              <Target className="w-4 h-4" /> Take Assessment
+            </Button>
+          </Link>
+        ) : (
+          <Link to={createPageUrl("Pricing")}>
+            <Button variant="outline" className="rounded-xl gap-2">
+              <Lock className="w-4 h-4" /> Upgrade to Assess
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Exam Overview */}

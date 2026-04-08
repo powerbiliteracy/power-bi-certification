@@ -30,13 +30,15 @@ export function useSectionAccess() {
   };
 
   const canAccess = (sectionKey: string): boolean => {
-    if (isAdmin) return true; // Admins bypass all restrictions
+    if (isAdmin) return true;
     const section = sections.find((s) => s.section_key === sectionKey);
     if (!section) return true;
     if (section.admin_only) return false;
     if (section.is_locked) return false;
     const userTier = profile?.subscription_tier ?? "explorer";
-    return tierLevel[userTier] >= tierLevel[section.required_tier];
+    const result = tierLevel[userTier] >= tierLevel[section.required_tier];
+    console.log(`[ACCESS] ${sectionKey}: userTier=${userTier}, required=${section.required_tier}, access=${result}, profileExists=${!!profile}`);
+    return result;
   };
 
   const isVisible = (sectionKey: string): boolean => {

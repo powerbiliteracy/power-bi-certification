@@ -9,6 +9,8 @@ interface AuthContextType {
   isAdmin: boolean;
   viewingAsUser: boolean;
   setViewingAsUser: (v: boolean) => void;
+  simulatedTier: "explorer" | "pro" | "premium" | null;
+  setSimulatedTier: (tier: "explorer" | "pro" | "premium" | null) => void;
   profile: {
     display_name: string | null;
     subscription_tier: "explorer" | "pro" | "premium";
@@ -26,6 +28,8 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   viewingAsUser: false,
   setViewingAsUser: () => {},
+  simulatedTier: null,
+  setSimulatedTier: () => {},
   profile: null,
   signOut: async () => {},
 });
@@ -36,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [viewingAsUser, setViewingAsUser] = useState(false);
+  const [simulatedTier, setSimulatedTier] = useState<"explorer" | "pro" | "premium" | null>(null);
   const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
 
   const fetchUserData = useCallback(async (userId: string) => {
@@ -97,8 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const effectiveIsAdmin = isAdmin && !viewingAsUser;
 
+  const effectiveProfile = simulatedTier && profile
+    ? { ...profile, subscription_tier: simulatedTier }
+    : profile;
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin: effectiveIsAdmin, viewingAsUser, setViewingAsUser, profile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin: effectiveIsAdmin, viewingAsUser, setViewingAsUser, simulatedTier, setSimulatedTier, profile: effectiveProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

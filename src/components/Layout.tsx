@@ -26,6 +26,7 @@ import {
   LogOut,
   User,
   Heart,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -73,8 +74,10 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPage = location.pathname.replace("/", "") || "Dashboard";
-  const { user, isAdmin, profile, signOut, loading } = useAuth();
+  const { user, isAdmin, profile, signOut, viewingAsUser, setViewingAsUser, simulatedTier, setSimulatedTier } = useAuth();
   const { canAccess, getRequiredTier, isVisible, isAdminOnly } = useSectionAccess();
+  // Check if user is truly admin (even when viewing as user)
+  const isTrueAdmin = isAdmin || viewingAsUser;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -223,6 +226,18 @@ export default function Layout({ children }: LayoutProps) {
             <Menu className="w-5 h-5 text-foreground" />
           </button>
         </header>
+        {isTrueAdmin && (viewingAsUser || simulatedTier) && (
+          <div className="sticky top-0 z-40 bg-amber-500/90 backdrop-blur text-amber-950 px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium">
+            <Eye className="w-4 h-4" />
+            <span>Viewing as: <strong>{simulatedTier || profile?.subscription_tier || "explorer"}</strong> tier user</span>
+            <button
+              onClick={() => { setViewingAsUser(false); setSimulatedTier(null); }}
+              className="px-3 py-1 rounded bg-amber-950/20 hover:bg-amber-950/30 transition-colors text-xs font-semibold"
+            >
+              Exit Preview
+            </button>
+          </div>
+        )}
         <div className="p-6 lg:p-10 max-w-7xl mx-auto">
           {children}
         </div>

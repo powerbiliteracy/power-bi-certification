@@ -54,22 +54,31 @@ const sectionKeyMap: Record<string, string> = {
   Badges: "badges",
   Pricing: "pricing",
   MyList: "my-list",
+  Account: "dashboard", // always accessible
 };
 
 const tierGroups = [
   {
-    tier: "explorer" as const,
-    label: "Explorer (Free)",
-    badgeClass: "text-emerald-400 border-emerald-400/30",
+    tier: "profile" as const,
+    label: "Profile",
+    badgeClass: "text-[hsl(0,0%,100%/0.7)] border-[hsl(0,0%,100%/0.2)]",
     items: [
       { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
       { name: "Badges", page: "Badges", icon: Trophy },
-      { name: "Pricing", page: "Pricing", icon: CreditCard },
-      { name: "Exam Syllabus", page: "Syllabus", icon: BookOpen },
-      { name: "Exam Prep Videos", page: "ExamPrepVideos", icon: Video },
-      { name: "Learn Modules", page: "LearnModules", icon: GraduationCap },
-      { name: "YouTube Playlists", page: "YouTubePlaylists", icon: Youtube },
       { name: "My List", page: "MyList", icon: Heart },
+      { name: "Account", page: "Account", icon: User },
+    ],
+  },
+  {
+    tier: "free" as const,
+    label: "Free",
+    badgeClass: "text-emerald-400 border-emerald-400/30",
+    items: [
+      { name: "Exam Syllabus", page: "Syllabus", icon: BookOpen },
+      { name: "Microsoft Modules", page: "LearnModules", icon: GraduationCap },
+      { name: "YouTube Playlists", page: "YouTubePlaylists", icon: Youtube },
+      { name: "Exam Prep Videos", page: "ExamPrepVideos", icon: Video },
+      { name: "Pricing", page: "Pricing", icon: CreditCard },
     ],
   },
   {
@@ -102,7 +111,8 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    explorer: true,
+    profile: true,
+    free: true,
     pro: true,
     premium: true,
   });

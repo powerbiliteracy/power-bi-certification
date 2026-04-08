@@ -225,6 +225,18 @@ export default function Layout({ children }: LayoutProps) {
             <Menu className="w-5 h-5 text-foreground" />
           </button>
         </header>
+        {isTrueAdmin && (viewingAsUser || simulatedTier) && (
+          <div className="sticky top-0 z-40 bg-amber-500/90 backdrop-blur text-amber-950 px-4 py-2 flex items-center justify-center gap-4 text-sm font-medium">
+            <Eye className="w-4 h-4" />
+            <span>Viewing as: <strong>{simulatedTier || profile?.subscription_tier || "explorer"}</strong> tier user</span>
+            <button
+              onClick={() => { setViewingAsUser(false); setSimulatedTier(null); }}
+              className="px-3 py-1 rounded bg-amber-950/20 hover:bg-amber-950/30 transition-colors text-xs font-semibold"
+            >
+              Exit Preview
+            </button>
+          </div>
+        )}
         <div className="p-6 lg:p-10 max-w-7xl mx-auto">
           {children}
         </div>

@@ -141,7 +141,8 @@ export default function Layout({ children }: LayoutProps) {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <h1 className="font-bold text-lg tracking-tight text-[hsl(0,0%,100%)]">PL-300 Coach</h1>
-              <p className="text-xs text-[hsl(var(--indigo-light))]">Power BI Data Analyst</p>
+           <p className="text-xs text-[hsl(var(--indigo-light))]">Power BI Data Analyst</p>
+              <p className="text-[10px] text-[hsl(var(--indigo-light)/0.6)]">Skills measured as of April 20, 2026</p>
             </div>
           )}
           <button

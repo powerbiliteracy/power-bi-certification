@@ -158,6 +158,39 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          is_approved: boolean
+          rating: number
+          review_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_approved?: boolean
+          rating: number
+          review_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_approved?: boolean
+          rating?: number
+          review_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       section_access: {
         Row: {
           admin_only: boolean
@@ -185,6 +218,39 @@ export type Database = {
           section_key?: string
           section_label?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      study_plan_results: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          quiz_answers: Json
+          recommended_plan: Json
+          self_ratings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          quiz_answers?: Json
+          recommended_plan?: Json
+          self_ratings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          quiz_answers?: Json
+          recommended_plan?: Json
+          self_ratings?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -209,18 +209,6 @@ export default function Admin() {
     setSaving(null);
   };
 
-  const updateSortOrder = async (id: string, newOrder: number) => {
-    setSaving(id);
-    const { error } = await supabase.from("section_access").update({ sort_order: newOrder } as any).eq("id", id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      setSections((prev) => prev.map((s) => (s.id === id ? { ...s, sort_order: newOrder } : s)));
-      notifySectionUpdate();
-    }
-    setSaving(null);
-  };
-
   const updateUserTier = async (userId: string, tier: "explorer" | "pro" | "premium") => {
     setSaving(userId);
     const { error } = await supabase.from("profiles").update({ subscription_tier: tier }).eq("user_id", userId);

@@ -273,6 +273,10 @@ export default function Syllabus() {
                       {isExpanded && !domainLocked && (
                   <div className="p-2 space-y-1">
                     {domain.sections.map((section, sectionIdx) => {
+                      const filteredTopics = topicSearch.trim()
+                        ? section.topics.filter(t => t.toLowerCase().includes(topicSearch.toLowerCase()))
+                        : section.topics;
+                      if (topicSearch.trim() && filteredTopics.length === 0) return null;
                       const sectionKey = `${domain.id}-${sectionIdx}`;
                       const sectionExpanded = expandedSections[sectionKey];
 
@@ -290,9 +294,9 @@ export default function Syllabus() {
                             />
                             <span className="truncate flex-1 text-left">{section.title}</span>
                           </button>
-                          {sectionExpanded && (
+                          {(topicSearch.trim() || sectionExpanded) && (
                             <div className="ml-2 space-y-1">
-                              {section.topics.map((topic, topicIdx) => {
+                              {filteredTopics.map((topic, topicIdx) => {
                                 const isCompleted = completedSet.has(topic);
                                 return (
                                   <button

@@ -30,6 +30,8 @@ import Cheatsheets from "./pages/Cheatsheets";
 import DosAndDonts from "./pages/DosAndDonts";
 import ExamChecklist from "./pages/ExamChecklist";
 import DAXTemplates from "./pages/DAXTemplates";
+import Reviews from "./pages/Reviews";
+import StudyPlan from "./pages/StudyPlan";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,8 @@ const App = () => (
             <Route path="/DosAndDonts" element={<LayoutWrapper><DosAndDonts /></LayoutWrapper>} />
             <Route path="/ExamChecklist" element={<LayoutWrapper><ExamChecklist /></LayoutWrapper>} />
             <Route path="/DAXTemplates" element={<LayoutWrapper><DAXTemplates /></LayoutWrapper>} />
+            <Route path="/Reviews" element={<LayoutWrapper><Reviews /></LayoutWrapper>} />
+            <Route path="/StudyPlan" element={<LayoutWrapper><StudyPlan /></LayoutWrapper>} />
             <Route path="/Admin" element={<LayoutWrapper><Admin /></LayoutWrapper>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

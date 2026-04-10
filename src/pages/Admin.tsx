@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, XCircle as XIcon } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 
@@ -95,6 +95,22 @@ export default function Admin() {
   const [flagUserId, setFlagUserId] = useState<string | null>(null);
   const [flagReason, setFlagReason] = useState("");
 
+  // Reviews moderation
+  const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+
+  const fetchReviews = async () => {
+    const { data } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
+    if (data) setPendingReviews(data);
+  };
+
+  const toggleReviewApproval = async (id: string, approved: boolean) => {
+    const { error } = await supabase.from("reviews").update({ is_approved: approved }).eq("id", id);
+    if (!error) {
+      setPendingReviews((prev) => prev.map((r) => (r.id === id ? { ...r, is_approved: approved } : r)));
+      toast({ title: approved ? "Review approved" : "Review hidden" });
+    }
+  };
+
   // We need the real admin status (not the viewingAsUser override)
   // Since viewingAsUser makes isAdmin false, we check if the user has admin role directly
   const realIsAdmin = !loading && (isAdmin || viewingAsUser);
@@ -107,6 +123,7 @@ export default function Admin() {
       fetchPromoCodes();
       fetchAnnouncements();
       fetchStudentProgress();
+      fetchReviews();
     }
   }, [realIsAdmin]);
 
@@ -416,6 +433,7 @@ export default function Admin() {
           <TabsTrigger value="promos" className="gap-2"><Tag className="w-4 h-4" /> Promo Codes</TabsTrigger>
           <TabsTrigger value="announcements" className="gap-2"><Megaphone className="w-4 h-4" /> Announcements</TabsTrigger>
           <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="w-4 h-4" /> Analytics</TabsTrigger>
+          <TabsTrigger value="reviews" className="gap-2"><MessageSquare className="w-4 h-4" /> Reviews</TabsTrigger>
         </TabsList>
 
         {/* SECTIONS TAB - same as before */}
@@ -804,6 +822,65 @@ export default function Admin() {
                   })}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* REVIEWS TAB */}
+        <TabsContent value="reviews" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><MessageSquare className="w-5 h-5" /> Review Moderation</CardTitle>
+              <CardDescription>Approve or hide student reviews. Only approved reviews are visible publicly.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pendingReviews.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6">No reviews submitted yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Rating</TableHead>
+                      <TableHead>Review</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingReviews.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium">{r.display_name || "Anonymous"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star key={s} className={`w-3.5 h-3.5 ${r.rating >= s ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-sm">{r.review_text}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={r.is_approved ? "default" : "secondary"}>
+                            {r.is_approved ? "Approved" : "Pending"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant={r.is_approved ? "outline" : "default"}
+                            onClick={() => toggleReviewApproval(r.id, !r.is_approved)}
+                            className="gap-1"
+                          >
+                            {r.is_approved ? <><EyeOff className="w-3 h-3" /> Hide</> : <><CheckCircle2 className="w-3 h-3" /> Approve</>}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

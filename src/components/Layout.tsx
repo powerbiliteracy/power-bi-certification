@@ -125,8 +125,36 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const currentPage = location.pathname.replace("/", "") || "Dashboard";
   const { user, isAdmin, profile, signOut, viewingAsUser, setViewingAsUser, simulatedTier, setSimulatedTier } = useAuth();
-  const { canAccess, getRequiredTier, isVisible, isAdminOnly } = useSectionAccess();
+  const { canAccess, isVisible, sections } = useSectionAccess();
   const isTrueAdmin = isAdmin || viewingAsUser;
+
+  // Build dynamic tier groups from DB section_access data
+  const dynamicTierGroups = useMemo(() => {
+    // Profile group is always static
+    const groups: { tier: string; label: string; badgeClass: string; items: typeof profileItems }[] = [
+      { tier: "profile", label: tierLabel.profile, badgeClass: tierBadgeClass.profile, items: profileItems },
+    ];
+
+    // Bucket nav items by their DB-assigned tier
+    const buckets: Record<string, typeof allNavItems> = { explorer: [], pro: [], premium: [] };
+    for (const item of allNavItems) {
+      const dbSection = sections.find((s) => s.section_key === item.sectionKey);
+      const tier = dbSection?.required_tier || "explorer";
+      buckets[tier].push(item);
+    }
+
+    for (const tier of ["explorer", "pro", "premium"] as const) {
+      if (buckets[tier].length > 0) {
+        groups.push({
+          tier,
+          label: tierLabel[tier],
+          badgeClass: tierBadgeClass[tier],
+          items: buckets[tier].map((i) => ({ name: i.name, page: i.page, icon: i.icon })),
+        });
+      }
+    }
+    return groups;
+  }, [sections]);
 
   const toggleGroup = (tier: string) => {
     setOpenGroups((prev) => ({ ...prev, [tier]: !prev[tier] }));

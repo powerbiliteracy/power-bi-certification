@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ExternalLink, Play, Youtube, ChevronDown, CheckCircle } from "lucide-react";
+import { Play, Youtube, ChevronDown, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import FavoriteButton from "@/components/FavoriteButton";

@@ -141,7 +141,7 @@ export default function Layout({ children }: LayoutProps) {
       { tier: "profile", label: tierLabel.profile, badgeClass: tierBadgeClass.profile, items: profileItems },
     ];
 
-    // Bucket nav items by their DB-assigned tier
+    // Bucket nav items by their DB-assigned tier, respecting sort_order
     const buckets: Record<string, typeof allNavItems> = { explorer: [], pro: [], premium: [] };
     for (const item of allNavItems) {
       const dbSection = sections.find((s) => s.section_key === item.sectionKey);
@@ -149,7 +149,14 @@ export default function Layout({ children }: LayoutProps) {
       buckets[tier].push(item);
     }
 
+    // Sort items within each bucket by DB sort_order
+    const getSortOrder = (sectionKey: string) => {
+      const s = sections.find((sec) => sec.section_key === sectionKey);
+      return s?.sort_order ?? 999;
+    };
+
     for (const tier of ["explorer", "pro", "premium"] as const) {
+      buckets[tier].sort((a, b) => getSortOrder(a.sectionKey) - getSortOrder(b.sectionKey));
       if (buckets[tier].length > 0) {
         groups.push({
           tier,

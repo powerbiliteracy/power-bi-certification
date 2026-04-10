@@ -132,7 +132,7 @@ export default function StudyPlan() {
     setLoading(false);
   };
 
-  const generatePlan = () => {
+  const generatePlan = async () => {
     const items: PlanItem[] = [];
     for (const d of domains) {
       for (const topic of d.topics) {
@@ -170,13 +170,16 @@ export default function StudyPlan() {
     setStep("results");
 
     if (user) {
-      supabase.from("study_plan_results").insert({
+      const { error } = await supabase.from("study_plan_results").insert({
         user_id: user.id,
         quiz_answers: {} as any,
         self_ratings: selfRatings as any,
         recommended_plan: items as any,
         completed: true,
       });
+      if (error) {
+        console.error("Failed to save study plan:", error);
+      }
     }
   };
 

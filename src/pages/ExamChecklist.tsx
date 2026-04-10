@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, RotateCcw, Check } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { FavoriteButton } from "@/components/FavoriteButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "exam-checklist-checked";

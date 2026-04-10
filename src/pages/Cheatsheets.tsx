@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { FavoriteButton } from "@/components/FavoriteButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import { prepareDataContent } from "@/data/content/PrepareDataContent";
 import { modelDataContent } from "@/data/content/ModelDataContent";
 import { visualizeAnalyzeContent } from "@/data/content/VisualizeAnalyzeContent";

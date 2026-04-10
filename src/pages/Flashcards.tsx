@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RotateCcw, ChevronLeft, ChevronRight, Shuffle, BookOpen } from "lucide-react";
-import { FavoriteButton } from "@/components/FavoriteButton";
+import FavoriteButton from "@/components/FavoriteButton";
 
 export default function Flashcards() {
   const [selectedDomains, setSelectedDomains] = useState<string[]>(FLASHCARD_DOMAINS.map(d => d.id));

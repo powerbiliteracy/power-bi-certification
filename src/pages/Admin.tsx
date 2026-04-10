@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, XCircle as XIcon } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, XCircle as XIcon, ArrowUp, ArrowDown } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 
@@ -22,6 +22,7 @@ interface SectionRow {
   required_tier: "explorer" | "pro" | "premium";
   is_locked: boolean;
   admin_only: boolean;
+  sort_order: number;
 }
 
 interface ProfileRow {
@@ -128,8 +129,8 @@ export default function Admin() {
   }, [realIsAdmin]);
 
   const fetchSections = async () => {
-    const { data } = await supabase.from("section_access").select("*").order("section_label");
-    if (data) setSections(data);
+    const { data } = await supabase.from("section_access").select("*").order("sort_order");
+    if (data) setSections(data as SectionRow[]);
   };
 
   const fetchUsers = async () => {

@@ -25,6 +25,11 @@ import PracticeSets from "./pages/PracticeSets";
 import Badges from "./pages/Badges";
 import MyList from "./pages/MyList";
 import Account from "./pages/Account";
+import Flashcards from "./pages/Flashcards";
+import Cheatsheets from "./pages/Cheatsheets";
+import DosAndDonts from "./pages/DosAndDonts";
+import ExamChecklist from "./pages/ExamChecklist";
+import DAXTemplates from "./pages/DAXTemplates";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +63,11 @@ const App = () => (
             <Route path="/Badges" element={<LayoutWrapper><Badges /></LayoutWrapper>} />
             <Route path="/MyList" element={<LayoutWrapper><MyList /></LayoutWrapper>} />
             <Route path="/Account" element={<LayoutWrapper><Account /></LayoutWrapper>} />
+            <Route path="/Flashcards" element={<LayoutWrapper><Flashcards /></LayoutWrapper>} />
+            <Route path="/Cheatsheets" element={<LayoutWrapper><Cheatsheets /></LayoutWrapper>} />
+            <Route path="/DosAndDonts" element={<LayoutWrapper><DosAndDonts /></LayoutWrapper>} />
+            <Route path="/ExamChecklist" element={<LayoutWrapper><ExamChecklist /></LayoutWrapper>} />
+            <Route path="/DAXTemplates" element={<LayoutWrapper><DAXTemplates /></LayoutWrapper>} />
             <Route path="/Admin" element={<LayoutWrapper><Admin /></LayoutWrapper>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

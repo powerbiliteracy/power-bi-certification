@@ -30,6 +30,11 @@ import {
   Eye,
   PanelLeftClose,
   PanelLeft,
+  ListChecks,
+  FileText,
+  ThumbsUp,
+  Layers,
+  Code,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +59,12 @@ const sectionKeyMap: Record<string, string> = {
   Badges: "badges",
   Pricing: "pricing",
   MyList: "my-list",
-  Account: "dashboard", // always accessible
+  Account: "dashboard",
+  Flashcards: "flashcards",
+  Cheatsheets: "cheatsheets",
+  DosAndDonts: "dos-and-donts",
+  ExamChecklist: "exam-checklist",
+  DAXTemplates: "dax-templates",
 };
 
 const tierGroups = [
@@ -89,6 +99,11 @@ const tierGroups = [
       { name: "Key Terms & Features", page: "KeyTerms", icon: BookMarked },
       { name: "Exam Scenarios", page: "ExamScenarios", icon: Lightbulb },
       { name: "Topic Assessments", page: "Assessment", icon: Brain },
+      { name: "Flashcards", page: "Flashcards", icon: Layers },
+      { name: "Cheat Sheets", page: "Cheatsheets", icon: FileText },
+      { name: "Dos & Don'ts", page: "DosAndDonts", icon: ThumbsUp },
+      { name: "Exam Checklist", page: "ExamChecklist", icon: ListChecks },
+      { name: "DAX Templates", page: "DAXTemplates", icon: Code },
     ],
   },
   {

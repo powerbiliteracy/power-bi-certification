@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, XCircle as XIcon, ArrowUp, ArrowDown } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2 } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 
@@ -458,8 +458,9 @@ export default function Admin() {
             </CardHeader>
             <CardContent>
               <Table>
-                <TableHeader>
+                 <TableHeader>
                   <TableRow>
+                    <TableHead>Order</TableHead>
                     <TableHead>Section</TableHead>
                     <TableHead>Required Tier</TableHead>
                     <TableHead>Admin Only</TableHead>
@@ -468,11 +469,25 @@ export default function Admin() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sections.filter(s => !s.section_key.includes(".")).sort((a, b) => {
-                    const tierOrder = { explorer: 0, pro: 1, premium: 2 };
-                    return tierOrder[a.required_tier] - tierOrder[b.required_tier] || a.section_label.localeCompare(b.section_label);
-                  }).map((section) => (
+                  {sections.filter(s => !s.section_key.includes(".")).sort((a, b) => a.sort_order - b.sort_order).map((section) => (
                     <TableRow key={section.id}>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          className="w-16 text-center"
+                          value={section.sort_order}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            setSections((prev) => prev.map((s) => (s.id === section.id ? { ...s, sort_order: val } : s)));
+                          }}
+                          onBlur={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            updateSortOrder(section.id, val);
+                          }}
+                          disabled={saving === section.id}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{section.section_label}</TableCell>
                       <TableCell>
                         <Select value={section.required_tier} onValueChange={(val) => updateSectionTier(section.id, val as any)} disabled={saving === section.id}>

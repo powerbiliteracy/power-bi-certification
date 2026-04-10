@@ -3,12 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { ClipboardList, ArrowRight, ArrowLeft, CheckCircle2, RotateCcw, BookOpen, Target } from "lucide-react";
+import { ClipboardList, ArrowRight, CheckCircle2, RotateCcw, BookOpen, Target, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const domains = [
   {
@@ -82,23 +79,7 @@ const domains = [
   },
 ];
 
-// 12 quick quiz questions — 3 per domain
-const quizQuestions = [
-  { domain: "prepare_data", q: "Which connection mode stores data inside the Power BI model file?", options: ["DirectQuery", "Import", "Live Connection", "DirectLake"], answer: 1 },
-  { domain: "prepare_data", q: "What Power Query feature lets you combine rows from two tables with matching columns?", options: ["Append", "Merge", "Group By", "Pivot"], answer: 1 },
-  { domain: "prepare_data", q: "Which privacy level prevents data from one source being sent to another?", options: ["Public", "Organizational", "Private", "None"], answer: 2 },
-  { domain: "model_data", q: "Which DAX function modifies filter context?", options: ["SUM", "CALCULATE", "RELATED", "COUNTROWS"], answer: 1 },
-  { domain: "model_data", q: "A date table used in multiple roles (OrderDate, ShipDate) is called a…", options: ["Fact table", "Bridge table", "Role-playing dimension", "Snowflake table"], answer: 2 },
-  { domain: "model_data", q: "Which relationship type is most common in a star schema?", options: ["Many-to-Many", "One-to-One", "One-to-Many", "Self-referencing"], answer: 2 },
-  { domain: "visualize_analyze", q: "Which visual type is best for showing composition of a whole?", options: ["Line chart", "Scatter plot", "Pie / Donut chart", "Waterfall chart"], answer: 2 },
-  { domain: "visualize_analyze", q: "Bookmarks in Power BI save which of the following?", options: ["Only filters", "Only visuals", "Page state including filters, slicers, visuals", "Data model"], answer: 2 },
-  { domain: "visualize_analyze", q: "Which AI visual helps identify factors that influence a metric?", options: ["Decomposition Tree", "Key Influencers", "Q&A", "Smart Narrative"], answer: 1 },
-  { domain: "deploy_maintain", q: "Row-level security (RLS) is defined using…", options: ["Power Query", "DAX filter expressions", "M code", "Dataflows"], answer: 1 },
-  { domain: "deploy_maintain", q: "What is the purpose of a deployment pipeline?", options: ["Version control", "Promote content through Dev → Test → Prod", "Schedule refresh", "Manage gateways"], answer: 1 },
-  { domain: "deploy_maintain", q: "Which endorsement level requires admin approval?", options: ["Promoted", "Certified", "Featured", "Verified"], answer: 1 },
-];
-
-type Step = "intro" | "quiz" | "selfRate" | "results";
+type Step = "intro" | "selfRate" | "results";
 
 interface PlanItem {
   domain: string;
@@ -109,13 +90,9 @@ interface PlanItem {
 
 export default function StudyPlan() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [step, setStep] = useState<Step>("intro");
-  const [quizIndex, setQuizIndex] = useState(0);
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
   const [selfRatings, setSelfRatings] = useState<Record<string, number>>({});
   const [plan, setPlan] = useState<PlanItem[]>([]);
-  const [savedPlan, setSavedPlan] = useState<PlanItem[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -132,46 +109,28 @@ export default function StudyPlan() {
       .limit(1)
       .maybeSingle();
     if (data) {
-      setSavedPlan((data as any).recommended_plan as PlanItem[]);
-      setStep("results");
       setPlan((data as any).recommended_plan as PlanItem[]);
+      setStep("results");
     }
     setLoading(false);
   };
 
   const generatePlan = () => {
-    const domainScores: Record<string, { quizCorrect: number; quizTotal: number; selfAvg: number }> = {};
-
-    for (const d of domains) {
-      const dQuestions = quizQuestions.filter((q) => q.domain === d.id);
-      let correct = 0;
-      dQuestions.forEach((q, i) => {
-        const globalIdx = quizQuestions.indexOf(q);
-        if (quizAnswers[globalIdx] === q.answer) correct++;
-      });
-      const topicRatings = d.topics.map((t) => selfRatings[`${d.id}::${t}`] || 1);
-      const selfAvg = topicRatings.reduce((a, b) => a + b, 0) / topicRatings.length;
-      domainScores[d.id] = { quizCorrect: correct, quizTotal: dQuestions.length, selfAvg };
-    }
-
     const items: PlanItem[] = [];
     for (const d of domains) {
-      const score = domainScores[d.id];
-      const quizPct = score.quizCorrect / score.quizTotal;
       for (const topic of d.topics) {
         const selfScore = selfRatings[`${d.id}::${topic}`] || 1;
-        const combined = (quizPct * 50 + (selfScore / 5) * 50) / 100;
         let priority: "high" | "medium" | "low" = "low";
         let reason = "";
-        if (combined < 0.4) {
+        if (selfScore <= 2) {
           priority = "high";
-          reason = "Low quiz performance + low confidence";
-        } else if (combined < 0.65) {
+          reason = "Low confidence — focus here first";
+        } else if (selfScore <= 3) {
           priority = "medium";
-          reason = "Moderate understanding — needs reinforcement";
+          reason = "Moderate confidence — reinforce understanding";
         } else {
           priority = "low";
-          reason = "Good grasp — review occasionally";
+          reason = "Good confidence — review occasionally";
         }
         items.push({ domain: d.title, topic, priority, reason });
       }
@@ -185,11 +144,10 @@ export default function StudyPlan() {
     setPlan(items);
     setStep("results");
 
-    // Save to DB
     if (user) {
       supabase.from("study_plan_results").insert({
         user_id: user.id,
-        quiz_answers: quizAnswers as any,
+        quiz_answers: {} as any,
         self_ratings: selfRatings as any,
         recommended_plan: items as any,
         completed: true,
@@ -199,15 +157,9 @@ export default function StudyPlan() {
 
   const resetPlan = () => {
     setStep("intro");
-    setQuizIndex(0);
-    setQuizAnswers({});
     setSelfRatings({});
     setPlan([]);
-    setSavedPlan(null);
   };
-
-  const currentQ = quizQuestions[quizIndex];
-  const quizProgress = ((quizIndex + 1) / quizQuestions.length) * 100;
 
   const priorityColor = {
     high: "bg-red-500/15 text-red-400 border-red-500/30",
@@ -225,7 +177,7 @@ export default function StudyPlan() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Personal Study Plan</h1>
-          <p className="text-sm text-muted-foreground">Quiz + self-assessment → tailored study priorities</p>
+          <p className="text-sm text-muted-foreground">Rate your confidence → get tailored study priorities</p>
         </div>
       </div>
 
@@ -234,77 +186,26 @@ export default function StudyPlan() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Target className="w-5 h-5" /> How It Works</CardTitle>
-            <CardDescription>Two quick steps to generate your personalized PL-300 study plan</CardDescription>
+            <CardDescription>One quick step to generate your personalized PL-300 study plan</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex gap-3 items-start">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">1</span>
-                <div>
-                  <p className="font-medium text-foreground">Quick Knowledge Quiz</p>
-                  <p className="text-sm text-muted-foreground">12 questions (3 per exam domain) to test your current knowledge.</p>
-                </div>
-              </div>
-              <div className="flex gap-3 items-start">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">2</span>
-                <div>
-                  <p className="font-medium text-foreground">Confidence Self-Rating</p>
-                  <p className="text-sm text-muted-foreground">Rate your confidence on each topic from 1 (no idea) to 5 (expert).</p>
-                </div>
+            <div className="flex gap-3 items-start">
+              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">1</span>
+              <div>
+                <p className="font-medium text-foreground">Confidence Self-Rating</p>
+                <p className="text-sm text-muted-foreground">Rate your confidence on each topic from 1 (no idea) to 5 (expert). Be honest — this drives your plan!</p>
               </div>
             </div>
-            <Button onClick={() => setStep("quiz")} className="gap-2 mt-4">
-              Start Assessment <ArrowRight className="w-4 h-4" />
+            <div className="flex gap-3 items-start">
+              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">2</span>
+              <div>
+                <p className="font-medium text-foreground">Get Your Plan</p>
+                <p className="text-sm text-muted-foreground">We'll prioritize topics and link you directly to the Exam Syllabus sections to study.</p>
+              </div>
+            </div>
+            <Button onClick={() => setStep("selfRate")} className="gap-2 mt-4">
+              Start Rating <ArrowRight className="w-4 h-4" />
             </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* QUIZ */}
-      {step === "quiz" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Question {quizIndex + 1} of {quizQuestions.length}</CardTitle>
-              <span className="text-xs text-muted-foreground capitalize">{currentQ.domain.replace("_", " ")}</span>
-            </div>
-            <Progress value={quizProgress} className="h-2 mt-2" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="font-medium text-foreground">{currentQ.q}</p>
-            <RadioGroup
-              value={quizAnswers[quizIndex]?.toString() || ""}
-              onValueChange={(v) => setQuizAnswers((p) => ({ ...p, [quizIndex]: parseInt(v) }))}
-            >
-              {currentQ.options.map((opt, i) => (
-                <div key={i} className="flex items-center space-x-2 p-3 rounded-lg border border-border/50 hover:border-primary/30 transition-colors">
-                  <RadioGroupItem value={i.toString()} id={`q${quizIndex}-${i}`} />
-                  <Label htmlFor={`q${quizIndex}-${i}`} className="flex-1 cursor-pointer">{opt}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-            <div className="flex justify-between pt-2">
-              <Button variant="outline" disabled={quizIndex === 0} onClick={() => setQuizIndex((i) => i - 1)} className="gap-2">
-                <ArrowLeft className="w-4 h-4" /> Back
-              </Button>
-              {quizIndex < quizQuestions.length - 1 ? (
-                <Button
-                  disabled={quizAnswers[quizIndex] === undefined}
-                  onClick={() => setQuizIndex((i) => i + 1)}
-                  className="gap-2"
-                >
-                  Next <ArrowRight className="w-4 h-4" />
-                </Button>
-              ) : (
-                <Button
-                  disabled={quizAnswers[quizIndex] === undefined}
-                  onClick={() => setStep("selfRate")}
-                  className="gap-2"
-                >
-                  Continue to Self-Rating <ArrowRight className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
           </CardContent>
         </Card>
       )}
@@ -387,12 +288,24 @@ export default function StudyPlan() {
                     <div key={i} className={cn("flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm", priorityColor[priority])}>
                       <span className="flex-1 font-medium">{item.topic}</span>
                       <span className="text-xs opacity-75 hidden sm:block">{item.domain}</span>
+                      <Link to="/Syllabus" className="flex-shrink-0 hover:opacity-80 transition-opacity" title="Study in Exam Syllabus">
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
                     </div>
                   ))}
                 </div>
               </div>
             );
           })}
+
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-6">
+              <Link to="/Syllabus" className="flex items-center gap-3 text-primary hover:underline font-medium">
+                <BookOpen className="w-5 h-5" />
+                Open Exam Syllabus to start studying →
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

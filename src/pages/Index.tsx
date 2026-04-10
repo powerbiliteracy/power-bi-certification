@@ -113,7 +113,7 @@ const appSections = [
     description: "Curated YouTube playlists from top Power BI educators organized by exam domain.",
     tier: "explorer",
     image: imgYoutubePlaylists,
-    metric: "19 curated playlists",
+    metric: "4 curated playlists",
   },
   {
     icon: Brain,

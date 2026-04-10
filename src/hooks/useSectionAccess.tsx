@@ -8,6 +8,7 @@ interface SectionAccess {
   required_tier: "explorer" | "pro" | "premium";
   is_locked: boolean;
   admin_only: boolean;
+  sort_order: number;
 }
 
 const tierLevel = { explorer: 0, pro: 1, premium: 2 };
@@ -21,7 +22,7 @@ export function useSectionAccess() {
     setLoading(true);
     supabase
       .from("section_access")
-      .select("section_key, section_label, required_tier, is_locked, admin_only")
+      .select("section_key, section_label, required_tier, is_locked, admin_only, sort_order")
       .then(({ data }) => {
         if (data) setSections(data as SectionAccess[]);
         setLoading(false);

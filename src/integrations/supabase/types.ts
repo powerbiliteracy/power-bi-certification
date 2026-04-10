@@ -199,6 +199,7 @@ export type Database = {
           required_tier: Database["public"]["Enums"]["subscription_tier"]
           section_key: string
           section_label: string
+          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -208,6 +209,7 @@ export type Database = {
           required_tier?: Database["public"]["Enums"]["subscription_tier"]
           section_key: string
           section_label: string
+          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -217,6 +219,7 @@ export type Database = {
           required_tier?: Database["public"]["Enums"]["subscription_tier"]
           section_key?: string
           section_label?: string
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []

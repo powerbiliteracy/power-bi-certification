@@ -457,62 +457,29 @@ export default function Admin() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5" /> Page Access Control</CardTitle>
-              <CardDescription>Set which subscription tier is required for each page, or lock pages entirely.</CardDescription>
+              <CardDescription>Drag and drop rows to reorder sections in the navigation. Changes save automatically.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Section</TableHead>
-                    <TableHead>Required Tier</TableHead>
-                    <TableHead>Admin Only</TableHead>
-                    <TableHead>Locked</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sections.filter(s => !s.section_key.includes(".")).sort((a, b) => a.sort_order - b.sort_order).map((section) => (
-                    <TableRow key={section.id}>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min={0}
-                          className="w-16 text-center"
-                          value={section.sort_order}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value) || 0;
-                            setSections((prev) => prev.map((s) => (s.id === section.id ? { ...s, sort_order: val } : s)));
-                          }}
-                          onBlur={(e) => {
-                            const val = parseInt(e.target.value) || 0;
-                            updateSortOrder(section.id, val);
-                          }}
-                          disabled={saving === section.id}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{section.section_label}</TableCell>
-                      <TableCell>
-                        <Select value={section.required_tier} onValueChange={(val) => updateSectionTier(section.id, val as any)} disabled={saving === section.id}>
-                          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="explorer">Explorer</SelectItem>
-                            <SelectItem value="pro">Pro</SelectItem>
-                            <SelectItem value="premium">Premium</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell><Switch checked={section.admin_only} onCheckedChange={(c) => toggleAdminOnly(section.id, c)} disabled={saving === section.id} /></TableCell>
-                      <TableCell><Switch checked={section.is_locked} onCheckedChange={(c) => toggleSectionLock(section.id, c)} disabled={saving === section.id} /></TableCell>
-                      <TableCell>
-                        {section.admin_only ? <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" /> Admin Only</Badge>
-                          : section.is_locked ? <Badge variant="destructive" className="gap-1"><Lock className="w-3 h-3" /> Locked</Badge>
-                          : <Badge variant={tierColor(section.required_tier) as any} className="gap-1"><Unlock className="w-3 h-3" /> {section.required_tier}</Badge>}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <SortableSectionsTable
+                sections={sections.filter(s => !s.section_key.includes("."))}
+                saving={saving}
+                onReorder={async (reordered) => {
+                  setSections((prev) => {
+                    const subSections = prev.filter(s => s.section_key.includes("."));
+                    return [...reordered, ...subSections];
+                  });
+                  // Save all new sort orders
+                  for (let i = 0; i < reordered.length; i++) {
+                    await supabase.from("section_access").update({ sort_order: i + 1 } as any).eq("id", reordered[i].id);
+                  }
+                  notifySectionUpdate();
+                  toast({ title: "Order updated" });
+                }}
+                onTierChange={updateSectionTier}
+                onAdminOnlyChange={toggleAdminOnly}
+                onLockChange={toggleSectionLock}
+                tierColor={tierColor}
+              />
             </CardContent>
           </Card>
 

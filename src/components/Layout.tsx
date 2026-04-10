@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -209,7 +209,7 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Nav */}
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {tierGroups.map((group) => {
+          {dynamicTierGroups.map((group) => {
             // Check if any item in this group is visible
             const visibleItems = group.items.filter((item) => {
               const sectionKey = sectionKeyMap[item.page];

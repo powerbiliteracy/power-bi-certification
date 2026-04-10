@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Copy, Check } from "lucide-react";
-import { FavoriteButton } from "@/components/FavoriteButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 

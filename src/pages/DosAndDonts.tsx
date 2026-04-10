@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Check, X } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { FavoriteButton } from "@/components/FavoriteButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import { cn } from "@/lib/utils";
 
 const domainColors = ["text-blue-400", "text-violet-400", "text-cyan-400", "text-orange-400"];

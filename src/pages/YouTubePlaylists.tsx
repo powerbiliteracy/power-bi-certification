@@ -262,15 +262,6 @@ export default function YouTubePlaylists() {
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <FavoriteButton itemType="youtube_playlist" itemId={playlist.id} />
-                  <a
-                    href={playlist.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-medium transition-colors"
-                  >
-                    <ExternalLink className="w-3 h-3" /> Open
-                  </a>
                   <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform", isExpanded ? "rotate-180" : "")} />
                 </div>
               </div>

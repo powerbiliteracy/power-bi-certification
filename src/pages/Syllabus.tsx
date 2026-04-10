@@ -227,7 +227,11 @@ export default function Syllabus() {
         <div className="space-y-2">
           {pl300Syllabus.domains.map((domain) => {
             const Icon = domainIcons[domain.id];
-            const isExpanded = expandedDomains[domain.id];
+            const isExpanded = expandedDomains[domain.id] || !!topicSearch.trim();
+            const hasMatchingTopics = topicSearch.trim()
+              ? domain.sections.some(s => s.topics.some(t => t.toLowerCase().includes(topicSearch.toLowerCase())))
+              : true;
+            if (topicSearch.trim() && !hasMatchingTopics) return null;
 
             return (
               <div key={domain.id} className="border border-border rounded-lg bg-card overflow-hidden">

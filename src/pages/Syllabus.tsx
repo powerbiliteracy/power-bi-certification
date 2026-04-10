@@ -25,6 +25,7 @@ import {
   Zap,
   XCircle,
   RotateCcw,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,6 +67,7 @@ export default function Syllabus() {
   const urlDomain = searchParams.get("domain");
   const urlSection = searchParams.get("section");
 
+  const [topicSearch, setTopicSearch] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
@@ -185,6 +187,16 @@ export default function Syllabus() {
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-foreground mb-1">PL-300 Exam Syllabus</h1>
           <p className="text-sm text-muted-foreground">Select a topic to explore</p>
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search topics..."
+              value={topicSearch}
+              onChange={(e) => setTopicSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
         </div>
 
         {/* Exam Info */}
@@ -215,7 +227,11 @@ export default function Syllabus() {
         <div className="space-y-2">
           {pl300Syllabus.domains.map((domain) => {
             const Icon = domainIcons[domain.id];
-            const isExpanded = expandedDomains[domain.id];
+            const isExpanded = expandedDomains[domain.id] || !!topicSearch.trim();
+            const hasMatchingTopics = topicSearch.trim()
+              ? domain.sections.some(s => s.topics.some(t => t.toLowerCase().includes(topicSearch.toLowerCase())))
+              : true;
+            if (topicSearch.trim() && !hasMatchingTopics) return null;
 
             return (
               <div key={domain.id} className="border border-border rounded-lg bg-card overflow-hidden">
@@ -261,6 +277,10 @@ export default function Syllabus() {
                       {isExpanded && !domainLocked && (
                   <div className="p-2 space-y-1">
                     {domain.sections.map((section, sectionIdx) => {
+                      const filteredTopics = topicSearch.trim()
+                        ? section.topics.filter(t => t.toLowerCase().includes(topicSearch.toLowerCase()))
+                        : section.topics;
+                      if (topicSearch.trim() && filteredTopics.length === 0) return null;
                       const sectionKey = `${domain.id}-${sectionIdx}`;
                       const sectionExpanded = expandedSections[sectionKey];
 
@@ -278,9 +298,9 @@ export default function Syllabus() {
                             />
                             <span className="truncate flex-1 text-left">{section.title}</span>
                           </button>
-                          {sectionExpanded && (
+                          {(topicSearch.trim() || sectionExpanded) && (
                             <div className="ml-2 space-y-1">
-                              {section.topics.map((topic, topicIdx) => {
+                              {filteredTopics.map((topic, topicIdx) => {
                                 const isCompleted = completedSet.has(topic);
                                 return (
                                   <button

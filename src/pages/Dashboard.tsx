@@ -113,7 +113,7 @@ export default function Dashboard() {
         label: "YouTube Playlists",
         page: "YouTubePlaylists",
         completed: completedYouTube.length,
-        total: 18,
+        total: 4,
         icon: Youtube,
         tier: getRequiredTier("youtube-playlists"),
         locked: !canAccess("youtube-playlists"),

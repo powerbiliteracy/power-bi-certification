@@ -1172,10 +1172,10 @@ CALCULATE(
 export default function ExamScenarios() {
   const [expandedScenario, setExpandedScenario] = useState<string | null>(null);
   const [expandedDomains, setExpandedDomains] = useState<Record<string, boolean>>({
-    prepare_data: true,
-    model_data: true,
-    visualize_analyze: true,
-    deploy_maintain: true,
+    prepare_data: false,
+    model_data: false,
+    visualize_analyze: false,
+    deploy_maintain: false,
   });
   const [filterDifficulty, setFilterDifficulty] = useState("all");
 

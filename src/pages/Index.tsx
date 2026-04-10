@@ -113,7 +113,7 @@ const appSections = [
     description: "Curated YouTube playlists from top Power BI educators organized by exam domain.",
     tier: "explorer",
     image: imgYoutubePlaylists,
-    metric: "19 curated playlists",
+    metric: "4 curated playlists",
   },
   {
     icon: Brain,
@@ -237,6 +237,11 @@ export default function LandingPage() {
             <p className="text-muted-foreground mt-3 text-lg max-w-xl mx-auto">
               Explore every section of the platform and see what's included with each plan.
             </p>
+            <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+              <span className="text-muted-foreground">{appSections.filter(s => s.tier === "explorer").length} <span className="font-semibold text-foreground">Free</span></span>
+              <span className="text-muted-foreground">{appSections.filter(s => s.tier === "pro").length} <span className="font-semibold text-primary">Pro</span></span>
+              <span className="text-muted-foreground">{appSections.filter(s => s.tier === "premium").length} <span className="font-semibold text-amber-400">Premium</span></span>
+            </div>
           </div>
 
           {/* Tier filter buttons */}

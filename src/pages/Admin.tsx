@@ -150,6 +150,8 @@ export default function Admin() {
     setStudentProgress(grouped);
   };
 
+  const notifySectionUpdate = () => window.dispatchEvent(new Event("section-access-updated"));
+
   const updateSectionTier = async (id: string, tier: "explorer" | "pro" | "premium") => {
     setSaving(id);
     const { error } = await supabase.from("section_access").update({ required_tier: tier }).eq("id", id);
@@ -158,6 +160,7 @@ export default function Admin() {
     } else {
       setSections((prev) => prev.map((s) => (s.id === id ? { ...s, required_tier: tier } : s)));
       toast({ title: "Updated", description: "Section tier updated." });
+      notifySectionUpdate();
     }
     setSaving(null);
   };
@@ -169,6 +172,7 @@ export default function Admin() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       setSections((prev) => prev.map((s) => (s.id === id ? { ...s, is_locked: locked } : s)));
+      notifySectionUpdate();
     }
     setSaving(null);
   };
@@ -181,6 +185,7 @@ export default function Admin() {
     } else {
       setSections((prev) => prev.map((s) => (s.id === id ? { ...s, admin_only: adminOnly } : s)));
       toast({ title: "Updated", description: adminOnly ? "Section set to admin-only." : "Section visible to all." });
+      notifySectionUpdate();
     }
     setSaving(null);
   };

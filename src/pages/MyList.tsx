@@ -44,6 +44,13 @@ export default function MyList() {
     return acc;
   }, {});
 
+  const resetAll = async () => {
+    if (!user || favorites.length === 0) return;
+    const ids = favorites.map(f => f.id);
+    await supabase.from("user_favorites").delete().in("id", ids);
+    setFavorites([]);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
@@ -54,7 +61,17 @@ export default function MyList() {
           <h1 className="text-2xl font-bold text-foreground">My List</h1>
           <p className="text-sm text-muted-foreground">Your favorited items across all sections</p>
         </div>
-        <Badge variant="outline" className="ml-auto">{favorites.length} items</Badge>
+        <div className="ml-auto flex items-center gap-2">
+          {favorites.length > 0 && (
+            <button
+              onClick={resetAll}
+              className="px-3 py-1.5 text-xs font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors"
+            >
+              Reset All
+            </button>
+          )}
+          <Badge variant="outline">{favorites.length} items</Badge>
+        </div>
       </div>
 
       {favorites.length === 0 ? (

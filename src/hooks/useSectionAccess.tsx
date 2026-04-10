@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
@@ -15,15 +15,27 @@ const tierLevel = { explorer: 0, pro: 1, premium: 2 };
 export function useSectionAccess() {
   const { profile, isAdmin, simulatedTier } = useAuth();
   const [sections, setSections] = useState<SectionAccess[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchSections = useCallback(() => {
+    setLoading(true);
     supabase
       .from("section_access")
       .select("section_key, section_label, required_tier, is_locked, admin_only")
       .then(({ data }) => {
         if (data) setSections(data as SectionAccess[]);
+        setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    fetchSections();
+
+    // Listen for admin changes to refresh sections
+    const handler = () => fetchSections();
+    window.addEventListener("section-access-updated", handler);
+    return () => window.removeEventListener("section-access-updated", handler);
+  }, [fetchSections]);
 
   const isAdminOnly = (sectionKey: string): boolean => {
     return sections.find((s) => s.section_key === sectionKey)?.admin_only ?? false;
@@ -35,7 +47,6 @@ export function useSectionAccess() {
     if (!section) return true;
     if (section.admin_only) return false;
     if (section.is_locked) return false;
-    // Use simulatedTier if set (admin previewing), otherwise use profile tier
     const userTier = simulatedTier || profile?.subscription_tier || "explorer";
     return tierLevel[userTier] >= tierLevel[section.required_tier];
   };
@@ -51,5 +62,5 @@ export function useSectionAccess() {
     return sections.find((s) => s.section_key === sectionKey)?.required_tier ?? "explorer";
   };
 
-  return { sections, canAccess, getRequiredTier, isVisible, isAdminOnly };
+  return { sections, canAccess, getRequiredTier, isVisible, isAdminOnly, loading, refetch: fetchSections };
 }

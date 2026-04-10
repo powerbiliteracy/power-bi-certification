@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -67,56 +67,46 @@ const sectionKeyMap: Record<string, string> = {
   DAXTemplates: "dax-templates",
 };
 
-const tierGroups = [
-  {
-    tier: "profile" as const,
-    label: "Profile",
-    badgeClass: "text-[hsl(0,0%,100%/0.7)] border-[hsl(0,0%,100%/0.2)]",
-    items: [
-      { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
-      { name: "Badges", page: "Badges", icon: Trophy },
-      { name: "My List", page: "MyList", icon: Heart },
-      { name: "Account", page: "Account", icon: User },
-    ],
-  },
-  {
-    tier: "free" as const,
-    label: "Free",
-    badgeClass: "text-emerald-400 border-emerald-400/30",
-    items: [
-      { name: "Exam Syllabus", page: "Syllabus", icon: BookOpen },
-      { name: "Microsoft Modules", page: "LearnModules", icon: GraduationCap },
-      { name: "YouTube Playlists", page: "YouTubePlaylists", icon: Youtube },
-      { name: "Exam Prep Videos", page: "ExamPrepVideos", icon: Video },
-      { name: "Pricing", page: "Pricing", icon: CreditCard },
-    ],
-  },
-  {
-    tier: "pro" as const,
-    label: "Pro",
-    badgeClass: "text-[hsl(var(--indigo-light))] border-[hsl(var(--indigo-light)/0.3)]",
-    items: [
-      { name: "Key Terms & Features", page: "KeyTerms", icon: BookMarked },
-      { name: "Exam Scenarios", page: "ExamScenarios", icon: Lightbulb },
-      { name: "Topic Assessments", page: "Assessment", icon: Brain },
-      { name: "Flashcards", page: "Flashcards", icon: Layers },
-      { name: "Cheat Sheets", page: "Cheatsheets", icon: FileText },
-      { name: "Dos & Don'ts", page: "DosAndDonts", icon: ThumbsUp },
-      { name: "Exam Checklist", page: "ExamChecklist", icon: ListChecks },
-      { name: "DAX Templates", page: "DAXTemplates", icon: Code },
-    ],
-  },
-  {
-    tier: "premium" as const,
-    label: "★ Premium",
-    badgeClass: "text-amber-400 border-amber-400/30",
-    items: [
-      { name: "Troubleshooting", page: "Troubleshooting", icon: AlertTriangle },
-      { name: "Decision Framework", page: "DecisionFramework", icon: GitBranch },
-      { name: "Exam Questions", page: "PracticeSets", icon: Brain },
-    ],
-  },
+// All navigable items with their icons — tier assignment comes from DB
+const allNavItems: { name: string; page: string; icon: any; sectionKey: string }[] = [
+  { name: "Exam Syllabus", page: "Syllabus", icon: BookOpen, sectionKey: "syllabus" },
+  { name: "Microsoft Modules", page: "LearnModules", icon: GraduationCap, sectionKey: "learn-modules" },
+  { name: "YouTube Playlists", page: "YouTubePlaylists", icon: Youtube, sectionKey: "youtube-playlists" },
+  { name: "Exam Prep Videos", page: "ExamPrepVideos", icon: Video, sectionKey: "exam-prep-videos" },
+  { name: "Pricing", page: "Pricing", icon: CreditCard, sectionKey: "pricing" },
+  { name: "Key Terms & Features", page: "KeyTerms", icon: BookMarked, sectionKey: "key-terms" },
+  { name: "Exam Scenarios", page: "ExamScenarios", icon: Lightbulb, sectionKey: "exam-scenarios" },
+  { name: "Topic Assessments", page: "Assessment", icon: Brain, sectionKey: "assessment" },
+  { name: "Flashcards", page: "Flashcards", icon: Layers, sectionKey: "flashcards" },
+  { name: "Cheat Sheets", page: "Cheatsheets", icon: FileText, sectionKey: "cheatsheets" },
+  { name: "Dos & Don'ts", page: "DosAndDonts", icon: ThumbsUp, sectionKey: "dos-and-donts" },
+  { name: "Exam Checklist", page: "ExamChecklist", icon: ListChecks, sectionKey: "exam-checklist" },
+  { name: "DAX Templates", page: "DAXTemplates", icon: Code, sectionKey: "dax-templates" },
+  { name: "Troubleshooting", page: "Troubleshooting", icon: AlertTriangle, sectionKey: "troubleshooting" },
+  { name: "Decision Framework", page: "DecisionFramework", icon: GitBranch, sectionKey: "decision-framework" },
+  { name: "Exam Questions", page: "PracticeSets", icon: Brain, sectionKey: "practice-sets" },
 ];
+
+const profileItems = [
+  { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
+  { name: "Badges", page: "Badges", icon: Trophy },
+  { name: "My List", page: "MyList", icon: Heart },
+  { name: "Account", page: "Account", icon: User },
+];
+
+const tierBadgeClass: Record<string, string> = {
+  profile: "text-[hsl(0,0%,100%/0.7)] border-[hsl(0,0%,100%/0.2)]",
+  explorer: "text-emerald-400 border-emerald-400/30",
+  pro: "text-[hsl(var(--indigo-light))] border-[hsl(var(--indigo-light)/0.3)]",
+  premium: "text-amber-400 border-amber-400/30",
+};
+
+const tierLabel: Record<string, string> = {
+  profile: "Profile",
+  explorer: "Free",
+  pro: "Pro",
+  premium: "★ Premium",
+};
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -135,8 +125,36 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const currentPage = location.pathname.replace("/", "") || "Dashboard";
   const { user, isAdmin, profile, signOut, viewingAsUser, setViewingAsUser, simulatedTier, setSimulatedTier } = useAuth();
-  const { canAccess, getRequiredTier, isVisible, isAdminOnly } = useSectionAccess();
+  const { canAccess, isVisible, sections } = useSectionAccess();
   const isTrueAdmin = isAdmin || viewingAsUser;
+
+  // Build dynamic tier groups from DB section_access data
+  const dynamicTierGroups = useMemo(() => {
+    // Profile group is always static
+    const groups: { tier: string; label: string; badgeClass: string; items: typeof profileItems }[] = [
+      { tier: "profile", label: tierLabel.profile, badgeClass: tierBadgeClass.profile, items: profileItems },
+    ];
+
+    // Bucket nav items by their DB-assigned tier
+    const buckets: Record<string, typeof allNavItems> = { explorer: [], pro: [], premium: [] };
+    for (const item of allNavItems) {
+      const dbSection = sections.find((s) => s.section_key === item.sectionKey);
+      const tier = dbSection?.required_tier || "explorer";
+      buckets[tier].push(item);
+    }
+
+    for (const tier of ["explorer", "pro", "premium"] as const) {
+      if (buckets[tier].length > 0) {
+        groups.push({
+          tier,
+          label: tierLabel[tier],
+          badgeClass: tierBadgeClass[tier],
+          items: buckets[tier].map((i) => ({ name: i.name, page: i.page, icon: i.icon })),
+        });
+      }
+    }
+    return groups;
+  }, [sections]);
 
   const toggleGroup = (tier: string) => {
     setOpenGroups((prev) => ({ ...prev, [tier]: !prev[tier] }));
@@ -191,7 +209,7 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Nav */}
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {tierGroups.map((group) => {
+          {dynamicTierGroups.map((group) => {
             // Check if any item in this group is visible
             const visibleItems = group.items.filter((item) => {
               const sectionKey = sectionKeyMap[item.page];

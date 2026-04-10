@@ -66,6 +66,7 @@ export default function Syllabus() {
   const urlDomain = searchParams.get("domain");
   const urlSection = searchParams.get("section");
 
+  const [topicSearch, setTopicSearch] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
@@ -185,6 +186,16 @@ export default function Syllabus() {
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-foreground mb-1">PL-300 Exam Syllabus</h1>
           <p className="text-sm text-muted-foreground">Select a topic to explore</p>
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search topics..."
+              value={topicSearch}
+              onChange={(e) => setTopicSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
         </div>
 
         {/* Exam Info */}

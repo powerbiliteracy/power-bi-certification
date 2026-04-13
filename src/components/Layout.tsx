@@ -88,7 +88,7 @@ const allNavItems: { name: string; page: string; icon: any; sectionKey: string }
   { name: "DAX Templates", page: "DAXTemplates", icon: Code, sectionKey: "dax-templates" },
   { name: "Troubleshooting", page: "Troubleshooting", icon: AlertTriangle, sectionKey: "troubleshooting" },
   { name: "Decision Framework", page: "DecisionFramework", icon: GitBranch, sectionKey: "decision-framework" },
-  { name: "Exam Questions", page: "PracticeSets", icon: Brain, sectionKey: "practice-sets" },
+  { name: "Exam Simulations", page: "PracticeSets", icon: Brain, sectionKey: "practice-sets" },
   { name: "Student Reviews", page: "Reviews", icon: MessageSquare, sectionKey: "reviews" },
   { name: "Study Plan", page: "StudyPlan", icon: ClipboardList, sectionKey: "study-plan" },
 ];

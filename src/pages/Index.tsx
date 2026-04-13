@@ -125,7 +125,7 @@ const appSections = [
   },
   {
     icon: Brain,
-    name: "Exam Questions",
+    name: "Exam Simulations",
     description: "200+ practice questions in timed sets simulating the real PL-300 exam experience.",
     tier: "pro",
     image: imgExamQuestions,

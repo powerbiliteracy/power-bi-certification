@@ -146,7 +146,7 @@ export default function Dashboard() {
         locked: !canAccess("troubleshooting"),
       },
       {
-        label: "Exam Questions",
+        label: "Exam Simulations",
         page: "PracticeSets",
         completed: completedPracticeSets.length,
         total: 7,
@@ -338,7 +338,7 @@ export default function Dashboard() {
           {[
             { label: "Study Syllabus", page: "Syllabus", sectionKey: "syllabus", icon: BookOpen, color: "text-primary" },
             { label: "Topic Assessments", page: "Assessment", sectionKey: "assessment", icon: Brain, color: "text-accent" },
-            { label: "Exam Questions", page: "PracticeSets", sectionKey: "practice-sets", icon: Zap, color: "text-chart-5" },
+            { label: "Exam Simulations", page: "PracticeSets", sectionKey: "practice-sets", icon: Zap, color: "text-chart-5" },
           ].map((link) => {
             const hasAccess = canAccess(link.sectionKey);
             return (

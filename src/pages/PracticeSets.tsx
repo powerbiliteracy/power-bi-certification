@@ -96,7 +96,7 @@ export default function PracticeSets() {
     return (
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Exam Questions</h1>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Exam Simulations</h1>
           <p className="text-muted-foreground mt-1">7 sets • 12 questions each • Real-world scenarios</p>
         </div>
 

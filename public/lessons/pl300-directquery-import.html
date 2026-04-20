@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: DirectQuery vs Import</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            border-bottom: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background: radial-gradient(circle at 20% 50%, #10b981 0%, transparent 50%), 
+                        radial-gradient(circle at 80% 80%, #059669 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .header-text h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            font-family: 'Georgia', serif;
+        }
+
+        .header-text p {
+            color: rgba(34, 197, 94, 0.8);
+            font-size: 1.125rem;
+        }
+
+        .tabs {
+            max-width: 80rem;
+            margin: 2rem auto 0;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.4);
+            color: #cbd5e1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: rgba(34, 197, 94, 0.3);
+            border-color: rgba(34, 197, 94, 1);
+            color: rgba(34, 197, 94, 1);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+        }
+
+        .container {
+            max-width: 80rem;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            background: linear-gradient(to bottom right, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            color: rgba(34, 197, 94, 0.8);
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            margin: 1.5rem 0;
+            border-collapse: collapse;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        .comparison-table .attribute {
+            font-weight: bold;
+            color: #ffffff;
+            width: 20%;
+        }
+
+        .comparison-table .import {
+            color: rgba(34, 197, 94, 1);
+        }
+
+        .comparison-table .directquery {
+            color: rgba(59, 130, 246, 1);
+        }
+
+        .scenario-item {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .scenario-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-expanded {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .scenario-item.expanded .scenario-expanded {
+            display: block;
+        }
+
+        .recommendation-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .import-badge {
+            background: rgba(34, 197, 94, 0.2);
+            color: rgba(134, 239, 172, 1);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+        }
+
+        .directquery-badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: rgba(147, 197, 253, 1);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+        }
+
+        .decision-step {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin: 0.5rem 0;
+            margin-left: 2rem;
+        }
+
+        .decision-yes {
+            border-left: 3px solid rgba(34, 197, 94, 0.5);
+            padding-left: 1rem;
+        }
+
+        .decision-no {
+            border-left: 3px solid rgba(59, 130, 246, 0.5);
+            padding-left: 1rem;
+        }
+
+        .quiz-question {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question.answered {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .quiz-question.answered.incorrect {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .question-text {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .option {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option:hover:not(:disabled) {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .option.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .option-radio {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #10b981, #059669);
+            transition: width 0.5s ease;
+        }
+
+        .footer {
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            margin-top: 3rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        h2, h3, h4 {
+            color: #ffffff;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            margin-bottom: 1.5rem;
+            font-family: 'Georgia', serif;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-retake {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(34, 197, 94, 0.3);
+            border: 1px solid rgba(34, 197, 94, 1);
+            color: rgba(34, 197, 94, 1);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retake:hover {
+            background: rgba(34, 197, 94, 0.4);
+        }
+
+        .quiz-complete {
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.75rem;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .quiz-complete.low {
+            background: rgba(250, 204, 21, 0.15);
+            border: 1px solid rgba(250, 204, 21, 0.4);
+        }
+
+        .quiz-complete h3 {
+            color: #86efac;
+        }
+
+        .quiz-complete.low h3 {
+            color: #fde047;
+        }
+
+        .quiz-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #10b981;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">⚡</div>
+            <div class="header-text">
+                <h1>DirectQuery vs Import</h1>
+                <p>PL-300: Mastering the Critical Performance & Real-Time Data Trade-Offs</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('comparison', event)">⚖️ Comparison</button>
+        <button class="tab-button" onclick="switchTab('scenarios', event)">🎯 Real Scenarios</button>
+        <button class="tab-button" onclick="switchTab('tree', event)">🌳 Decision Tree</button>
+        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚡</div>
+                    <div class="card-title">Import Mode</div>
+                    <div class="card-subtitle">Speed-Focused</div>
+                    <div style="color: #cbd5e1; font-size: 0.875rem; line-height: 1.6;">Loads data into Power BI's in-memory model, enabling lightning-fast queries and rich analytics.</div>
+                    <div class="list-item" style="margin-top: 1rem; color: #86efac;">✓ Sub-second report performance</div>
+                    <div class="list-item" style="color: #86efac;">✓ Full DAX capabilities</div>
+                    <div class="list-item" style="color: #86efac;">✓ Works offline</div>
+                    <div class="list-item" style="color: #facc15;">⚠ Limited by file size</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔄</div>
+                    <div class="card-title">DirectQuery Mode</div>
+                    <div class="card-subtitle">Real-Time-Focused</div>
+                    <div style="color: #cbd5e1; font-size: 0.875rem; line-height: 1.6;">Queries source database directly on every interaction, ensuring always-current data.</div>
+                    <div class="list-item" style="margin-top: 1rem; color: #86efac;">✓ Always real-time data</div>
+                    <div class="list-item" style="color: #86efac;">✓ No size limitations</div>
+                    <div class="list-item" style="color: #86efac;">✓ Minimal file size</div>
+                    <div class="list-item" style="color: #facc15;">⚠ Slower report loads</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(34, 197, 94, 0.3); background: linear-gradient(to right, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1));">
+                <h3>The Big Picture</h3>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                    <span style="font-weight: bold; color: #86efac;">Import</span> and <span style="font-weight: bold; color: #93c5fd;">DirectQuery</span> represent opposite ends of a spectrum:
+                </p>
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem;">
+                    Import prioritizes <strong>speed</strong> through in-memory storage. DirectQuery prioritizes <strong>real-time accuracy</strong> through source querying. Choose based on your data size, refresh frequency, and performance requirements.
+                </p>
+                <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.3); border-radius: 0.5rem; border: 1px solid rgba(34, 197, 94, 0.2);">
+                        <h4 style="color: #86efac; margin-bottom: 0.5rem;">Import Excels When:</h4>
+                        <div class="list-item">• Performance is critical</div>
+                        <div class="list-item">• Data fits in model</div>
+                        <div class="list-item">• Complex DAX needed</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.3); border-radius: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        <h4 style="color: #93c5fd; margin-bottom: 0.5rem;">DirectQuery Excels When:</h4>
+                        <div class="list-item">• Real-time required</div>
+                        <div class="list-item">• Data too large</div>
+                        <div class="list-item">• Simple queries</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Tab -->
+        <div id="comparison" class="tab-content">
+            <h2>DirectQuery vs Import Comparison</h2>
+            <div style="overflow-x: auto;">
+                <table class="comparison-table">
+                    <tr>
+                        <td class="attribute">Attribute</td>
+                        <td class="import"><strong>Import</strong></td>
+                        <td class="directquery"><strong>DirectQuery</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="attribute">Data Refresh</td>
+                        <td>Scheduled refresh (1/day, hourly, etc.)</td>
+                        <td>Real-time whenever query runs</td>
+                    </tr>
+                    <tr>
+                        <td class="attribute">Report Load Speed</td>
+                        <td>⚡ Lightning fast (sub-second)</td>
+                        <td>⏳ Depends on network & DB</td>
+                    </tr>
+                    <tr>
+                        <td class="attribute">Large Datasets</td>
+                        <td>Limited (~2-4GB typical)</td>
+                        <td>Unlimited - queries source</td>
+                    </tr>
+                    <tr>
+                        <td class="attribute">File Size</td>
+                        <td>Creates large .pbix files</td>
+                        <td>Minimal file size</td>
+                    </tr>
+                    <tr>
+                        <td class="attribute">Memory Usage</td>
+                        <td>High in Power BI Service</td>
+                        <td>Low memory consumption</td>
+                    </tr>
+                    <tr>
+                        <td class="attribute">Full DAX Support</td>
+                        <td>✓ Complete support</td>
+                        <td>✗ Limited support</td>
+                    </tr>
+                    <tr>
+                        <td class="attribute">Offline Access</td>
+                        <td>✓ Can work offline</td>
+                        <td>✗ Requires connection</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Scenarios Tab -->
+        <div id="scenarios" class="tab-content">
+            <h2>Real-World Scenarios</h2>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Financial Services - Real-Time Trading Dashboard</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Stock prices updated by the second, portfolio values, risk metrics</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation-badge directquery-badge">DirectQuery</div>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Real-time data requirement is paramount. Traders make decisions on current info. Performance acceptable for financial dashboards.</p>
+                    <p style="color: #cbd5e1;"><strong>Tradeoffs:</strong> Will require Premium license. Report load slightly slower than Import.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Retail Chain - Sales Performance Report</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Daily sales, inventory levels, across 500 stores</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation-badge import-badge">Import</div>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Data refresh completes once daily. Fast performance critical for adoption. Historical aggregation works well in Import.</p>
+                    <p style="color: #cbd5e1;"><strong>Tradeoffs:</strong> File size ~200MB. Must manage capacity on Premium.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Healthcare Analytics - Patient Data Dashboard</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">10+ years of sensitive patient records</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation-badge" style="background: rgba(168, 85, 247, 0.2); color: rgba(221, 214, 254, 1); border: 1px solid rgba(168, 85, 247, 0.5);">Hybrid (Dual Mode)</div>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Large sensitive data - Import core facts. Use DirectQuery for real-time alerts. Compliance requires audit trail.</p>
+                    <p style="color: #cbd5e1;"><strong>Tradeoffs:</strong> Dual mode adds complexity but balances compliance and performance.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">SaaS Platform - Customer Metrics</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Subscription status, usage metrics, support data - 200 support agents</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation-badge directquery-badge">DirectQuery + Premium</div>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Customer data changes frequently. Support agents need current status. Source database optimized for queries.</p>
+                    <p style="color: #cbd5e1;"><strong>Tradeoffs:</strong> Must handle 200 concurrent users. Database indexing critical.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decision Tree Tab -->
+        <div id="tree" class="tab-content">
+            <h2>Decision Tree: Import or DirectQuery?</h2>
+            <p style="color: #cbd5e1; margin-bottom: 2rem;">Work through these questions in order. Your answer will guide you to the right choice.</p>
+
+            <div class="card">
+                <h4 style="color: #86efac;">Question 1: Do you need real-time data (updates per second/minute)?</h4>
+                <div class="decision-yes" style="margin-top: 1rem;">
+                    <strong style="color: #86efac;">YES → DirectQuery</strong>
+                </div>
+                <div class="decision-no">
+                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
+                <h4 style="color: #86efac;">Question 2: Is your dataset larger than 2-4 GB?</h4>
+                <div class="decision-yes" style="margin-top: 1rem;">
+                    <strong style="color: #86efac;">YES → DirectQuery or aggregated Import</strong>
+                </div>
+                <div class="decision-no">
+                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
+                <h4 style="color: #86efac;">Question 3: Do users need to work offline?</h4>
+                <div class="decision-yes" style="margin-top: 1rem;">
+                    <strong style="color: #86efac;">YES → Import</strong>
+                </div>
+                <div class="decision-no">
+                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
+                <h4 style="color: #86efac;">Question 4: Is report performance (sub-second loads) critical?</h4>
+                <div class="decision-yes" style="margin-top: 1rem;">
+                    <strong style="color: #86efac;">YES → Import</strong>
+                </div>
+                <div class="decision-no">
+                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
+                <h4 style="color: #86efac;">Question 5: Are you using complex DAX?</h4>
+                <div class="decision-yes" style="margin-top: 1rem;">
+                    <strong style="color: #86efac;">YES → Import</strong>
+                </div>
+                <div class="decision-no">
+                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
+                <h4 style="color: #86efac;">Question 6: Can your source database handle high query volume?</h4>
+                <div class="decision-yes" style="margin-top: 1rem;">
+                    <strong style="color: #86efac;">YES → DirectQuery is possible</strong>
+                </div>
+                <div class="decision-no">
+                    <strong style="color: #93c5fd;">NO → Import</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2)); border: 1px solid rgba(34, 197, 94, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div>
+                        <div id="score-text" style="color: #cbd5e1;"></div>
+                    </div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #10b981; display: none;">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Master the PL-300 Certification • DirectQuery vs Import: The Foundation of Power BI Architecture</p>
+    </div>
+
+    <script>
+        const quizQuestions = [
+            {
+                id: 1,
+                question: "You have a dataset of 500 million customer transactions. Which mode do you choose?",
+                options: [
+                    { text: "Import - Load all 500M rows into Power BI", correct: false },
+                    { text: "DirectQuery - Query at source, never load all data", correct: true },
+                    { text: "Live Connection - Real-time only", correct: false },
+                    { text: "Aggregate in Excel first", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                question: "What is the PRIMARY advantage of Import mode?",
+                options: [
+                    { text: "Lightning-fast report performance", correct: true },
+                    { text: "Always shows real-time data", correct: false },
+                    { text: "Works with unlimited data sizes", correct: false },
+                    { text: "No Premium license needed", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                question: "You need to display stock prices updated every 5 seconds. Which is best?",
+                options: [
+                    { text: "Import with 5-minute refresh schedule", correct: false },
+                    { text: "DirectQuery for real-time data", correct: true },
+                    { text: "Live Connection only", correct: false },
+                    { text: "Manual refresh each time", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                question: "Which scenario favors Import mode?",
+                options: [
+                    { text: "Sales team needs report to load in <1 second", correct: true },
+                    { text: "Financial traders need updates per second", correct: false },
+                    { text: "Manufacturing needs real-time equipment status", correct: false },
+                    { text: "Data source has 2 billion rows", correct: false }
+                ]
+            },
+            {
+                id: 5,
+                question: "What happens to query folding in DirectQuery?",
+                options: [
+                    { text: "All transforms pushed to source database", correct: false },
+                    { text: "Folding is limited by source database capabilities", correct: true },
+                    { text: "No query folding possible in DirectQuery", correct: false },
+                    { text: "Query folding is better than Import", correct: false }
+                ]
+            },
+            {
+                id: 6,
+                question: "DirectQuery requires which license level for on-premises sources?",
+                options: [
+                    { text: "Pro license is sufficient", correct: false },
+                    { text: "Premium Per User is required", correct: false },
+                    { text: "Premium Capacity is required", correct: true },
+                    { text: "Any license works with on-premises", correct: false }
+                ]
+            },
+            {
+                id: 7,
+                question: "Which mode is best for users who need offline access?",
+                options: [
+                    { text: "DirectQuery (only mode that works offline)", correct: false },
+                    { text: "Import (can work offline)", correct: true },
+                    { text: "Live Connection (works everywhere)", correct: false },
+                    { text: "Both work offline", correct: false }
+                ]
+            },
+            {
+                id: 8,
+                question: "What is a major risk of DirectQuery with 200+ concurrent users?",
+                options: [
+                    { text: "Source database can be overwhelmed with queries", correct: true },
+                    { text: "Power BI Service will crash", correct: false },
+                    { text: "Report performance improves", correct: false },
+                    { text: "Real-time data becomes inaccurate", correct: false }
+                ]
+            }
+        ];
+
+        let quizAnswers = {};
+
+        function switchTab(tabName, e) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+
+            if (tabName === 'quiz') {
+                initializeQuiz();
+            }
+        }
+
+        function toggleScenario(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            if (container.innerHTML) return;
+
+            quizQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-question';
+                div.id = `question-${q.id}`;
+
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    optionsHTML += `
+                        <button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})">
+                            <span class="option-radio"></span>
+                            <span>${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                div.innerHTML = `
+                    <div class="question-text">${q.question}</div>
+                    ${optionsHTML}
+                    <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return;
+
+            quizAnswers[questionId] = isCorrect;
+            
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) {
+                    btn.classList.add('correct');
+                } else if (btn === event.target) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            updateProgress();
+
+            if (Object.keys(quizAnswers).length === quizQuestions.length) {
+                showQuizComplete();
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+            const isGood = percentage >= 0.75;
+
+            const completeDiv = document.getElementById('quiz-complete');
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `
+                <h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3>
+                <div class="quiz-score">${Math.round(percentage * 100)}%</div>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                    ${isGood ? "Excellent! You've mastered the DirectQuery vs Import decision framework." : "Review the scenarios and decision tree to strengthen your understanding."}
+                </p>
+                <button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>
+            `;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+    </script>
+</body>
+</html>

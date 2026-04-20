@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: Create & Modify Parameters</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 50%, #1a0f2e 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background: radial-gradient(circle at 20% 50%, #a855f7 0%, transparent 50%), 
+                        radial-gradient(circle at 80% 80%, #c084fc 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .header-text h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            font-family: 'Georgia', serif;
+        }
+
+        .header-text p {
+            color: rgba(168, 85, 247, 0.8);
+            font-size: 1.125rem;
+        }
+
+        .tabs {
+            max-width: 80rem;
+            margin: 2rem auto 0;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.4);
+            color: #cbd5e1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: rgba(168, 85, 247, 0.3);
+            border-color: rgba(168, 85, 247, 1);
+            color: rgba(168, 85, 247, 1);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .container {
+            max-width: 80rem;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            background: linear-gradient(to bottom right, rgba(168, 85, 247, 0.1), rgba(168, 85, 247, 0.05));
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .expandable {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .expandable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .expandable-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .expandable.expanded .expandable-content {
+            display: block;
+        }
+
+        .expandable-toggle {
+            transition: transform 0.3s ease;
+            color: rgba(168, 85, 247, 1);
+        }
+
+        .expandable.expanded .expandable-toggle {
+            transform: rotate(180deg);
+        }
+
+        .type-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .type-button {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            color: #cbd5e1;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .type-button.active {
+            background: rgba(168, 85, 247, 0.3);
+            border-color: rgba(168, 85, 247, 0.8);
+            color: rgba(168, 85, 247, 1);
+        }
+
+        .demo-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin-bottom: 1rem;
+        }
+
+        .demo-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-value {
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-block {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .step {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .step-number {
+            width: 2rem;
+            height: 2rem;
+            min-width: 2rem;
+            border-radius: 50%;
+            background: rgba(168, 85, 247, 0.3);
+            border: 1px solid rgba(168, 85, 247, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: rgba(168, 85, 247, 1);
+        }
+
+        .step-content h4 {
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .use-case {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .use-case-title {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .use-case-expanded {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .use-case.expanded .use-case-expanded {
+            display: block;
+        }
+
+        .quiz-question {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question.answered {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .quiz-question.answered.incorrect {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .question-text {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .option {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option:hover:not(:disabled) {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .option.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .option-radio {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #a855f7, #c084fc);
+            transition: width 0.5s ease;
+        }
+
+        .footer {
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            margin-top: 3rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        h2, h3, h4 {
+            color: #ffffff;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            margin-bottom: 1.5rem;
+            font-family: 'Georgia', serif;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-retake {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(168, 85, 247, 0.3);
+            border: 1px solid rgba(168, 85, 247, 1);
+            color: rgba(168, 85, 247, 1);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retake:hover {
+            background: rgba(168, 85, 247, 0.4);
+        }
+
+        .quiz-complete {
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.75rem;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .quiz-complete.low {
+            background: rgba(250, 204, 21, 0.15);
+            border: 1px solid rgba(250, 204, 21, 0.4);
+        }
+
+        .quiz-complete h3 {
+            color: #86efac;
+        }
+
+        .quiz-complete.low h3 {
+            color: #fde047;
+        }
+
+        .quiz-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #a855f7;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">🎚️</div>
+            <div class="header-text">
+                <h1>Create & Modify Parameters</h1>
+                <p>PL-300: Dynamic Reusable Values, Flexibility & User Control</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('types', event)">🔢 Types</button>
+        <button class="tab-button" onclick="switchTab('creation', event)">➕ How to Create</button>
+        <button class="tab-button" onclick="switchTab('usecases', event)">💡 Use Cases</button>
+        <button class="tab-button" onclick="switchTab('modify', event)">✏️ Modifying</button>
+        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚡</div>
+                    <div class="card-title">Flexibility</div>
+                    <div class="list-item">Change values without touching M code</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔄</div>
+                    <div class="card-title">Reusability</div>
+                    <div class="list-item">Reference same parameter in multiple queries</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">👥</div>
+                    <div class="card-title">User Control</div>
+                    <div class="list-item">Non-technical users adjust values easily</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(168, 85, 247, 0.3); background: linear-gradient(to right, rgba(168, 85, 247, 0.1), rgba(168, 85, 247, 0.05));">
+                <h2>What Are Parameters?</h2>
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem; line-height: 1.6;">
+                    <span style="font-weight: bold; color: rgba(168, 85, 247, 1);">Parameters</span> are reusable placeholder values in Power Query (M) that can be referenced throughout your queries. Instead of hardcoding values like <span style="font-family: monospace; color: rgba(168, 85, 247, 0.8);">2024</span> or <span style="font-family: monospace; color: rgba(168, 85, 247, 0.8);">"North America"</span>, you create a parameter and reference it by name.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3 style="color: rgba(168, 85, 247, 1); margin-bottom: 1rem;">Key Benefits</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Reduce hardcoded values in queries</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Enable business users to adjust filters</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Support what-if scenarios dynamically</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Maintain consistency across queries</div>
+                        <div class="list-item">✓ Improve report maintainability</div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: rgba(168, 85, 247, 1); margin-bottom: 1rem;">Common Scenarios</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">• Year/Period filtering</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">• Regional/geographic selection</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">• Threshold/KPI adjustments</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">• Currency conversion rates</div>
+                        <div class="list-item">• What-if analysis scenarios</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Types Tab -->
+        <div id="types" class="tab-content">
+            <h2>Parameter Types</h2>
+            
+            <div class="type-selector">
+                <button class="type-button active" onclick="switchType(0, event)">🔢</button>
+                <button class="type-button" onclick="switchType(1, event)">📝</button>
+                <button class="type-button" onclick="switchType(2, event)">💯</button>
+                <button class="type-button" onclick="switchType(3, event)">📅</button>
+                <button class="type-button" onclick="switchType(4, event)">📋</button>
+            </div>
+
+            <div id="type-detail" class="card" style="border-color: rgba(168, 85, 247, 0.3); background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.4), rgba(30, 41, 59, 0.2));"></div>
+        </div>
+
+        <!-- Creation Tab -->
+        <div id="creation" class="tab-content">
+            <h2>Creating a Parameter: Step-by-Step</h2>
+            
+            <div class="card" style="border-color: rgba(168, 85, 247, 0.3); background: linear-gradient(to right, rgba(168, 85, 247, 0.1), rgba(168, 85, 247, 0.05)); margin-bottom: 2rem;">
+                <div id="steps-container"></div>
+            </div>
+
+            <h3>Interactive Demo: Create a Year Parameter</h3>
+            <div class="card">
+                <div class="demo-box">
+                    <div class="demo-label">Parameter Name:</div>
+                    <div class="demo-value">SelectedYear</div>
+                </div>
+
+                <div class="demo-box">
+                    <div class="demo-label">Data Type:</div>
+                    <div class="demo-value">Whole Number</div>
+                </div>
+
+                <div class="demo-box">
+                    <div class="demo-label">Default Value:</div>
+                    <input type="number" id="demoValue" value="2024" style="width: 100%; padding: 0.5rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(51, 65, 85, 0.3); color: #ffffff; border-radius: 0.25rem;">
+                </div>
+
+                <div class="demo-box">
+                    <div class="demo-label">Suggested Values:</div>
+                    <div class="demo-value">List (2022, 2023, 2024)</div>
+                </div>
+
+                <button onclick="toggleCodeBlock()" style="width: 100%; padding: 1rem; margin-top: 1rem; background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); color: rgba(168, 85, 247, 1); font-weight: bold; border-radius: 0.5rem; cursor: pointer;">Show/Hide M Code</button>
+
+                <div id="code-block" class="code-block" style="display: none;">// How to reference in your query:
+let
+  Source = Excel.Workbook(File.Contents("Sales.xlsx")),
+  SalesData = Source{[Item="SalesData"]}[Content],
+  Filtered = Table.SelectRows(
+    SalesData,
+    each [Year] = SelectedYear  // ← Reference the parameter
+  )
+in
+  Filtered</div>
+            </div>
+        </div>
+
+        <!-- Use Cases Tab -->
+        <div id="usecases" class="tab-content">
+            <h2>Real-World Use Cases</h2>
+            
+            <div id="usecases-container"></div>
+        </div>
+
+        <!-- Modify Tab -->
+        <div id="modify" class="tab-content">
+            <h2>Modifying Existing Parameters</h2>
+            
+            <div id="modify-container"></div>
+
+            <h3 style="margin-top: 2rem;">Safe vs Breaking Changes</h3>
+            <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="card" style="border-color: rgba(34, 197, 94, 0.3); background: linear-gradient(to bottom right, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));">
+                    <h4 style="color: rgba(134, 239, 172, 1); margin-bottom: 1rem;">✓ Safe Modifications</h4>
+                    <div class="list-item">Changing default value</div>
+                    <div class="list-item">Updating list items</div>
+                    <div class="list-item">Changing description</div>
+                    <div class="list-item">Modifying suggested values source</div>
+                </div>
+
+                <div class="card" style="border-color: rgba(239, 68, 68, 0.3); background: linear-gradient(to bottom right, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));">
+                    <h4 style="color: rgba(252, 165, 165, 1); margin-bottom: 1rem;">⚠ Breaking Changes</h4>
+                    <div class="list-item">Renaming parameter (breaks all references)</div>
+                    <div class="list-item">Changing data type (may break queries)</div>
+                    <div class="list-item">Deleting parameter (leaves orphaned references)</div>
+                    <div class="list-item">Changing from Text to Number</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.2)); border: 1px solid rgba(168, 85, 247, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div>
+                        <div id="score-text" style="color: #cbd5e1;"></div>
+                    </div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #a855f7; display: none;">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Master the PL-300 Certification • Creating & Modifying Parameters for Dynamic Power BI Solutions</p>
+    </div>
+
+    <script>
+        const parameterTypes = [
+            {
+                name: "Simple Numeric Parameter",
+                icon: "🔢",
+                description: "Stores a single number",
+                dataType: "Whole Number",
+                example: "Year, Quantity, Threshold",
+                when: ["Filtering data by year", "Setting thresholds", "Calculations"],
+                pros: ["Simple to create", "Fast performance", "Easy to use in filters"],
+                cons: ["Limited scope", "Not ideal for complex logic"]
+            },
+            {
+                name: "Text Parameter",
+                icon: "📝",
+                description: "Stores text values",
+                dataType: "Text",
+                example: "Region name, Product category, Country",
+                when: ["Filtering by text fields", "Dynamic naming", "Conditional logic"],
+                pros: ["Flexible", "Great for filtering", "Case-sensitive options"],
+                cons: ["Validation needed", "Can create typos", "No autocomplete"]
+            },
+            {
+                name: "Decimal Parameter",
+                icon: "💯",
+                description: "Stores decimal numbers for precision",
+                dataType: "Decimal Number",
+                example: "Exchange rate, Commission rate, Discount percentage",
+                when: ["Currency conversion", "Percentage calculations", "Precise thresholds"],
+                pros: ["Precise calculations", "Good for percentages", "Financial accuracy"],
+                cons: ["Floating point issues", "Requires validation", "Harder to debug"]
+            },
+            {
+                name: "Date Parameter",
+                icon: "📅",
+                description: "Stores dates for time-based filtering",
+                dataType: "Date",
+                example: "Report date, Start date, End date",
+                when: ["Dynamic date ranges", "Period filters", "Time-series analysis"],
+                pros: ["Perfect for time filters", "Prevents invalid dates", "Works with DAX"],
+                cons: ["Timezone issues", "Format specificity", "Layout limited"]
+            },
+            {
+                name: "List Parameter",
+                icon: "📋",
+                description: "Stores multiple predefined values",
+                dataType: "List",
+                example: "Region list, Product categories, Department names",
+                when: ["Dropdown filters", "Category selection", "Multi-select scenarios"],
+                pros: ["Prevents invalid entries", "User-friendly", "Consistent values"],
+                cons: ["Must maintain list", "Not dynamic", "Fixed options"]
+            }
+        ];
+
+        const useCases = [
+            {
+                title: "Dynamic Threshold for Sales Reports",
+                problem: "Threshold hardcoded in queries",
+                solution: "Create Numeric Parameter 'MinSalesThreshold' → 10000",
+                benefit: "Non-technical users can change without redeployment"
+            },
+            {
+                title: "Multi-Region Reporting Portal",
+                problem: "Same model for 20+ regions",
+                solution: "Create List Parameter 'SelectedRegion' with all regions",
+                benefit: "One report, multiple regions - data isolation"
+            },
+            {
+                title: "Currency Conversion Dashboard",
+                problem: "Need to view in different currencies",
+                solution: "Create Decimal Parameter 'ExchangeRate' → 0.92",
+                benefit: "Flexible currency switching without code changes"
+            },
+            {
+                title: "What-If Analysis for Forecasting",
+                problem: "Model different growth rates",
+                solution: "Create Decimal Parameter 'GrowthRate' → 0.05",
+                benefit: "Interactive scenario planning without file updates"
+            },
+            {
+                title: "Dynamic Date Range Reporting",
+                problem: "Hardcoded dates go stale",
+                solution: "Create Date Parameter 'StartDate' → TODAY()-90",
+                benefit: "Always current without manual updates"
+            }
+        ];
+
+        const modifyActions = [
+            { action: "Change Default Value", how: "Manage Parameters → Select → Change 'Current Value'", impact: "Affects next execution" },
+            { action: "Update Suggested Values", how: "Edit 'Suggested Values' list", impact: "Changes dropdown options" },
+            { action: "Change Parameter Type", how: "Change 'Type' dropdown", impact: "May break queries if incompatible" },
+            { action: "Rename Parameter", how: "Right-click → Rename", impact: "ALL references break - find/replace needed" },
+            { action: "Delete Parameter", how: "Manage Parameters → Delete", impact: "Removes but leaves broken references" },
+            { action: "Change to Dynamic Values", how: "Change 'Suggested Values' to 'Query'", impact: "Values now from live query" }
+        ];
+
+        const steps = [
+            { number: 1, icon: "📂", title: "Open Power Query Editor", description: "Home → Edit Queries" },
+            { number: 2, icon: "➕", title: "Create New Parameter", description: "Home → New Parameter" },
+            { number: 3, icon: "⚙️", title: "Configure Details", description: "Name, Type, Default Value" },
+            { number: 4, icon: "📋", title: "Set Suggested Values", description: "All, List, Query, or Range" },
+            { number: 5, icon: "🔗", title: "Reference Parameter", description: "[ParameterName] in M code" },
+            { number: 6, icon: "✓", title: "Test the Parameter", description: "Change value and verify" }
+        ];
+
+        const quizQuestions = [
+            {
+                id: 1,
+                question: "What is the PRIMARY purpose of a parameter in Power BI?",
+                options: [
+                    { text: "To allow dynamic, reusable values without editing M code", correct: true },
+                    { text: "To encrypt sensitive data automatically", correct: false },
+                    { text: "To improve query performance", correct: false },
+                    { text: "To store backup copies of data", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                question: "Which parameter type would you use for an exchange rate of 0.92?",
+                options: [
+                    { text: "Whole Number", correct: false },
+                    { text: "Decimal Number", correct: true },
+                    { text: "Text", correct: false },
+                    { text: "Date", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                question: "You create a Text Parameter named 'Region'. How do you reference it in M?",
+                options: [
+                    { text: "@Region", correct: false },
+                    { text: "#Region", correct: false },
+                    { text: "[Region]", correct: true },
+                    { text: "$Region", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                question: "What happens when you rename a parameter?",
+                options: [
+                    { text: "All references update automatically", correct: false },
+                    { text: "Only the parameter is renamed", correct: false },
+                    { text: "All query references break and show errors", correct: true },
+                    { text: "Queries are automatically deleted", correct: false }
+                ]
+            },
+            {
+                id: 5,
+                question: "Which 'Suggested Values' option makes parameters dynamic?",
+                options: [
+                    { text: "List - hardcoded values", correct: false },
+                    { text: "All - all values from a column", correct: false },
+                    { text: "Query - values from query results", correct: true },
+                    { text: "Range - numeric range", correct: false }
+                ]
+            },
+            {
+                id: 6,
+                question: "How do you let users modify parameters in Power BI Service?",
+                options: [
+                    { text: "Parameters cannot be changed in Service", correct: false },
+                    { text: "Publish report with 'Edit in Web' enabled", correct: true },
+                    { text: "Create a separate Power BI App", correct: false },
+                    { text: "Parameters only work in Desktop", correct: false }
+                ]
+            },
+            {
+                id: 7,
+                question: "Which scenario best uses a List parameter?",
+                options: [
+                    { text: "Storing a numeric threshold value", correct: false },
+                    { text: "Filtering by predefined region names", correct: true },
+                    { text: "Storing an exchange rate", correct: false },
+                    { text: "Dynamic date calculations", correct: false }
+                ]
+            },
+            {
+                id: 8,
+                question: "How do you create dependent parameters (Parameter 2 based on Parameter 1)?",
+                options: [
+                    { text: "Not possible in Power BI", correct: false },
+                    { text: "Set Parameter 2's 'Suggested Values' to 'Query' filtered by Parameter 1", correct: true },
+                    { text: "Link them in DAX only", correct: false },
+                    { text: "Create them as a single combined parameter", correct: false }
+                ]
+            }
+        ];
+
+        let quizAnswers = {};
+        let currentType = 0;
+
+        function switchTab(tabName, e) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+
+            if (tabName === 'types') {
+                switchType(0);
+            } else if (tabName === 'creation') {
+                initializeCreation();
+            } else if (tabName === 'usecases') {
+                initializeUseCases();
+            } else if (tabName === 'modify') {
+                initializeModify();
+            } else if (tabName === 'quiz') {
+                initializeQuiz();
+            }
+        }
+
+        function switchType(index, e) {
+            if (e) {
+                document.querySelectorAll('.type-button').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+            
+            currentType = index;
+            const type = parameterTypes[index];
+            
+            const detail = document.getElementById('type-detail');
+            detail.innerHTML = `
+                <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 2rem;">
+                    <span style="font-size: 3rem;">${type.icon}</span>
+                    <div>
+                        <h2 style="margin: 0 0 0.5rem 0;">${type.name}</h2>
+                        <p style="color: rgba(168, 85, 247, 1); font-size: 1rem; margin: 0;">${type.description}</p>
+                    </div>
+                </div>
+
+                <h4>Data Type: <span style="color: rgba(168, 85, 247, 1);">${type.dataType}</span></h4>
+                <h4 style="margin-top: 1rem;">Examples: <span style="color: rgba(168, 85, 247, 1); font-weight: normal;">${type.example}</span></h4>
+
+                <h4 style="margin-top: 1.5rem;">When to Use</h4>
+                <div>${type.when.map(w => `<div class="list-item">✓ ${w}</div>`).join('')}</div>
+
+                <h4 style="margin-top: 1.5rem;">Advantages</h4>
+                <div>${type.pros.map(p => `<div class="list-item" style="color: #86efac;">✓ ${p}</div>`).join('')}</div>
+
+                <h4 style="margin-top: 1.5rem;">Considerations</h4>
+                <div>${type.cons.map(c => `<div class="list-item" style="color: #facc15;">⚠ ${c}</div>`).join('')}</div>
+            `;
+        }
+
+        function initializeCreation() {
+            const container = document.getElementById('steps-container');
+            if (container.innerHTML) return;
+
+            steps.forEach(step => {
+                const div = document.createElement('div');
+                div.className = 'step';
+                div.innerHTML = `
+                    <div class="step-number">${step.icon}</div>
+                    <div class="step-content">
+                        <h4>Step ${step.number}: ${step.title}</h4>
+                        <p>${step.description}</p>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function initializeUseCases() {
+            const container = document.getElementById('usecases-container');
+            if (container.innerHTML) return;
+
+            useCases.forEach((useCase, idx) => {
+                const div = document.createElement('div');
+                div.className = 'use-case';
+                div.innerHTML = `
+                    <div class="use-case-title">${useCase.title}</div>
+                    <div style="color: #cbd5e1; font-size: 0.875rem;">${useCase.problem}</div>
+                    <div class="use-case-expanded">
+                        <h4 style="color: rgba(34, 197, 94, 1); margin-top: 1rem;">✓ Solution</h4>
+                        <div style="color: #cbd5e1; margin-bottom: 1rem;">${useCase.solution}</div>
+                        <h4 style="color: rgba(168, 85, 247, 1);">💡 Benefit</h4>
+                        <div style="color: #cbd5e1;">${useCase.benefit}</div>
+                    </div>
+                `;
+                
+                div.addEventListener('click', function() {
+                    this.classList.toggle('expanded');
+                });
+
+                container.appendChild(div);
+            });
+        }
+
+        function initializeModify() {
+            const container = document.getElementById('modify-container');
+            if (container.innerHTML) return;
+
+            modifyActions.forEach((action, idx) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.marginBottom = '1rem';
+                div.innerHTML = `
+                    <h4>${action.action}</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 0.5rem;"><strong>How:</strong> ${action.how}</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> ${action.impact}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleCodeBlock() {
+            const block = document.getElementById('code-block');
+            block.style.display = block.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            if (container.innerHTML) return;
+
+            quizQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-question';
+                div.id = `question-${q.id}`;
+
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    optionsHTML += `
+                        <button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})">
+                            <span class="option-radio"></span>
+                            <span>${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                div.innerHTML = `
+                    <div class="question-text">${q.question}</div>
+                    ${optionsHTML}
+                    <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return;
+
+            quizAnswers[questionId] = isCorrect;
+            
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) {
+                    btn.classList.add('correct');
+                } else if (btn === event.target) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            updateProgress();
+
+            if (Object.keys(quizAnswers).length === quizQuestions.length) {
+                showQuizComplete();
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+            const isGood = percentage >= 0.75;
+
+            const completeDiv = document.getElementById('quiz-complete');
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `
+                <h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3>
+                <div class="quiz-score">${Math.round(percentage * 100)}%</div>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                    ${isGood ? "You've mastered parameter creation and modification for Power BI." : "Review the use cases and advanced scenarios to strengthen your knowledge."}
+                </p>
+                <button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>
+            `;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            switchType(0);
+        });
+    </script>
+</body>
+</html>

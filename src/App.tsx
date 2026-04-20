@@ -32,6 +32,7 @@ import ExamChecklist from "./pages/ExamChecklist";
 import DAXTemplates from "./pages/DAXTemplates";
 import Reviews from "./pages/Reviews";
 import StudyPlan from "./pages/StudyPlan";
+import InteractiveLessons from "./pages/InteractiveLessons";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/DAXTemplates" element={<LayoutWrapper><DAXTemplates /></LayoutWrapper>} />
             <Route path="/Reviews" element={<LayoutWrapper><Reviews /></LayoutWrapper>} />
             <Route path="/StudyPlan" element={<LayoutWrapper><StudyPlan /></LayoutWrapper>} />
+            <Route path="/InteractiveLessons" element={<LayoutWrapper><InteractiveLessons /></LayoutWrapper>} />
             <Route path="/Admin" element={<LayoutWrapper><Admin /></LayoutWrapper>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

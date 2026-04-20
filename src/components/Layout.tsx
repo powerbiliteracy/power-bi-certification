@@ -37,6 +37,7 @@ import {
   Code,
   MessageSquare,
   ClipboardList,
+  PlayCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +70,7 @@ const sectionKeyMap: Record<string, string> = {
   DAXTemplates: "dax-templates",
   Reviews: "reviews",
   StudyPlan: "study-plan",
+  InteractiveLessons: "interactive-lessons",
 };
 
 // All navigable items with their icons — tier assignment comes from DB
@@ -91,6 +93,7 @@ const allNavItems: { name: string; page: string; icon: any; sectionKey: string }
   { name: "Exam Simulations", page: "PracticeSets", icon: Brain, sectionKey: "practice-sets" },
   { name: "Student Reviews", page: "Reviews", icon: MessageSquare, sectionKey: "reviews" },
   { name: "Study Plan", page: "StudyPlan", icon: ClipboardList, sectionKey: "study-plan" },
+  { name: "Interactive Lessons", page: "InteractiveLessons", icon: PlayCircle, sectionKey: "interactive-lessons" },
 ];
 
 const profileItems = [

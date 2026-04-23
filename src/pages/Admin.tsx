@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2 } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import SortableSectionsTable from "@/components/SortableSectionsTable";
@@ -379,6 +379,9 @@ export default function Admin() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button asChild variant="outline" className="gap-2">
+            <a href="/SyllabusAudit"><FileSearch className="w-4 h-4" /> Syllabus Audit</a>
+          </Button>
           <Button
             variant={viewingAsUser ? "default" : "outline"}
             className="gap-2"

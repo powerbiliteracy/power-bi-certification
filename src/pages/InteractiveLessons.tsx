@@ -203,7 +203,8 @@ export default function InteractiveLessons() {
             ))}
           </div>
         </section>
-      ))}
+        );
+      })}
     </div>
   );
 }

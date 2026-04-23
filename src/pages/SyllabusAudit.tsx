@@ -85,7 +85,7 @@ function parseSyllabus(text: string): ParsedDomain[] {
   let currentDomain: ParsedDomain | null = null;
   let currentSection: ParsedSection | null = null;
 
-  const domainRegex = /^([A-Z][A-Za-z0-9 ,&'\\-/]+?)\s*\(?\s*(\d{1,2}\s*[–-]\s*\d{1,2}\s*%|\d{1,2}\s*%)\s*\)?\s*$/;
+  const domainRegex = /^([A-Z][A-Za-z0-9 ,&'/\-]+?)\s*\(?\s*(\d{1,2}\s*[\-–]\s*\d{1,2}\s*%|\d{1,2}\s*%)\s*\)?\s*$/;
   const bulletRegex = /^\s*([-*•·–▪◦]|\d+\.)\s+(.*)$/;
 
   for (const line of lines) {

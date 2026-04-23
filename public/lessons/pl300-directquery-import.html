@@ -1,847 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PL-300: DirectQuery vs Import</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-        }
-
-        .header {
-            background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
-            border-bottom: 1px solid rgba(34, 197, 94, 0.3);
-            padding: 3rem 0;
-            position: relative;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            opacity: 0.1;
-            background: radial-gradient(circle at 20% 50%, #10b981 0%, transparent 50%), 
-                        radial-gradient(circle at 80% 80%, #059669 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        .header-content {
-            max-width: 80rem;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-            position: relative;
-            z-index: 1;
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .header-icon {
-            width: 3.5rem;
-            height: 3.5rem;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            background: rgba(34, 197, 94, 0.2);
-            border: 1px solid rgba(34, 197, 94, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-        }
-
-        .header-text h1 {
-            font-size: 2.25rem;
-            font-weight: bold;
-            margin-bottom: 0.25rem;
-            font-family: 'Georgia', serif;
-        }
-
-        .header-text p {
-            color: rgba(34, 197, 94, 0.8);
-            font-size: 1.125rem;
-        }
-
-        .tabs {
-            max-width: 80rem;
-            margin: 2rem auto 0;
-            padding: 0 1.5rem;
-            display: flex;
-            gap: 0.5rem;
-            overflow-x: auto;
-            padding-bottom: 0.5rem;
-        }
-
-        .tab-button {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            border: 1px solid rgba(51, 65, 85, 0.3);
-            background: rgba(30, 41, 59, 0.4);
-            color: #cbd5e1;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.3s ease;
-        }
-
-        .tab-button.active {
-            background: rgba(34, 197, 94, 0.3);
-            border-color: rgba(34, 197, 94, 1);
-            color: rgba(34, 197, 94, 1);
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
-        }
-
-        .container {
-            max-width: 80rem;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .card {
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            background: linear-gradient(to bottom right, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
-        }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: #ffffff;
-            margin-bottom: 0.5rem;
-        }
-
-        .card-subtitle {
-            color: rgba(34, 197, 94, 0.8);
-            font-weight: bold;
-            margin-bottom: 1rem;
-        }
-
-        .list-item {
-            display: flex;
-            gap: 0.5rem;
-            padding: 0.5rem 0;
-            color: #cbd5e1;
-            font-size: 0.875rem;
-        }
-
-        .comparison-table {
-            width: 100%;
-            margin: 1.5rem 0;
-            border-collapse: collapse;
-        }
-
-        .comparison-table td {
-            padding: 1rem;
-            border: 1px solid rgba(51, 65, 85, 0.3);
-            background: rgba(30, 41, 59, 0.3);
-        }
-
-        .comparison-table .attribute {
-            font-weight: bold;
-            color: #ffffff;
-            width: 20%;
-        }
-
-        .comparison-table .import {
-            color: rgba(34, 197, 94, 1);
-        }
-
-        .comparison-table .directquery {
-            color: rgba(59, 130, 246, 1);
-        }
-
-        .scenario-item {
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            background: rgba(30, 41, 59, 0.3);
-            border: 1px solid rgba(51, 65, 85, 0.3);
-            margin-bottom: 1rem;
-            cursor: pointer;
-        }
-
-        .scenario-title {
-            font-size: 1.125rem;
-            font-weight: bold;
-            color: #ffffff;
-            margin-bottom: 0.5rem;
-        }
-
-        .scenario-expanded {
-            display: none;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(51, 65, 85, 0.3);
-        }
-
-        .scenario-item.expanded .scenario-expanded {
-            display: block;
-        }
-
-        .recommendation-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-        }
-
-        .import-badge {
-            background: rgba(34, 197, 94, 0.2);
-            color: rgba(134, 239, 172, 1);
-            border: 1px solid rgba(34, 197, 94, 0.5);
-        }
-
-        .directquery-badge {
-            background: rgba(59, 130, 246, 0.2);
-            color: rgba(147, 197, 253, 1);
-            border: 1px solid rgba(59, 130, 246, 0.5);
-        }
-
-        .decision-step {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            background: rgba(30, 41, 59, 0.3);
-            border: 1px solid rgba(51, 65, 85, 0.3);
-            margin: 0.5rem 0;
-            margin-left: 2rem;
-        }
-
-        .decision-yes {
-            border-left: 3px solid rgba(34, 197, 94, 0.5);
-            padding-left: 1rem;
-        }
-
-        .decision-no {
-            border-left: 3px solid rgba(59, 130, 246, 0.5);
-            padding-left: 1rem;
-        }
-
-        .quiz-question {
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            border: 1px solid rgba(51, 65, 85, 0.3);
-            background: rgba(30, 41, 59, 0.3);
-            margin-bottom: 1.5rem;
-        }
-
-        .quiz-question.answered {
-            border-color: rgba(34, 197, 94, 0.3);
-            background: rgba(34, 197, 94, 0.05);
-        }
-
-        .quiz-question.answered.incorrect {
-            border-color: rgba(239, 68, 68, 0.3);
-            background: rgba(239, 68, 68, 0.05);
-        }
-
-        .question-text {
-            font-weight: bold;
-            color: #ffffff;
-            margin-bottom: 1rem;
-        }
-
-        .option {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 2px solid rgba(51, 65, 85, 0.3);
-            background: rgba(30, 41, 59, 0.3);
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .option:hover:not(:disabled) {
-            background: rgba(51, 65, 85, 0.5);
-        }
-
-        .option.correct {
-            background: rgba(34, 197, 94, 0.2);
-            border-color: rgba(34, 197, 94, 0.5);
-            color: rgba(134, 239, 172, 1);
-        }
-
-        .option.incorrect {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: rgba(239, 68, 68, 0.5);
-        }
-
-        .option-radio {
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid currentColor;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 0.5rem;
-            background: rgba(51, 65, 85, 0.5);
-            border-radius: 9999px;
-            overflow: hidden;
-            margin-top: 1rem;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(to right, #10b981, #059669);
-            transition: width 0.5s ease;
-        }
-
-        .footer {
-            border-top: 1px solid rgba(51, 65, 85, 0.3);
-            background: rgba(15, 23, 42, 0.5);
-            margin-top: 3rem;
-            padding: 2rem 0;
-            text-align: center;
-            color: #64748b;
-            font-size: 0.875rem;
-        }
-
-        h2, h3, h4 {
-            color: #ffffff;
-        }
-
-        h2 {
-            font-size: 1.875rem;
-            margin-bottom: 1.5rem;
-            font-family: 'Georgia', serif;
-        }
-
-        h3 {
-            font-size: 1.125rem;
-            margin-bottom: 1rem;
-        }
-
-        .btn-retake {
-            padding: 0.5rem 1.5rem;
-            border-radius: 0.5rem;
-            background: rgba(34, 197, 94, 0.3);
-            border: 1px solid rgba(34, 197, 94, 1);
-            color: rgba(34, 197, 94, 1);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-retake:hover {
-            background: rgba(34, 197, 94, 0.4);
-        }
-
-        .quiz-complete {
-            padding: 2rem;
-            text-align: center;
-            border-radius: 0.75rem;
-            background: rgba(34, 197, 94, 0.15);
-            border: 1px solid rgba(34, 197, 94, 0.4);
-        }
-
-        .quiz-complete.low {
-            background: rgba(250, 204, 21, 0.15);
-            border: 1px solid rgba(250, 204, 21, 0.4);
-        }
-
-        .quiz-complete h3 {
-            color: #86efac;
-        }
-
-        .quiz-complete.low h3 {
-            color: #fde047;
-        }
-
-        .quiz-score {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #10b981;
-            margin-bottom: 0.5rem;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL-300: Choose Between DirectLake, DirectQuery, and Import</title>
+<link rel="stylesheet" href="/lessons/shared.css">
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-content">
-            <div class="header-icon">⚡</div>
-            <div class="header-text">
-                <h1>DirectQuery vs Import</h1>
-                <p>PL-300: Mastering the Critical Performance & Real-Time Data Trade-Offs</p>
-            </div>
-        </div>
+<div class="header">
+  <div class="header-content">
+    <div class="header-icon">⚡</div>
+    <div class="header-text">
+      <h1>Choose Between DirectLake, DirectQuery, and Import</h1>
+      <p>PL-300: Pick the right storage mode for performance, freshness, and scale</p>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-button active" data-tab="overview">📚 Overview</button>
+  <button class="tab-button" data-tab="modes">🧱 The Three Modes</button>
+  <button class="tab-button" data-tab="decision">🧭 Decision Guide</button>
+  <button class="tab-button" data-tab="composite">🧩 Composite & Dual</button>
+  <button class="tab-button" data-tab="scenarios">🏢 Scenarios</button>
+  <button class="tab-button" data-tab="best">⭐ Best Practices</button>
+  <button class="tab-button" data-tab="quiz">✓ Quiz</button>
+</div>
+
+<div class="container">
+  <div id="overview" class="tab-content active">
+    <div class="grid">
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">📦</div><div class="card-title">Import</div><div class="list-item">Data is loaded into the model (VertiPaq).</div></div>
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">🔌</div><div class="card-title">DirectQuery</div><div class="list-item">Queries are sent live to the source on every interaction.</div></div>
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">🌊</div><div class="card-title">DirectLake</div><div class="list-item">Reads Delta/Parquet files directly from OneLake — no import, no DAX-to-SQL translation.</div></div>
+    </div>
+    <div class="info-box">
+      <div style="font-size:1.5rem;">💡</div>
+      <div class="info-box-content">
+        <div class="info-title">What changed in the latest exam</div>
+        <div class="info-text">DirectLake is now the third storage mode you must compare alongside Import and DirectQuery. It's exclusive to <strong>Microsoft Fabric semantic models</strong> built on OneLake (Lakehouse / Warehouse). It targets near-Import performance with near-DirectQuery freshness.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modes" class="tab-content">
+    <h2>How each mode works</h2>
+    <table class="comparison-table">
+      <tr><td class="header">Aspect</td><td class="header">Import</td><td class="header">DirectQuery</td><td class="header">DirectLake</td></tr>
+      <tr><td>Where data lives at query time</td><td>In-memory VertiPaq cache (compressed)</td><td>In the source system</td><td>OneLake Delta/Parquet, paged into memory on demand</td></tr>
+      <tr><td>Refresh model</td><td>Scheduled refresh / incremental refresh</td><td>None — always live</td><td>Automatic framing on Delta commits (no scheduled refresh)</td></tr>
+      <tr><td>Query language sent to source</td><td>None at runtime</td><td>SQL/MDX translated from DAX</td><td>None — reads columnar files directly</td></tr>
+      <tr><td>Performance</td><td>Fastest</td><td>Depends on source</td><td>Near-Import (with fallback to DirectQuery if needed)</td></tr>
+      <tr><td>Data freshness</td><td>As of last refresh</td><td>Real-time</td><td>Near real-time (after Delta commit + framing)</td></tr>
+      <tr><td>Where it's available</td><td>Power BI Desktop & Service</td><td>Power BI Desktop & Service</td><td>Fabric only — on Lakehouse / Warehouse semantic models</td></tr>
+      <tr><td>DAX support</td><td>Full</td><td>Limited (some DAX falls back / fails)</td><td>Full DAX (auto-fallback to DirectQuery for unsupported features)</td></tr>
+      <tr><td>Capacity needs</td><td>Pro / PPU / Fabric</td><td>Pro / PPU / Fabric</td><td>Fabric / Premium F-SKU only</td></tr>
+    </table>
+
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>📦 Import — when it shines</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Best raw query performance for visuals</div>
+        <div class="list-item">✓ Full DAX, calculated columns, and calculation groups</div>
+        <div class="list-item">✓ Works with any data source connector</div>
+        <div class="list-item">✗ Stale until next refresh; capacity memory limits dataset size</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🔌 DirectQuery — when it shines</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Always-live data without scheduled refresh</div>
+        <div class="list-item">✓ Bypasses model size limits — query the source</div>
+        <div class="list-item">✗ Visuals are only as fast as the source can answer DAX-to-SQL</div>
+        <div class="list-item">✗ Some DAX (time intelligence, complex measures) is restricted</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🌊 DirectLake — when it shines</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Import-like speed without copying data into the model</div>
+        <div class="list-item">✓ Auto-updates as Delta tables are written in the Lakehouse</div>
+        <div class="list-item">✓ Full DAX, with automatic fallback to DirectQuery for edge cases</div>
+        <div class="list-item">✗ Requires Fabric capacity and a Lakehouse / Warehouse source</div>
+        <div class="list-item">✗ No Power Query transformations in the semantic model — shape data upstream</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="decision" class="tab-content">
+    <h2>Quick decision guide</h2>
+    <div class="info-box">
+      <div style="font-size:1.5rem;">🧭</div>
+      <div class="info-box-content">
+        <div class="info-title">Start here</div>
+        <div class="info-text">Ask three questions: <strong>How fresh must the data be?</strong> <strong>How big is it?</strong> <strong>Is the source already in OneLake (Fabric)?</strong></div>
+      </div>
     </div>
 
-    <!-- Tabs Navigation -->
-    <div class="tabs">
-        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
-        <button class="tab-button" onclick="switchTab('comparison', event)">⚖️ Comparison</button>
-        <button class="tab-button" onclick="switchTab('scenarios', event)">🎯 Real Scenarios</button>
-        <button class="tab-button" onclick="switchTab('tree', event)">🌳 Decision Tree</button>
-        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    <table class="comparison-table">
+      <tr><td class="header">Requirement</td><td class="header">Recommended mode</td></tr>
+      <tr><td>Daily/weekly snapshot, &lt; a few GB compressed</td><td><strong>Import</strong></td></tr>
+      <tr><td>Source data is already a Fabric Lakehouse / Warehouse</td><td><strong>DirectLake</strong></td></tr>
+      <tr><td>Real-time monitoring (sensors, transactions) on a fast SQL source</td><td><strong>DirectQuery</strong> (or DirectLake if in Fabric)</td></tr>
+      <tr><td>Very large fact (hundreds of millions of rows) on Fabric</td><td><strong>DirectLake</strong></td></tr>
+      <tr><td>Very large fact, no Fabric, fast warehouse</td><td><strong>DirectQuery</strong></td></tr>
+      <tr><td>Mix of huge fact + small dims you want fast</td><td><strong>Composite</strong> (DQ fact + Import dims, or Dual)</td></tr>
+    </table>
+
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🚦 Decision flow (text)</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">1. Is the source a Fabric Lakehouse/Warehouse? → <strong>DirectLake</strong> by default.</div>
+        <div class="list-item">2. Otherwise, does the data fit in memory and is daily refresh OK? → <strong>Import</strong>.</div>
+        <div class="list-item">3. Need real-time and source can handle interactive load? → <strong>DirectQuery</strong>.</div>
+        <div class="list-item">4. Mix of needs? → <strong>Composite</strong> with Dual storage on dimensions.</div>
+      </div>
     </div>
+  </div>
 
-    <div class="container">
-        <!-- Overview Tab -->
-        <div id="overview" class="tab-content active">
-            <div class="grid">
-                <div class="card">
-                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚡</div>
-                    <div class="card-title">Import Mode</div>
-                    <div class="card-subtitle">Speed-Focused</div>
-                    <div style="color: #cbd5e1; font-size: 0.875rem; line-height: 1.6;">Loads data into Power BI's in-memory model, enabling lightning-fast queries and rich analytics.</div>
-                    <div class="list-item" style="margin-top: 1rem; color: #86efac;">✓ Sub-second report performance</div>
-                    <div class="list-item" style="color: #86efac;">✓ Full DAX capabilities</div>
-                    <div class="list-item" style="color: #86efac;">✓ Works offline</div>
-                    <div class="list-item" style="color: #facc15;">⚠ Limited by file size</div>
-                </div>
-
-                <div class="card">
-                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔄</div>
-                    <div class="card-title">DirectQuery Mode</div>
-                    <div class="card-subtitle">Real-Time-Focused</div>
-                    <div style="color: #cbd5e1; font-size: 0.875rem; line-height: 1.6;">Queries source database directly on every interaction, ensuring always-current data.</div>
-                    <div class="list-item" style="margin-top: 1rem; color: #86efac;">✓ Always real-time data</div>
-                    <div class="list-item" style="color: #86efac;">✓ No size limitations</div>
-                    <div class="list-item" style="color: #86efac;">✓ Minimal file size</div>
-                    <div class="list-item" style="color: #facc15;">⚠ Slower report loads</div>
-                </div>
-            </div>
-
-            <div class="card" style="border-color: rgba(34, 197, 94, 0.3); background: linear-gradient(to right, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1));">
-                <h3>The Big Picture</h3>
-                <p style="color: #cbd5e1; margin-bottom: 1rem;">
-                    <span style="font-weight: bold; color: #86efac;">Import</span> and <span style="font-weight: bold; color: #93c5fd;">DirectQuery</span> represent opposite ends of a spectrum:
-                </p>
-                <p style="color: #cbd5e1; margin-bottom: 1.5rem;">
-                    Import prioritizes <strong>speed</strong> through in-memory storage. DirectQuery prioritizes <strong>real-time accuracy</strong> through source querying. Choose based on your data size, refresh frequency, and performance requirements.
-                </p>
-                <div class="grid" style="grid-template-columns: 1fr 1fr;">
-                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.3); border-radius: 0.5rem; border: 1px solid rgba(34, 197, 94, 0.2);">
-                        <h4 style="color: #86efac; margin-bottom: 0.5rem;">Import Excels When:</h4>
-                        <div class="list-item">• Performance is critical</div>
-                        <div class="list-item">• Data fits in model</div>
-                        <div class="list-item">• Complex DAX needed</div>
-                    </div>
-                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.3); border-radius: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.2);">
-                        <h4 style="color: #93c5fd; margin-bottom: 0.5rem;">DirectQuery Excels When:</h4>
-                        <div class="list-item">• Real-time required</div>
-                        <div class="list-item">• Data too large</div>
-                        <div class="list-item">• Simple queries</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Comparison Tab -->
-        <div id="comparison" class="tab-content">
-            <h2>DirectQuery vs Import Comparison</h2>
-            <div style="overflow-x: auto;">
-                <table class="comparison-table">
-                    <tr>
-                        <td class="attribute">Attribute</td>
-                        <td class="import"><strong>Import</strong></td>
-                        <td class="directquery"><strong>DirectQuery</strong></td>
-                    </tr>
-                    <tr>
-                        <td class="attribute">Data Refresh</td>
-                        <td>Scheduled refresh (1/day, hourly, etc.)</td>
-                        <td>Real-time whenever query runs</td>
-                    </tr>
-                    <tr>
-                        <td class="attribute">Report Load Speed</td>
-                        <td>⚡ Lightning fast (sub-second)</td>
-                        <td>⏳ Depends on network & DB</td>
-                    </tr>
-                    <tr>
-                        <td class="attribute">Large Datasets</td>
-                        <td>Limited (~2-4GB typical)</td>
-                        <td>Unlimited - queries source</td>
-                    </tr>
-                    <tr>
-                        <td class="attribute">File Size</td>
-                        <td>Creates large .pbix files</td>
-                        <td>Minimal file size</td>
-                    </tr>
-                    <tr>
-                        <td class="attribute">Memory Usage</td>
-                        <td>High in Power BI Service</td>
-                        <td>Low memory consumption</td>
-                    </tr>
-                    <tr>
-                        <td class="attribute">Full DAX Support</td>
-                        <td>✓ Complete support</td>
-                        <td>✗ Limited support</td>
-                    </tr>
-                    <tr>
-                        <td class="attribute">Offline Access</td>
-                        <td>✓ Can work offline</td>
-                        <td>✗ Requires connection</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <!-- Scenarios Tab -->
-        <div id="scenarios" class="tab-content">
-            <h2>Real-World Scenarios</h2>
-
-            <div class="scenario-item" onclick="toggleScenario(this)">
-                <div class="scenario-title">Financial Services - Real-Time Trading Dashboard</div>
-                <div style="color: #cbd5e1; font-size: 0.875rem;">Stock prices updated by the second, portfolio values, risk metrics</div>
-                <div class="scenario-expanded">
-                    <div class="recommendation-badge directquery-badge">DirectQuery</div>
-                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Real-time data requirement is paramount. Traders make decisions on current info. Performance acceptable for financial dashboards.</p>
-                    <p style="color: #cbd5e1;"><strong>Tradeoffs:</strong> Will require Premium license. Report load slightly slower than Import.</p>
-                </div>
-            </div>
-
-            <div class="scenario-item" onclick="toggleScenario(this)">
-                <div class="scenario-title">Retail Chain - Sales Performance Report</div>
-                <div style="color: #cbd5e1; font-size: 0.875rem;">Daily sales, inventory levels, across 500 stores</div>
-                <div class="scenario-expanded">
-                    <div class="recommendation-badge import-badge">Import</div>
-                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Data refresh completes once daily. Fast performance critical for adoption. Historical aggregation works well in Import.</p>
-                    <p style="color: #cbd5e1;"><strong>Tradeoffs:</strong> File size ~200MB. Must manage capacity on Premium.</p>
-                </div>
-            </div>
-
-            <div class="scenario-item" onclick="toggleScenario(this)">
-                <div class="scenario-title">Healthcare Analytics - Patient Data Dashboard</div>
-                <div style="color: #cbd5e1; font-size: 0.875rem;">10+ years of sensitive patient records</div>
-                <div class="scenario-expanded">
-                    <div class="recommendation-badge" style="background: rgba(168, 85, 247, 0.2); color: rgba(221, 214, 254, 1); border: 1px solid rgba(168, 85, 247, 0.5);">Hybrid (Dual Mode)</div>
-                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Large sensitive data - Import core facts. Use DirectQuery for real-time alerts. Compliance requires audit trail.</p>
-                    <p style="color: #cbd5e1;"><strong>Tradeoffs:</strong> Dual mode adds complexity but balances compliance and performance.</p>
-                </div>
-            </div>
-
-            <div class="scenario-item" onclick="toggleScenario(this)">
-                <div class="scenario-title">SaaS Platform - Customer Metrics</div>
-                <div style="color: #cbd5e1; font-size: 0.875rem;">Subscription status, usage metrics, support data - 200 support agents</div>
-                <div class="scenario-expanded">
-                    <div class="recommendation-badge directquery-badge">DirectQuery + Premium</div>
-                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Customer data changes frequently. Support agents need current status. Source database optimized for queries.</p>
-                    <p style="color: #cbd5e1;"><strong>Tradeoffs:</strong> Must handle 200 concurrent users. Database indexing critical.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Decision Tree Tab -->
-        <div id="tree" class="tab-content">
-            <h2>Decision Tree: Import or DirectQuery?</h2>
-            <p style="color: #cbd5e1; margin-bottom: 2rem;">Work through these questions in order. Your answer will guide you to the right choice.</p>
-
-            <div class="card">
-                <h4 style="color: #86efac;">Question 1: Do you need real-time data (updates per second/minute)?</h4>
-                <div class="decision-yes" style="margin-top: 1rem;">
-                    <strong style="color: #86efac;">YES → DirectQuery</strong>
-                </div>
-                <div class="decision-no">
-                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 1rem;">
-                <h4 style="color: #86efac;">Question 2: Is your dataset larger than 2-4 GB?</h4>
-                <div class="decision-yes" style="margin-top: 1rem;">
-                    <strong style="color: #86efac;">YES → DirectQuery or aggregated Import</strong>
-                </div>
-                <div class="decision-no">
-                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 1rem;">
-                <h4 style="color: #86efac;">Question 3: Do users need to work offline?</h4>
-                <div class="decision-yes" style="margin-top: 1rem;">
-                    <strong style="color: #86efac;">YES → Import</strong>
-                </div>
-                <div class="decision-no">
-                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 1rem;">
-                <h4 style="color: #86efac;">Question 4: Is report performance (sub-second loads) critical?</h4>
-                <div class="decision-yes" style="margin-top: 1rem;">
-                    <strong style="color: #86efac;">YES → Import</strong>
-                </div>
-                <div class="decision-no">
-                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 1rem;">
-                <h4 style="color: #86efac;">Question 5: Are you using complex DAX?</h4>
-                <div class="decision-yes" style="margin-top: 1rem;">
-                    <strong style="color: #86efac;">YES → Import</strong>
-                </div>
-                <div class="decision-no">
-                    <strong style="color: #93c5fd;">NO → Continue to next question</strong>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 1rem;">
-                <h4 style="color: #86efac;">Question 6: Can your source database handle high query volume?</h4>
-                <div class="decision-yes" style="margin-top: 1rem;">
-                    <strong style="color: #86efac;">YES → DirectQuery is possible</strong>
-                </div>
-                <div class="decision-no">
-                    <strong style="color: #93c5fd;">NO → Import</strong>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quiz Tab -->
-        <div id="quiz" class="tab-content">
-            <h2>Test Your Knowledge</h2>
-            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2)); border: 1px solid rgba(34, 197, 94, 0.4);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <div>
-                        <div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div>
-                        <div id="score-text" style="color: #cbd5e1;"></div>
-                    </div>
-                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #10b981; display: none;">0%</div>
-                </div>
-                <div class="progress-bar">
-                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
-                </div>
-            </div>
-            <div id="quiz-container"></div>
-            <div id="quiz-complete" style="display: none;"></div>
-        </div>
+  <div id="composite" class="tab-content">
+    <h2>Composite models, Dual storage & DirectLake fallback</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🧩 Composite models</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Mix Import and DirectQuery sources in one model.</div>
+        <div class="list-item">Common pattern: huge fact in DirectQuery, small dimensions in Import.</div>
+        <div class="list-item">Watch limited relationships and security boundaries between sources.</div>
+      </div>
     </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        <p>Master the PL-300 Certification • DirectQuery vs Import: The Foundation of Power BI Architecture</p>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🪞 Dual storage mode</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Set on dimension tables: behaves as Import when joined to Import facts, DirectQuery when joined to DQ facts.</div>
+        <div class="list-item">Reduces slow cross-source joins in composite models.</div>
+      </div>
     </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>♻️ DirectLake fallback</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">If a query exceeds DirectLake guardrails (row groups, column count, SKU limits), it silently falls back to <strong>DirectQuery on SQL endpoint</strong>.</div>
+        <div class="list-item">Good: queries still return. Bad: performance drops — monitor with Performance Analyzer.</div>
+        <div class="list-item">Reduce risk: keep tables tidy (V-Order optimised Delta), partition large facts, use higher Fabric SKUs.</div>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        const quizQuestions = [
-            {
-                id: 1,
-                question: "You have a dataset of 500 million customer transactions. Which mode do you choose?",
-                options: [
-                    { text: "Import - Load all 500M rows into Power BI", correct: false },
-                    { text: "DirectQuery - Query at source, never load all data", correct: true },
-                    { text: "Live Connection - Real-time only", correct: false },
-                    { text: "Aggregate in Excel first", correct: false }
-                ]
-            },
-            {
-                id: 2,
-                question: "What is the PRIMARY advantage of Import mode?",
-                options: [
-                    { text: "Lightning-fast report performance", correct: true },
-                    { text: "Always shows real-time data", correct: false },
-                    { text: "Works with unlimited data sizes", correct: false },
-                    { text: "No Premium license needed", correct: false }
-                ]
-            },
-            {
-                id: 3,
-                question: "You need to display stock prices updated every 5 seconds. Which is best?",
-                options: [
-                    { text: "Import with 5-minute refresh schedule", correct: false },
-                    { text: "DirectQuery for real-time data", correct: true },
-                    { text: "Live Connection only", correct: false },
-                    { text: "Manual refresh each time", correct: false }
-                ]
-            },
-            {
-                id: 4,
-                question: "Which scenario favors Import mode?",
-                options: [
-                    { text: "Sales team needs report to load in <1 second", correct: true },
-                    { text: "Financial traders need updates per second", correct: false },
-                    { text: "Manufacturing needs real-time equipment status", correct: false },
-                    { text: "Data source has 2 billion rows", correct: false }
-                ]
-            },
-            {
-                id: 5,
-                question: "What happens to query folding in DirectQuery?",
-                options: [
-                    { text: "All transforms pushed to source database", correct: false },
-                    { text: "Folding is limited by source database capabilities", correct: true },
-                    { text: "No query folding possible in DirectQuery", correct: false },
-                    { text: "Query folding is better than Import", correct: false }
-                ]
-            },
-            {
-                id: 6,
-                question: "DirectQuery requires which license level for on-premises sources?",
-                options: [
-                    { text: "Pro license is sufficient", correct: false },
-                    { text: "Premium Per User is required", correct: false },
-                    { text: "Premium Capacity is required", correct: true },
-                    { text: "Any license works with on-premises", correct: false }
-                ]
-            },
-            {
-                id: 7,
-                question: "Which mode is best for users who need offline access?",
-                options: [
-                    { text: "DirectQuery (only mode that works offline)", correct: false },
-                    { text: "Import (can work offline)", correct: true },
-                    { text: "Live Connection (works everywhere)", correct: false },
-                    { text: "Both work offline", correct: false }
-                ]
-            },
-            {
-                id: 8,
-                question: "What is a major risk of DirectQuery with 200+ concurrent users?",
-                options: [
-                    { text: "Source database can be overwhelmed with queries", correct: true },
-                    { text: "Power BI Service will crash", correct: false },
-                    { text: "Report performance improves", correct: false },
-                    { text: "Real-time data becomes inaccurate", correct: false }
-                ]
-            }
-        ];
+  <div id="scenarios" class="tab-content">
+    <h2>Real-world scenarios</h2>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 1 — 50M-row sales report refreshed nightly from Azure SQL</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Choose:</strong> Import. The dataset compresses well, freshness target is daily, and Import gives the fastest user experience.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 2 — Operational dashboard on the warehouse floor, must reflect every minute</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Choose:</strong> DirectQuery on a tuned source (or DirectLake if running on Fabric Lakehouse). Pair with automatic page refresh.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 3 — Enterprise has migrated to Fabric, 800M-row Lakehouse fact</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Choose:</strong> DirectLake. Skip the import refresh, get Import-like performance, stay in sync with the Lakehouse.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 4 — Marketing wants Snowflake live for ads, but small product dim should be fast</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Choose:</strong> Composite — DirectQuery on the ad spend fact, Import (or Dual) on the product dimension.</div>
+      </div>
+    </div>
+  </div>
 
-        let quizAnswers = {};
+  <div id="best" class="tab-content">
+    <h2>Best practices</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>📦 Import</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Use incremental refresh on large facts.</div>
+        <div class="list-item">✓ Remove unused columns to shrink the model.</div>
+        <div class="list-item">✓ Star schema beats wide flat tables.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🔌 DirectQuery</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Push aggregates and indexes down to the source.</div>
+        <div class="list-item">✓ Use aggregations tables to accelerate common visuals.</div>
+        <div class="list-item">✓ Avoid complex DAX measures that translate to expensive SQL.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🌊 DirectLake</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Curate the Lakehouse with V-Order optimised Delta tables.</div>
+        <div class="list-item">✓ Model the star schema in the Lakehouse — DirectLake doesn't run Power Query at refresh.</div>
+        <div class="list-item">✓ Monitor for DirectQuery fallback in Performance Analyzer; size up the Fabric SKU if it happens often.</div>
+      </div>
+    </div>
+  </div>
 
-        function switchTab(tabName, e) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            
-            document.getElementById(tabName).classList.add('active');
-            e.target.classList.add('active');
+  <div id="quiz" class="tab-content">
+    <h2>Test your knowledge</h2>
+    <div id="quiz-progress" style="display:none;margin-bottom:1.5rem;padding:1.25rem 1.5rem;border-radius:.75rem;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <div>
+          <div style="font-weight:bold;color:#fff;margin-bottom:.25rem">Progress</div>
+          <div id="score-text" style="color:#a5a8d4"></div>
+        </div>
+        <div id="score-display" style="font-size:2rem;font-weight:bold;color:#6366f1">0%</div>
+      </div>
+      <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div id="quiz-container"></div>
+    <div id="quiz-complete" style="display:none"></div>
+  </div>
+</div>
 
-            if (tabName === 'quiz') {
-                initializeQuiz();
-            }
-        }
+<div class="footer"><p>Master the PL-300 Certification • Choose Between DirectLake, DirectQuery, and Import</p></div>
 
-        function toggleScenario(element) {
-            element.classList.toggle('expanded');
-        }
+<script>
+const quizQuestions = [
+  {id:1, question:"Where does DirectLake read its data from?", options:[
+    {text:"Delta/Parquet files in OneLake",correct:true},
+    {text:"The VertiPaq in-memory cache",correct:false},
+    {text:"A live SQL connection translated from DAX",correct:false},
+    {text:"A scheduled CSV export",correct:false}
+  ]},
+  {id:2, question:"Which mode requires Microsoft Fabric capacity?", options:[
+    {text:"DirectLake",correct:true},
+    {text:"Import",correct:false},
+    {text:"DirectQuery",correct:false},
+    {text:"All three",correct:false}
+  ]},
+  {id:3, question:"You need real-time data and the source is a fast Azure SQL DB (no Fabric). Best mode?", options:[
+    {text:"DirectQuery",correct:true},
+    {text:"Import with hourly refresh",correct:false},
+    {text:"DirectLake",correct:false},
+    {text:"Excel export",correct:false}
+  ]},
+  {id:4, question:"What happens when DirectLake hits a guardrail it can't handle?", options:[
+    {text:"It falls back to DirectQuery on the SQL endpoint",correct:true},
+    {text:"The visual returns an error",correct:false},
+    {text:"It triggers an Import refresh",correct:false},
+    {text:"It caches the result forever",correct:false}
+  ]},
+  {id:5, question:"Why is Import usually the fastest at query time?", options:[
+    {text:"Data is pre-compressed in the in-memory VertiPaq engine",correct:true},
+    {text:"It sends queries to the source",correct:false},
+    {text:"It uses GPU acceleration",correct:false},
+    {text:"It only loads metadata",correct:false}
+  ]},
+  {id:6, question:"In a composite model, what does Dual storage mode do for a dimension?", options:[
+    {text:"Acts as Import when joined to Import facts and as DirectQuery when joined to DQ facts",correct:true},
+    {text:"Doubles the memory used",correct:false},
+    {text:"Forces every query to run twice",correct:false},
+    {text:"Disables relationships",correct:false}
+  ]},
+  {id:7, question:"Which mode does NOT require a scheduled refresh?", options:[
+    {text:"DirectLake (and DirectQuery) — they reflect source changes automatically",correct:true},
+    {text:"Import",correct:false},
+    {text:"All modes need scheduled refresh",correct:false},
+    {text:"None — refresh is always manual",correct:false}
+  ]},
+  {id:8, question:"You have 800 million rows in a Fabric Lakehouse and want fast Power BI visuals. Best choice?", options:[
+    {text:"DirectLake",correct:true},
+    {text:"Import (refresh nightly)",correct:false},
+    {text:"DirectQuery to the SQL endpoint",correct:false},
+    {text:"Export to CSV",correct:false}
+  ]}
+];
 
-        function initializeQuiz() {
-            const container = document.getElementById('quiz-container');
-            if (container.innerHTML) return;
-
-            quizQuestions.forEach((q, idx) => {
-                const div = document.createElement('div');
-                div.className = 'quiz-question';
-                div.id = `question-${q.id}`;
-
-                let optionsHTML = '';
-                q.options.forEach(opt => {
-                    optionsHTML += `
-                        <button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})">
-                            <span class="option-radio"></span>
-                            <span>${opt.text}</span>
-                        </button>
-                    `;
-                });
-
-                div.innerHTML = `
-                    <div class="question-text">${q.question}</div>
-                    ${optionsHTML}
-                    <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>
-                `;
-
-                container.appendChild(div);
-            });
-        }
-
-        function answerQuestion(questionId, isCorrect) {
-            if (quizAnswers[questionId] !== undefined) return;
-
-            quizAnswers[questionId] = isCorrect;
-            
-            const questionDiv = document.getElementById(`question-${questionId}`);
-            questionDiv.classList.add('answered');
-            if (!isCorrect) questionDiv.classList.add('incorrect');
-
-            const buttons = questionDiv.querySelectorAll('.option');
-            buttons.forEach((btn, idx) => {
-                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
-                if (isCorrectOption) {
-                    btn.classList.add('correct');
-                } else if (btn === event.target) {
-                    btn.classList.add('incorrect');
-                }
-                btn.disabled = true;
-            });
-
-            updateProgress();
-
-            if (Object.keys(quizAnswers).length === quizQuestions.length) {
-                showQuizComplete();
-            }
-        }
-
-        function updateProgress() {
-            const answered = Object.keys(quizAnswers).length;
-            const total = quizQuestions.length;
-            const correct = Object.values(quizAnswers).filter(v => v === true).length;
-            const percentage = Math.round((correct / total) * 100);
-
-            const progressDiv = document.getElementById('quiz-progress');
-            progressDiv.style.display = 'block';
-            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
-            document.getElementById('score-display').textContent = `${percentage}%`;
-            document.getElementById('progress-fill').style.width = `${percentage}%`;
-        }
-
-        function showQuizComplete() {
-            const correct = Object.values(quizAnswers).filter(v => v === true).length;
-            const total = quizQuestions.length;
-            const percentage = (correct / total);
-            const isGood = percentage >= 0.75;
-
-            const completeDiv = document.getElementById('quiz-complete');
-            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
-            completeDiv.innerHTML = `
-                <h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3>
-                <div class="quiz-score">${Math.round(percentage * 100)}%</div>
-                <p style="color: #cbd5e1; margin-bottom: 1rem;">
-                    ${isGood ? "Excellent! You've mastered the DirectQuery vs Import decision framework." : "Review the scenarios and decision tree to strengthen your understanding."}
-                </p>
-                <button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>
-            `;
-            completeDiv.style.display = 'block';
-        }
-
-        function retakeQuiz() {
-            quizAnswers = {};
-            document.getElementById('quiz-container').innerHTML = '';
-            document.getElementById('quiz-complete').style.display = 'none';
-            document.getElementById('quiz-progress').style.display = 'none';
-            initializeQuiz();
-        }
-    </script>
+let quizAnswers = {};
+function switchTab(tab, e) { document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.tab-button').forEach(t=>t.classList.remove('active')); document.getElementById(tab).classList.add('active'); e.currentTarget.classList.add('active'); if (tab==='quiz') initializeQuiz(); }
+document.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', e => switchTab(btn.dataset.tab, e)));
+function toggleExpandable(el){el.classList.toggle('expanded');}
+function toggleScenario(el){el.classList.toggle('expanded');}
+function initializeQuiz(){const c=document.getElementById('quiz-container');if(c.innerHTML)return;quizQuestions.forEach((q,i)=>{const d=document.createElement('div');d.className='quiz-question';d.id=`question-${q.id}`;let s='';q.options.forEach(o=>{s+=`<button class="option" onclick="answerQuestion(${q.id},${o.correct},this)"><span class="option-radio"></span><span>${o.text}</span></button>`;});d.innerHTML=`<div class="question-text">${q.question}</div>${s}<div style="color:#7c80b0;font-size:.85rem;margin-top:.5rem">Question ${i+1} of ${quizQuestions.length}</div>`;c.appendChild(d);});}
+function answerQuestion(id,isCorrect,btn){if(quizAnswers[id]!==undefined)return;quizAnswers[id]=isCorrect;const q=document.getElementById(`question-${id}`);q.querySelectorAll('.option').forEach((opt,i)=>{const correct=quizQuestions.find(x=>x.id===id).options[i].correct;if(correct){opt.classList.add('correct');}else if(opt===btn){opt.classList.add('incorrect');}opt.disabled=true;});updateProgress();if(Object.keys(quizAnswers).length===quizQuestions.length)showQuizComplete();}
+function updateProgress(){const a=Object.keys(quizAnswers).length,t=quizQuestions.length,c=Object.values(quizAnswers).filter(x=>x===true).length,p=Math.round(100*c/t);document.getElementById('quiz-progress').style.display='block';document.getElementById('score-text').textContent=`${c} of ${t} correct • ${a} answered`;document.getElementById('score-display').textContent=`${p}%`;document.getElementById('progress-fill').style.width=`${p}%`;}
+function showQuizComplete(){const c=Object.values(quizAnswers).filter(x=>x===true).length,t=quizQuestions.length,pass=c/t>=.75,el=document.getElementById('quiz-complete');el.className=pass?'quiz-complete':'quiz-complete low';el.innerHTML=`<h3>${pass?'Excellent!':'Keep practising'}</h3><div class="quiz-score">${Math.round(100*c/t)}%</div><p style="color:#a5a8d4;margin-bottom:1rem">${pass?"You're ready to choose the right storage mode on the exam.":"Review the decision guide and the three-mode comparison table."}</p><button class="btn-retake" onclick="retakeQuiz()">Retake quiz</button>`;el.style.display='block';}
+function retakeQuiz(){quizAnswers={};document.getElementById('quiz-container').innerHTML='';document.getElementById('quiz-complete').style.display='none';document.getElementById('quiz-progress').style.display='none';initializeQuiz();}
+</script>
 </body>
 </html>

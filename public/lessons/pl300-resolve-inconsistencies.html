@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL-300: Resolve Inconsistencies, Nulls & Data Quality Issues</title>
+<link rel="stylesheet" href="/lessons/shared.css">
+</head>
+<body>
+<div class="header">
+  <div class="header-content">
+    <div class="header-icon">🧹</div>
+    <div class="header-text">
+      <h1>Resolve Inconsistencies, Nulls & Data Quality Issues</h1>
+      <p>PL-300: Clean dirty data in Power Query before it pollutes the model</p>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-button active" data-tab="overview">📚 Overview</button>
+  <button class="tab-button" data-tab="nulls">🚫 Nulls & Empties</button>
+  <button class="tab-button" data-tab="inconsistencies">🔀 Inconsistencies</button>
+  <button class="tab-button" data-tab="quality">🛡️ Data Quality</button>
+  <button class="tab-button" data-tab="scenarios">🏢 Scenarios</button>
+  <button class="tab-button" data-tab="best">⭐ Best Practices</button>
+  <button class="tab-button" data-tab="quiz">✓ Quiz</button>
+</div>
+
+<div class="container">
+  <div id="overview" class="tab-content active">
+    <div class="grid">
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">🚫</div><div class="card-title">Nulls & Blanks</div><div class="list-item">Replace, fill down, or filter nulls before they break DAX</div></div>
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">🔀</div><div class="card-title">Inconsistent Values</div><div class="list-item">"USA" vs "United States" — standardise spelling, case, and trim</div></div>
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">🛡️</div><div class="card-title">Outliers & Surprises</div><div class="list-item">Spot impossible values and decide: fix, flag, or remove</div></div>
+    </div>
+    <div class="info-box">
+      <div style="font-size:1.5rem;">💡</div>
+      <div class="info-box-content">
+        <div class="info-title">PL-300 syllabus alignment</div>
+        <div class="info-text">This lesson covers the syllabus task <strong>Resolve inconsistencies, unexpected or null values, and data quality issues</strong> — distinct from "Resolve data import errors", which deals with broken refresh.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="nulls" class="tab-content">
+    <h2>Handling nulls and blanks</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🔍 Detect nulls fast</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">View → Column quality. The Empty % chip flags null/blank columns.</div>
+        <div class="list-item">Click the column header → Filter → Remove Empty to drop them, or click the null chip to inspect.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🔄 Replace Values</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Right-click column → <strong>Replace Values</strong>. Tick "Special values → null" to replace null with 0, "Unknown", etc.</div>
+        <div class="list-item">For text columns, replacing null with "Unknown" prevents blanks in slicers and visuals.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>⬇️ Fill Down / Fill Up</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Transform → Fill → Down/Up.</div>
+        <div class="list-item">Useful when an Excel-style report leaves group headers null on subsequent rows.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>❌ Remove Empty rows</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Home → Remove Rows → Remove Blank Rows (drops rows where every column is null/empty string).</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="inconsistencies" class="tab-content">
+    <h2>Standardising inconsistent values</h2>
+    <table class="comparison-table">
+      <tr><td class="header">Problem</td><td class="header">Power Query fix</td></tr>
+      <tr><td>Leading/trailing spaces</td><td>Transform → Format → <strong>Trim</strong></td></tr>
+      <tr><td>Inconsistent case ("usa", "USA", "Usa")</td><td>Format → <strong>UPPERCASE / lowercase / Capitalize Each Word</strong></td></tr>
+      <tr><td>Hidden non-printable characters</td><td>Format → <strong>Clean</strong> (removes 0x00–0x1F)</td></tr>
+      <tr><td>Multiple spellings ("USA", "U.S.A", "United States")</td><td><strong>Replace Values</strong> (or merge with a mapping table)</td></tr>
+      <tr><td>Mixed delimiters in one column</td><td><strong>Split Column → By Delimiter</strong></td></tr>
+      <tr><td>Numbers stored as text</td><td>Change <strong>Data Type</strong> to whole/decimal number</td></tr>
+      <tr><td>Inconsistent date formats across regions</td><td>Change Type → <strong>Using Locale</strong></td></tr>
+    </table>
+    <div class="info-box">
+      <div style="font-size:1.5rem;">🧩</div>
+      <div class="info-box-content">
+        <div class="info-title">When to use a mapping table</div>
+        <div class="info-text">If you have many variants of the same value (countries, product codes, suppliers), don't chain Replace Values. Build a small <strong>mapping table</strong> and merge it in — it's transparent, testable, and easier to update.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quality" class="tab-content">
+    <h2>Spotting and handling unexpected values</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🔢 Numeric outliers</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Use Column profile → min, max, mean, std-dev to spot impossible values (negative quantities, ages of 999).</div>
+        <div class="list-item">Decide: replace, filter out, or flag with a calculated column for review.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>📅 Date outliers</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Look for placeholder dates like 1900-01-01 or 9999-12-31 in the value distribution chart.</div>
+        <div class="list-item">Replace with null (and handle null in DAX) or filter out.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>♻️ Duplicates</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Right-click key column → <strong>Remove Duplicates</strong> (or <strong>Keep Duplicates</strong> to inspect them first).</div>
+        <div class="list-item">For composite keys, select multiple columns before Remove Duplicates.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>⚠️ Errors as data quality signal</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Right-click column → <strong>Replace Errors</strong> (with null or a default) — keeps refresh succeeding.</div>
+        <div class="list-item">Or Home → Keep Rows → Keep Errors to triage them in a separate quality query.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scenarios" class="tab-content">
+    <h2>Scenarios</h2>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 1 — Country column has "USA", "U.S.A.", "United States" and " usa "</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Steps:</strong> Trim → lowercase → Replace Values to a single canonical "United States" (or join to a country mapping table).</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 2 — Sales table has 12% null Region after merging with Customers</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Cause:</strong> Customer keys missing in the Customers table. Either clean the source, or replace null with "Unknown" so the row still shows up in totals.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 3 — Age column ranges from 0 to 999</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Steps:</strong> Use Column profile to confirm. Filter Age &gt; 120 to inspect, then either replace with null or exclude. Document the rule.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 4 — Excel export has empty cells where group headers were merged</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Steps:</strong> Use Transform → Fill → Down on the group column to propagate the header value down each group.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="best" class="tab-content">
+    <h2>Best practices</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>✅ Clean upstream when you can</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Pushing fixes back to the source removes duplication and benefits everyone.</div>
+        <div class="list-item">Use Power Query as the safety net, not the only line of defence.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>✅ Prefer Replace Values over chained IFs</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Use Replace Values, mapping tables, or conditional columns — they're easier to audit than nested if/else logic.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>✅ Document the rule</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Rename steps to describe what they do ("Replace null Region with Unknown").</div>
+        <div class="list-item">Add a description in step properties so future developers know why the rule exists.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>✅ Don't silently drop rows</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">If you filter out bad rows, build a parallel "quality" query that captures them so issues are visible, not hidden.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz" class="tab-content">
+    <h2>Test your knowledge</h2>
+    <div id="quiz-progress" style="display:none;margin-bottom:1.5rem;padding:1.25rem 1.5rem;border-radius:.75rem;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <div><div style="font-weight:bold;color:#fff;margin-bottom:.25rem">Progress</div><div id="score-text" style="color:#a5a8d4"></div></div>
+        <div id="score-display" style="font-size:2rem;font-weight:bold;color:#6366f1">0%</div>
+      </div>
+      <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div id="quiz-container"></div>
+    <div id="quiz-complete" style="display:none"></div>
+  </div>
+</div>
+
+<div class="footer"><p>Master the PL-300 Certification • Resolve Inconsistencies, Nulls & Data Quality Issues</p></div>
+
+<script>
+const quizQuestions = [
+  {id:1, question:"Excel export has merged group headers, leaving subsequent rows null in the Group column. Best fix?", options:[
+    {text:"Transform → Fill → Down",correct:true},
+    {text:"Remove Blank Rows",correct:false},
+    {text:"Replace Errors with null",correct:false},
+    {text:"Change data type to text",correct:false}
+  ]},
+  {id:2, question:"You want null Region values to appear in slicers as 'Unknown'. Use…", options:[
+    {text:"Replace Values with the 'Special values → null' option",correct:true},
+    {text:"Remove Empty",correct:false},
+    {text:"Trim",correct:false},
+    {text:"Keep Errors",correct:false}
+  ]},
+  {id:3, question:"Country column has 'USA', 'usa', 'U.S.A.' and ' usa '. Best cleaning sequence?", options:[
+    {text:"Trim → lowercase → Replace Values to one canonical value",correct:true},
+    {text:"Remove Duplicates",correct:false},
+    {text:"Change Type → Using Locale",correct:false},
+    {text:"Pivot the column",correct:false}
+  ]},
+  {id:4, question:"You spot Age values up to 999. What's the recommended approach?", options:[
+    {text:"Use Column profile to confirm, filter out or replace impossible values, and document the rule",correct:true},
+    {text:"Ignore — DAX will handle it",correct:false},
+    {text:"Hide the column",correct:false},
+    {text:"Convert Age to text",correct:false}
+  ]},
+  {id:5, question:"Best long-term fix for many country code variants is…", options:[
+    {text:"Build a mapping table and merge it in",correct:true},
+    {text:"Chain dozens of Replace Values steps",correct:false},
+    {text:"Use a calculated column in DAX",correct:false},
+    {text:"Hide the column",correct:false}
+  ]},
+  {id:6, question:"Which Power Query transform removes leading and trailing spaces?", options:[
+    {text:"Transform → Format → Trim",correct:true},
+    {text:"Transform → Format → Clean",correct:false},
+    {text:"Replace Errors",correct:false},
+    {text:"Remove Duplicates",correct:false}
+  ]},
+  {id:7, question:"To suppress non-printable characters from a text column, use…", options:[
+    {text:"Transform → Format → Clean",correct:true},
+    {text:"Replace Values",correct:false},
+    {text:"Trim",correct:false},
+    {text:"Lowercase",correct:false}
+  ]},
+  {id:8, question:"You want errors in a column to become nulls so refresh keeps succeeding. Use…", options:[
+    {text:"Replace Errors with null",correct:true},
+    {text:"Remove Errors",correct:false},
+    {text:"Keep Errors",correct:false},
+    {text:"Change Type",correct:false}
+  ]}
+];
+
+let quizAnswers = {};
+function switchTab(tab, e) { document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.tab-button').forEach(t=>t.classList.remove('active')); document.getElementById(tab).classList.add('active'); e.currentTarget.classList.add('active'); if (tab==='quiz') initializeQuiz(); }
+document.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', e => switchTab(btn.dataset.tab, e)));
+function toggleExpandable(el){el.classList.toggle('expanded');}
+function toggleScenario(el){el.classList.toggle('expanded');}
+function initializeQuiz(){const c=document.getElementById('quiz-container');if(c.innerHTML)return;quizQuestions.forEach((q,i)=>{const d=document.createElement('div');d.className='quiz-question';d.id=`question-${q.id}`;let s='';q.options.forEach(o=>{s+=`<button class="option" onclick="answerQuestion(${q.id},${o.correct},this)"><span class="option-radio"></span><span>${o.text}</span></button>`;});d.innerHTML=`<div class="question-text">${q.question}</div>${s}<div style="color:#7c80b0;font-size:.85rem;margin-top:.5rem">Question ${i+1} of ${quizQuestions.length}</div>`;c.appendChild(d);});}
+function answerQuestion(id,isCorrect,btn){if(quizAnswers[id]!==undefined)return;quizAnswers[id]=isCorrect;const q=document.getElementById(`question-${id}`);q.querySelectorAll('.option').forEach((opt,i)=>{const correct=quizQuestions.find(x=>x.id===id).options[i].correct;if(correct){opt.classList.add('correct');}else if(opt===btn){opt.classList.add('incorrect');}opt.disabled=true;});updateProgress();if(Object.keys(quizAnswers).length===quizQuestions.length)showQuizComplete();}
+function updateProgress(){const a=Object.keys(quizAnswers).length,t=quizQuestions.length,c=Object.values(quizAnswers).filter(x=>x===true).length,p=Math.round(100*c/t);document.getElementById('quiz-progress').style.display='block';document.getElementById('score-text').textContent=`${c} of ${t} correct • ${a} answered`;document.getElementById('score-display').textContent=`${p}%`;document.getElementById('progress-fill').style.width=`${p}%`;}
+function showQuizComplete(){const c=Object.values(quizAnswers).filter(x=>x===true).length,t=quizQuestions.length,pass=c/t>=.75,el=document.getElementById('quiz-complete');el.className=pass?'quiz-complete':'quiz-complete low';el.innerHTML=`<h3>${pass?'Excellent!':'Keep practising'}</h3><div class="quiz-score">${Math.round(100*c/t)}%</div><p style="color:#a5a8d4;margin-bottom:1rem">${pass?"You can clean up dirty data with confidence.":"Review the inconsistencies and data quality sections."}</p><button class="btn-retake" onclick="retakeQuiz()">Retake quiz</button>`;el.style.display='block';}
+function retakeQuiz(){quizAnswers={};document.getElementById('quiz-container').innerHTML='';document.getElementById('quiz-complete').style.display='none';document.getElementById('quiz-progress').style.display='none';initializeQuiz();}
+</script>
+</body>
+</html>

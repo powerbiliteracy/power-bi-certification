@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: Convert Semi-Structured Data to a Table</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d1a0f 0%, #4e2d1a 50%, #2d1a0f 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            border-bottom: 1px solid rgba(249, 115, 22, 0.3);
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background: radial-gradient(circle at 20% 50%, #f97316 0%, transparent 50%), 
+                        radial-gradient(circle at 80% 80%, #fb923c 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: rgba(249, 115, 22, 0.2);
+            border: 1px solid rgba(249, 115, 22, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .header-text h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            font-family: 'Georgia', serif;
+        }
+
+        .header-text p {
+            color: rgba(249, 115, 22, 0.8);
+            font-size: 1.125rem;
+        }
+
+        .tabs {
+            max-width: 80rem;
+            margin: 2rem auto 0;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.4);
+            color: #cbd5e1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: rgba(249, 115, 22, 0.3);
+            border-color: rgba(249, 115, 22, 1);
+            color: rgba(249, 115, 22, 1);
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+        }
+
+        .container {
+            max-width: 80rem;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            background: linear-gradient(to bottom right, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05));
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .format-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .format-button {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            color: #cbd5e1;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .format-button:hover {
+            border-color: rgba(249, 115, 22, 0.6);
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .format-button.active {
+            border-color: rgba(249, 115, 22, 1);
+            background: rgba(249, 115, 22, 0.2);
+            color: rgba(249, 115, 22, 1);
+        }
+
+        .format-detail {
+            padding: 2rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .example-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 0.75rem 0;
+            line-height: 1.4;
+        }
+
+        .expandable {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .expandable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .expandable-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .expandable.expanded .expandable-content {
+            display: block;
+        }
+
+        .expandable-toggle {
+            transition: transform 0.3s ease;
+            color: rgba(249, 115, 22, 1);
+        }
+
+        .expandable.expanded .expandable-toggle {
+            transform: rotate(180deg);
+        }
+
+        .scenario-item {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .scenario-title {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-expanded {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .scenario-item.expanded .scenario-expanded {
+            display: block;
+        }
+
+        .step {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-left: 3px solid rgba(249, 115, 22, 0.5);
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .step-number {
+            width: 2rem;
+            height: 2rem;
+            min-width: 2rem;
+            border-radius: 50%;
+            background: rgba(249, 115, 22, 0.3);
+            border: 1px solid rgba(249, 115, 22, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: rgba(249, 115, 22, 1);
+        }
+
+        .step-content h4 {
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .comparison-table td {
+            padding: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            font-size: 0.875rem;
+        }
+
+        .comparison-table .header {
+            font-weight: bold;
+            color: #ffffff;
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        .quiz-question {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question.answered {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .quiz-question.answered.incorrect {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .question-text {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .option {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option:hover:not(:disabled) {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .option.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .option-radio {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #f97316, #fb923c);
+            transition: width 0.5s ease;
+        }
+
+        .footer {
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            margin-top: 3rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        h2, h3, h4 {
+            color: #ffffff;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            margin-bottom: 1.5rem;
+            font-family: 'Georgia', serif;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-retake {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(249, 115, 22, 0.3);
+            border: 1px solid rgba(249, 115, 22, 1);
+            color: rgba(249, 115, 22, 1);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retake:hover {
+            background: rgba(249, 115, 22, 0.4);
+        }
+
+        .quiz-complete {
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.75rem;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .quiz-complete.low {
+            background: rgba(250, 204, 21, 0.15);
+            border: 1px solid rgba(250, 204, 21, 0.4);
+        }
+
+        .quiz-complete h3 {
+            color: #86efac;
+        }
+
+        .quiz-complete.low h3 {
+            color: #fde047;
+        }
+
+        .quiz-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f97316;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .info-box-content {
+            flex: 1;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-text {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .code-label {
+            color: rgba(249, 115, 22, 1);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">🔓</div>
+            <div class="header-text">
+                <h1>Convert Semi-Structured Data to a Table</h1>
+                <p>PL-300: JSON, XML, Nested Data & Flattening Structures</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('formats', event)">📦 Data Formats</button>
+        <button class="tab-button" onclick="switchTab('techniques', event)">⚙️ Techniques</button>
+        <button class="tab-button" onclick="switchTab('scenarios', event)">🎯 Real Scenarios</button>
+        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔍</div>
+                    <div class="card-title">Identify Structure</div>
+                    <div class="list-item">Understand nested/hierarchical data</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">📂</div>
+                    <div class="card-title">Flatten Data</div>
+                    <div class="list-item">Convert nested to flat table format</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">✓</div>
+                    <div class="card-title">Extract Rows</div>
+                    <div class="list-item">Transform to usable table structure</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(249, 115, 22, 0.3); background: linear-gradient(to right, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05));">
+                <h2>What is Semi-Structured Data?</h2>
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem; line-height: 1.6;">
+                    <span style="font-weight: bold; color: rgba(249, 115, 22, 1);">Semi-structured data</span> has some organization but isn't formatted in strict table rows/columns. Common formats: JSON (nested objects/arrays), XML (hierarchical tags), HTML tables (sometimes inconsistent). Power Query helps flatten this into usable tables.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3 style="color: rgba(249, 115, 22, 1); margin-bottom: 1rem;">Common Formats</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">📄 JSON (objects, arrays)</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">📋 XML (hierarchical)</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">🌐 HTML Tables</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">📑 Nested Records</div>
+                        <div class="list-item">🔗 REST API responses</div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: rgba(249, 115, 22, 1); margin-bottom: 1rem;">Key Challenges</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">⚠️ Nested structures</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">⚠️ Variable hierarchy</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">⚠️ Missing fields</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">⚠️ Array expansion</div>
+                        <div class="list-item">⚠️ Type conflicts</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div style="font-size: 1.5rem;">💡</div>
+                <div class="info-box-content">
+                    <div class="info-title">Key Principle</div>
+                    <div class="info-text">Power Query's "Expand" and "Extract" functions handle semi-structured data. Start simple: expand one level at a time, then flatten to your desired structure.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formats Tab -->
+        <div id="formats" class="tab-content">
+            <h2>Semi-Structured Data Formats</h2>
+            
+            <div class="format-selector">
+                <button class="format-button active" onclick="switchFormat(0, event)">JSON</button>
+                <button class="format-button" onclick="switchFormat(1, event)">XML</button>
+                <button class="format-button" onclick="switchFormat(2, event)">HTML</button>
+                <button class="format-button" onclick="switchFormat(3, event)">API</button>
+            </div>
+
+            <div id="format-detail" class="format-detail"></div>
+        </div>
+
+        <!-- Techniques Tab -->
+        <div id="techniques" class="tab-content">
+            <h2>Flattening & Extraction Techniques</h2>
+            
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🔍 Expand Records</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Expand nested record fields into separate columns.</p>
+                    <div class="code-label">Example: Address record with Street, City, Zip</div>
+                    <div class="example-box"># Before: Single "Address" column with nested data
+# After: Separate Street, City, Zip columns
+
+Table.ExpandRecordColumn(Source, "Address", 
+  {"Street", "City", "Zip"}, 
+  {"Address.Street", "Address.City", "Address.Zip"})</div>
+                    <p style="color: #cbd5e1; margin-top: 1rem;"><strong>When to use:</strong> Nested objects (records) with known fields</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>📂 Expand Lists/Arrays</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Expand array fields into multiple rows (one per item).</p>
+                    <div class="code-label">Example: Customer with multiple orders</div>
+                    <div class="example-box"># Before: One row per customer, Orders = [Order1, Order2, Order3]
+# After: Multiple rows per customer, one order per row
+
+Table.ExpandListColumn(Source, "Orders")</div>
+                    <p style="color: #cbd5e1; margin-top: 1rem;"><strong>When to use:</strong> Arrays/lists that need to become separate rows</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🔄 Extract Nested Data</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Navigate into nested structures and extract specific values.</p>
+                    <div class="code-label">Example: API response with data[0].value.name</div>
+                    <div class="example-box"># Drill down through nested structure
+Source = Json.Document(File.Contents("response.json")),
+Data = Source[data],
+FirstRecord = Data{0},
+Value = FirstRecord[value],
+Name = Value[name]
+in
+Name</div>
+                    <p style="color: #cbd5e1; margin-top: 1rem;"><strong>When to use:</strong> Deeply nested structures, specific path extraction</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>⚡ Power Query UI Expansion</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Use the expand icon (⇄) in Power Query Editor for semi-automatic flattening.</p>
+                    <div class="step" style="border-left: none; margin-bottom: 0.5rem;">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Load JSON/API data into Power Query</div>
+                            <div class="step-description">Source should show records/objects</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none; margin-bottom: 0.5rem;">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Click expand icon (⇄) on column header</div>
+                            <div class="step-description">Shows available fields to expand</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none; margin-bottom: 0.5rem;">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Select fields to add as columns</div>
+                            <div class="step-description">Repeat for each nested level needed</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Continue until data is flat</div>
+                            <div class="step-description">M code is generated automatically</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🎯 Handle Missing/Inconsistent Fields</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Semi-structured data often has optional fields that aren't always present.</p>
+                    <div class="code-label">Solution: Use error handling and defaults</div>
+                    <div class="example-box"># Safely extract field with default value
+try
+  record[optional_field]
+otherwise
+  "N/A"  // Default value if missing</div>
+                    <p style="color: #cbd5e1; margin-top: 1rem;"><strong>Impact:</strong> Prevents transformation failures due to missing data</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenarios Tab -->
+        <div id="scenarios" class="tab-content">
+            <h2>Real-World Scenarios</h2>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 1: JSON from REST API</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">API returns nested JSON with customers and their orders</div>
+                <div class="scenario-expanded">
+                    <h4>Data Structure:</h4>
+                    <div class="example-box">{
+  "customers": [
+    {
+      "id": 1,
+      "name": "John",
+      "orders": [
+        {"id": 101, "amount": 500},
+        {"id": 102, "amount": 300}
+      ]
+    }
+  ]
+}</div>
+                    <h4 style="margin-top: 1rem;">Transformation Steps:</h4>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Load JSON and get "customers" array</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Expand customer records (id, name, orders)</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Expand orders list into rows</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Expand order records (id, amount)</div>
+                        </div>
+                    </div>
+                    <h4 style="margin-top: 1rem;">Result: Flat table with customer_id, customer_name, order_id, order_amount</h4>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 2: XML File Structure</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">XML with hierarchical product categories</div>
+                <div class="scenario-expanded">
+                    <h4>Data Structure:</h4>
+                    <div class="example-box">&lt;products&gt;
+  &lt;category name="Electronics"&gt;
+    &lt;product&gt;
+      &lt;id&gt;1&lt;/id&gt;
+      &lt;name&gt;Laptop&lt;/name&gt;
+      &lt;price&gt;999&lt;/price&gt;
+    &lt;/product&gt;
+  &lt;/category&gt;
+&lt;/products&gt;</div>
+                    <h4 style="margin-top: 1rem;">Power Query Approach:</h4>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Load XML.Tables() to parse structure</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Extract category and product attributes</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Flatten into category, product, price columns</div>
+                        </div>
+                    </div>
+                    <h4 style="margin-top: 1rem;">Result: Table with category, id, name, price per row</h4>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 3: Inconsistent API Response</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Some records missing optional phone field</div>
+                <div class="scenario-expanded">
+                    <h4>Challenge:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">API sometimes returns phone, sometimes doesn't. Expansion fails on missing field.</p>
+                    <h4>Solution:</h4>
+                    <div class="example-box"># Check field existence before expanding
+= Table.AddColumn(Source, "Phone", 
+  each if Record.HasFields([Address], "phone") 
+       then [Address][phone] 
+       else "N/A")</div>
+                    <h4 style="margin-top: 1rem;">Result: Table with Phone column, "N/A" for missing values</h4>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 4: Deeply Nested Data</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Multi-level hierarchy: company → department → team → employee</div>
+                <div class="scenario-expanded">
+                    <h4>Challenge:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Data nested 4+ levels deep. Must expand one level at a time.</p>
+                    <h4>Strategy:</h4>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Expand Level 1: Company fields</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Expand departments array into rows</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Expand department records</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Continue until completely flat</div>
+                        </div>
+                    </div>
+                    <h4 style="margin-top: 1rem;">Result: One row per employee with company, dept, team context preserved</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.2)); border: 1px solid rgba(249, 115, 22, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div>
+                        <div id="score-text" style="color: #cbd5e1;"></div>
+                    </div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #f97316; display: none;">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Master the PL-300 Certification • Converting Semi-Structured Data to Tables</p>
+    </div>
+
+    <script>
+        const formats = [
+            {
+                name: "JSON",
+                icon: "{}",
+                description: "JavaScript Object Notation - Objects and arrays",
+                example: `{
+  "customers": [
+    {
+      "id": 1,
+      "name": "John",
+      "address": {
+        "city": "NYC",
+        "zip": "10001"
+      }
+    }
+  ]
+}`,
+                challenge: "Nested objects and arrays",
+                solution: "Use Table.ExpandRecordColumn and Table.ExpandListColumn",
+                common: "REST APIs, cloud services, web data"
+            },
+            {
+                name: "XML",
+                icon: "<>",
+                description: "Extensible Markup Language - Hierarchical tags",
+                example: `<?xml version="1.0"?>
+<customers>
+  <customer>
+    <id>1</id>
+    <name>John</name>
+    <address>
+      <city>NYC</city>
+    </address>
+  </customer>
+</customers>`,
+                challenge: "Hierarchical structure, attributes vs elements",
+                solution: "Use Xml.Tables() or manual navigation",
+                common: "Legacy systems, configuration files, SOAP services"
+            },
+            {
+                name: "HTML Tables",
+                icon: "⊞",
+                description: "HTML table structures with inconsistent formatting",
+                example: `<table>
+  <tr>
+    <th>Name</th>
+    <th>Email</th>
+  </tr>
+  <tr>
+    <td>John</td>
+    <td>john@email.com</td>
+  </tr>
+</table>`,
+                challenge: "Variable column structure, nested cells",
+                solution: "Use Web.BrowserContents() or Web.Page()",
+                common: "Web scraping, public data tables, reports"
+            },
+            {
+                name: "API Responses",
+                icon: "🔗",
+                description: "Dynamic responses from web APIs",
+                example: `{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "timestamp": "2024-03-10",
+      "values": {
+        "sales": 5000
+      }
+    }
+  ]
+}`,
+                challenge: "Optional fields, pagination, rate limits",
+                solution: "Error handling, conditional expansion, pagination loops",
+                common: "Cloud platforms, payment processors, analytics"
+            }
+        ];
+
+        const quizQuestions = [
+            {
+                id: 1,
+                question: "What's the main purpose of expanding records in Power Query?",
+                options: [
+                    { text: "Convert nested objects into separate columns", correct: true },
+                    { text: "Create additional rows for each record", correct: false },
+                    { text: "Delete unnecessary columns", correct: false },
+                    { text: "Sort data alphabetically", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                question: "You have JSON with a 'customers' array containing multiple customer objects. What do you do FIRST?",
+                options: [
+                    { text: "Expand the customers array into rows", correct: true },
+                    { text: "Expand customer records into columns", correct: false },
+                    { text: "Delete the entire customers column", correct: false },
+                    { text: "Sort by customer ID", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                question: "Which function expands list/array fields into multiple rows?",
+                options: [
+                    { text: "Table.ExpandRecordColumn", correct: false },
+                    { text: "Table.ExpandListColumn", correct: true },
+                    { text: "Table.RenameColumns", correct: false },
+                    { text: "Table.SelectRows", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                question: "Your JSON has optional fields that aren't always present. What should you do?",
+                options: [
+                    { text: "Ignore them, expand anyway", correct: false },
+                    { text: "Use error handling and provide default values", correct: true },
+                    { text: "Delete all records missing a field", correct: false },
+                    { text: "Skip the transformation", correct: false }
+                ]
+            },
+            {
+                id: 5,
+                question: "Data is nested 4 levels deep. How do you flatten it?",
+                options: [
+                    { text: "Expand all levels at once", correct: false },
+                    { text: "Expand one level at a time, repeating as needed", correct: true },
+                    { text: "Use a single Flatten() function", correct: false },
+                    { text: "Export to Excel and rearrange manually", correct: false }
+                ]
+            },
+            {
+                id: 6,
+                question: "What does Table.ExpandRecordColumn do?",
+                options: [
+                    { text: "Creates new rows from array elements", correct: false },
+                    { text: "Converts nested record fields into new columns", correct: true },
+                    { text: "Deletes the original column", correct: false },
+                    { text: "Sorts by record values", correct: false }
+                ]
+            },
+            {
+                id: 7,
+                question: "After expanding list columns, how many rows will you have?",
+                options: [
+                    { text: "Same as before (list stays compact)", correct: false },
+                    { text: "More rows (one per list item)", correct: true },
+                    { text: "Depends on the list values", correct: false },
+                    { text: "Impossible to predict", correct: false }
+                ]
+            },
+            {
+                id: 8,
+                question: "Which scenario best requires semi-structured data flattening?",
+                options: [
+                    { text: "Excel file with sales data in columns", correct: false },
+                    { text: "REST API returning nested JSON objects", correct: true },
+                    { text: "CSV file with consistent rows/columns", correct: false },
+                    { text: "Database table with primary keys", correct: false }
+                ]
+            }
+        ];
+
+        let quizAnswers = {};
+        let currentFormat = 0;
+
+        function switchTab(tabName, e) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+
+            if (tabName === 'formats') {
+                switchFormat(0);
+            } else if (tabName === 'quiz') {
+                initializeQuiz();
+            }
+        }
+
+        function switchFormat(index, e) {
+            if (e) {
+                document.querySelectorAll('.format-button').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+            
+            currentFormat = index;
+            const fmt = formats[index];
+            
+            const detail = document.getElementById('format-detail');
+            detail.innerHTML = `
+                <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 2rem;">
+                    <span style="font-size: 3rem;">${fmt.icon}</span>
+                    <div>
+                        <h2 style="margin: 0 0 0.5rem 0;">${fmt.name}</h2>
+                        <p style="color: rgba(249, 115, 22, 1); font-size: 1rem; margin: 0;">${fmt.description}</p>
+                    </div>
+                </div>
+
+                <h4 style="margin-bottom: 0.75rem;">Example Data:</h4>
+                <div class="example-box">${fmt.example}</div>
+
+                <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem;">Main Challenge:</h4>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">⚠️ ${fmt.challenge}</p>
+
+                <h4 style="margin-bottom: 0.75rem;">Solution in Power Query:</h4>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">✓ ${fmt.solution}</p>
+
+                <h4 style="margin-bottom: 0.75rem;">Common Sources:</h4>
+                <div class="list-item">${fmt.common}</div>
+            `;
+        }
+
+        function toggleExpandable(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function toggleScenario(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            if (container.innerHTML) return;
+
+            quizQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-question';
+                div.id = `question-${q.id}`;
+
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    optionsHTML += `
+                        <button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})">
+                            <span class="option-radio"></span>
+                            <span>${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                div.innerHTML = `
+                    <div class="question-text">${q.question}</div>
+                    ${optionsHTML}
+                    <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return;
+
+            quizAnswers[questionId] = isCorrect;
+            
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) {
+                    btn.classList.add('correct');
+                } else if (btn === event.target) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            updateProgress();
+
+            if (Object.keys(quizAnswers).length === quizQuestions.length) {
+                showQuizComplete();
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+            const isGood = percentage >= 0.75;
+
+            const completeDiv = document.getElementById('quiz-complete');
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `
+                <h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3>
+                <div class="quiz-score">${Math.round(percentage * 100)}%</div>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                    ${isGood ? "Outstanding! You've mastered converting semi-structured data to tables." : "Review the formats and techniques to strengthen your knowledge."}
+                </p>
+                <button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>
+            `;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            switchFormat(0);
+        });
+    </script>
+</body>
+</html>

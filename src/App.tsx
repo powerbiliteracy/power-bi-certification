@@ -33,6 +33,7 @@ import DAXTemplates from "./pages/DAXTemplates";
 import Reviews from "./pages/Reviews";
 import StudyPlan from "./pages/StudyPlan";
 import InteractiveLessons from "./pages/InteractiveLessons";
+import SyllabusAudit from "./pages/SyllabusAudit";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/StudyPlan" element={<LayoutWrapper><StudyPlan /></LayoutWrapper>} />
             <Route path="/InteractiveLessons" element={<LayoutWrapper><InteractiveLessons /></LayoutWrapper>} />
             <Route path="/Admin" element={<LayoutWrapper><Admin /></LayoutWrapper>} />
+            <Route path="/SyllabusAudit" element={<LayoutWrapper><SyllabusAudit /></LayoutWrapper>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

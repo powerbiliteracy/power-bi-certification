@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: Identify & Connect to Data Sources</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            border-bottom: 1px solid rgba(6, 182, 212, 0.3);
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background: radial-gradient(circle at 20% 50%, #06b6d4 0%, transparent 50%), 
+                        radial-gradient(circle at 80% 80%, #0ea5e9 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: rgba(6, 182, 212, 0.2);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .header-text h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            font-family: 'Georgia', serif;
+        }
+
+        .header-text p {
+            color: rgba(6, 182, 212, 0.8);
+            font-size: 1.125rem;
+        }
+
+        .tabs {
+            max-width: 80rem;
+            margin: 2rem auto 0;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.4);
+            color: #cbd5e1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: rgba(51, 65, 85, 0.4);
+        }
+
+        .tab-button.active {
+            background: rgba(6, 182, 212, 0.3);
+            border-color: rgba(6, 182, 212, 1);
+            color: rgba(6, 182, 212, 1);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+
+        .container {
+            max-width: 80rem;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            background: linear-gradient(to bottom right, rgba(6, 182, 212, 0.1), rgba(6, 182, 212, 0.05));
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            color: rgba(6, 182, 212, 0.8);
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .card-content {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .list {
+            space-y: 0.5rem;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .list-item.success {
+            color: #86efac;
+        }
+
+        .list-item.warning {
+            color: #facc15;
+        }
+
+        .expandable {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .expandable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .expandable-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .expandable.expanded .expandable-content {
+            display: block;
+        }
+
+        .expandable-toggle {
+            transition: transform 0.3s ease;
+            color: rgba(6, 182, 212, 1);
+        }
+
+        .expandable.expanded .expandable-toggle {
+            transform: rotate(180deg);
+        }
+
+        .scenario-item {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .scenario-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-description {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .scenario-expanded {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+            display: none;
+        }
+
+        .scenario-item.expanded .scenario-expanded {
+            display: block;
+        }
+
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: rgba(6, 182, 212, 0.3);
+            border: 1px solid rgba(6, 182, 212, 0.6);
+            font-weight: bold;
+            color: rgba(6, 182, 212, 1);
+            flex-shrink: 0;
+        }
+
+        .step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-description {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .quiz-question {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question.answered {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .quiz-question.answered.incorrect {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .question-text {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .question-number {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .option {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option:hover:not(:disabled) {
+            background: rgba(51, 65, 85, 0.5);
+            border-color: rgba(51, 65, 85, 0.5);
+        }
+
+        .option:disabled {
+            cursor: default;
+        }
+
+        .option.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+            color: rgba(252, 165, 165, 1);
+        }
+
+        .option-radio {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #06b6d4, #0ea5e9);
+            transition: width 0.5s ease;
+        }
+
+        .footer {
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            margin-top: 3rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .success-icon {
+            color: #86efac;
+        }
+
+        .warning-icon {
+            color: #facc15;
+        }
+
+        .info-box {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .info-box-content {
+            flex: 1;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-text {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .btn-retake {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(6, 182, 212, 0.3);
+            border: 1px solid rgba(6, 182, 212, 1);
+            color: rgba(6, 182, 212, 1);
+            font-weight: medium;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retake:hover {
+            background: rgba(6, 182, 212, 0.4);
+        }
+
+        .quiz-complete {
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.75rem;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .quiz-complete.low {
+            background: rgba(250, 204, 21, 0.15);
+            border: 1px solid rgba(250, 204, 21, 0.4);
+        }
+
+        .quiz-complete h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #86efac;
+        }
+
+        .quiz-complete.low h3 {
+            color: #fde047;
+        }
+
+        .quiz-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #06b6d4;
+            margin-bottom: 0.5rem;
+        }
+
+        h2, h3, h4 {
+            color: #ffffff;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            margin-bottom: 1.5rem;
+            font-family: 'Georgia', serif;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">📊</div>
+            <div class="header-text">
+                <h1>Identify & Connect to Data Sources</h1>
+                <p>PL-300 Exam Mastery: Shared Semantic Models & Data Connection Strategies</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview')">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('concepts')">💡 Key Concepts</button>
+        <button class="tab-button" onclick="switchTab('scenarios')">🎯 Scenarios</button>
+        <button class="tab-button" onclick="switchTab('quiz')">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">📊</div>
+                    <div class="card-title">Data Source Types</div>
+                    <div class="card-content">Power BI can connect to multiple data source categories:</div>
+                    <div class="list">
+                        <div class="list-item">Files: Excel, CSV, JSON, XML, PDF, Parquet, Folder</div>
+                        <div class="list-item">Databases: SQL Server, MySQL, PostgreSQL, Oracle</div>
+                        <div class="list-item">Cloud Services: Azure SQL, Azure Synapse, Google BigQuery</div>
+                        <div class="list-item">Online Services: Salesforce, Dynamics 365, SharePoint</div>
+                        <div class="list-item">Power Platform: Shared semantic models, Power BI datasets</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔗</div>
+                    <div class="card-title">Shared Semantic Model</div>
+                    <div class="card-content">A semantic model (formerly 'dataset') is a single, certified data source shared across your organization.</div>
+                    <div class="list">
+                        <div class="list-item">Stored in Power BI Service (cloud)</div>
+                        <div class="list-item">One source of truth for all users</div>
+                        <div class="list-item">Consistency across all reports and dashboards</div>
+                        <div class="list-item">Reduces data duplication</div>
+                        <div class="list-item">Enables role-based security and governance</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚡</div>
+                    <div class="card-title">Import vs DirectQuery</div>
+                    <div class="card-content">Choose based on your data size, refresh frequency, and performance needs:</div>
+                    <div class="list">
+                        <div class="list-item"><strong>Import:</strong> Data stored in Power BI, faster queries</div>
+                        <div class="list-item"><strong>DirectQuery:</strong> Real-time from source, smaller file sizes</div>
+                        <div class="list-item"><strong>Dual Mode:</strong> Combine both for flexibility</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div style="font-size: 1.5rem;">🌉</div>
+                <div class="info-box-content">
+                    <div class="info-title">Data Gateway</div>
+                    <div class="info-text">Required to refresh imported data or use DirectQuery from on-premises sources. Personal Gateway: Single user. Standard Gateway: Multiple users, enterprise-level.</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(6, 182, 212, 0.3); background: linear-gradient(to right, rgba(6, 182, 212, 0.1), rgba(6, 182, 212, 0.05));">
+                <h3>Learning Path</h3>
+                <div class="list">
+                    <div class="list-item success">✓ Understand all available data source connectors</div>
+                    <div class="list-item success">✓ Learn what a shared semantic model is and why it matters</div>
+                    <div class="list-item success">✓ Master Import vs DirectQuery vs Dual Mode decisions</div>
+                    <div class="list-item success">✓ Know when and how to implement Data Gateways</div>
+                    <div class="list-item success">✓ Practice real-world connection scenarios</div>
+                    <div class="list-item success">✓ Test your knowledge with exam-style questions</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Concepts Tab -->
+        <div id="concepts" class="tab-content">
+            <h2>Key Concepts</h2>
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>📊 Data Source Types</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p>Power BI can connect to multiple data source categories:</p>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">Files:</strong>
+                    <div class="list">
+                        <div class="list-item">Excel workbooks (.xlsx, .xls)</div>
+                        <div class="list-item">CSV, JSON, XML, PDF, Parquet, Folder</div>
+                    </div>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">Databases:</strong>
+                    <div class="list">
+                        <div class="list-item">SQL Server, MySQL, PostgreSQL, Oracle, Access</div>
+                    </div>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">Cloud Services:</strong>
+                    <div class="list">
+                        <div class="list-item">Azure SQL, Azure Synapse, Google BigQuery, Snowflake</div>
+                    </div>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">Online Services:</strong>
+                    <div class="list">
+                        <div class="list-item">Salesforce, Dynamics 365, SharePoint, Dataverse</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🔗 Shared Semantic Model</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p>A semantic model (formerly 'dataset') is a single, certified data source shared across your organization.</p>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">Key Characteristics:</strong>
+                    <div class="list">
+                        <div class="list-item">Stored in Power BI Service (cloud)</div>
+                        <div class="list-item">One source of truth for all users</div>
+                        <div class="list-item">Consistency across all reports and dashboards</div>
+                        <div class="list-item">Reduces data duplication</div>
+                        <div class="list-item">Enables role-based security and governance</div>
+                        <div class="list-item">Can be connected via 'Power BI datasets' connector</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>⚡ Import vs DirectQuery</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p>Choose based on your data size, refresh frequency, and performance needs:</p>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">Import Mode:</strong>
+                    <div class="list">
+                        <div class="list-item success">✓ Data stored in Power BI model, faster queries</div>
+                        <div class="list-item success">✓ Larger file sizes</div>
+                        <div class="list-item success">✓ Full DAX and transformation capabilities</div>
+                    </div>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">DirectQuery Mode:</strong>
+                    <div class="list">
+                        <div class="list-item success">✓ Real-time data from source</div>
+                        <div class="list-item success">✓ Smaller file sizes</div>
+                        <div class="list-item success">✓ No data duplication</div>
+                        <div class="list-item warning">⚠ Slower query performance</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🌉 Data Gateway</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p>Required to refresh imported data or use DirectQuery from on-premises sources.</p>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">Personal Gateway:</strong>
+                    <div class="list">
+                        <div class="list-item">Single user, on their machine</div>
+                        <div class="list-item">For personal use only</div>
+                    </div>
+                    <strong style="color: #cbd5e1; display: block; margin-top: 1rem;">Standard Gateway:</strong>
+                    <div class="list">
+                        <div class="list-item">Multiple users, enterprise-level</div>
+                        <div class="list-item">Handles authentication and data encryption</div>
+                        <div class="list-item">Critical for hybrid environments</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenarios Tab -->
+        <div id="scenarios" class="tab-content">
+            <h2>Hands-On Scenarios</h2>
+            <div class="info-box">
+                <div style="font-size: 1.5rem;">🎯</div>
+                <div class="info-box-content">
+                    <div class="info-title">Learn by Example</div>
+                    <div class="info-text">Work through real-world scenarios to master different data connection types.</div>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 1: Excel Data to Power BI</div>
+                <div class="scenario-description">Your manager has a customer dataset in Excel. Import it into Power BI Desktop.</div>
+                <div class="scenario-expanded">
+                    <h4>Steps:</h4>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Open Power BI Desktop</div>
+                            <div class="step-description">Launch Power BI Desktop application</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Select Home > Get Data > Excel</div>
+                            <div class="step-description">Choose Excel as your data source</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Browse to the Excel file location</div>
+                            <div class="step-description">Navigate to your file</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Select the worksheet containing data</div>
+                            <div class="step-description">Choose the specific sheet</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <div class="step-title">Preview and Load the data</div>
+                            <div class="step-description">Data is now available in Power BI for modeling</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 2: Connect to a Shared Semantic Model</div>
+                <div class="scenario-description">Your organization has a certified semantic model in Power BI Service. Use it instead of importing raw data.</div>
+                <div class="scenario-expanded">
+                    <h4>Steps:</h4>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Open Power BI Desktop</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Select Home > Get Data > Power BI datasets</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Authenticate with your organizational account</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Browse and select the certified dataset</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <div class="step-title">Create queries on top of the semantic model</div>
+                            <div class="step-description">You're connected to a single source of truth, ensuring data consistency</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 3: Database Connection</div>
+                <div class="scenario-description">Connect directly to your organization's SQL Server database.</div>
+                <div class="scenario-expanded">
+                    <h4>Steps:</h4>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Select Home > Get Data > SQL Server</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Enter server name and database name</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Choose Direct Query or Import mode</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Configure authentication (Windows or Database)</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <div class="step-title">Select tables for your model</div>
+                            <div class="step-description">Real-time or imported data is ready for analysis</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 4: Cloud Data Warehouse</div>
+                <div class="scenario-description">Your company uses Azure Synapse. Connect to it in Power BI.</div>
+                <div class="scenario-expanded">
+                    <h4>Steps:</h4>
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Select Home > Get Data > Azure > Azure Synapse</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Provide server and database credentials</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Use Service Principal or user authentication</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Select tables from the data warehouse</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <div class="step-title">Decide between Import and Direct Query modes</div>
+                            <div class="step-description">You have access to cloud-scale analytics infrastructure</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(6, 182, 212, 0.2), rgba(14, 165, 233, 0.2)); border: 1px solid rgba(6, 182, 212, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div>
+                        <div id="score-text" style="color: #cbd5e1;"></div>
+                    </div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #06b6d4; display: none;">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Master the PL-300 Certification • Identify and Connect to Data Sources & Shared Semantic Models</p>
+    </div>
+
+    <script>
+        const quizQuestions = [
+            {
+                id: 1,
+                question: "Which connector would you use to connect to a shared Power BI semantic model?",
+                options: [
+                    { text: "Home > Get Data > Power BI datasets", correct: true },
+                    { text: "Home > Get Data > SQL Server", correct: false },
+                    { text: "Home > Get Data > Excel", correct: false },
+                    { text: "Home > Recent Sources", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                question: "What is the main advantage of using a shared semantic model?",
+                options: [
+                    { text: "It ensures a single source of truth for your organization", correct: true },
+                    { text: "It automatically creates visualizations", correct: false },
+                    { text: "It removes the need for Power BI Desktop", correct: false },
+                    { text: "It eliminates the need for data modeling", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                question: "When should you use DirectQuery instead of Import mode?",
+                options: [
+                    { text: "When you need real-time data and have large datasets", correct: true },
+                    { text: "When you want faster report performance", correct: false },
+                    { text: "When the data source is an Excel file", correct: false },
+                    { text: "When you need offline reporting", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                question: "Why would you need a Data Gateway?",
+                options: [
+                    { text: "To refresh imported data from on-premises sources securely", correct: true },
+                    { text: "To increase Power BI Desktop performance", correct: false },
+                    { text: "To create relationships between tables", correct: false },
+                    { text: "To enable real-time notifications", correct: false }
+                ]
+            },
+            {
+                id: 5,
+                question: "Which of the following is a cloud data source?",
+                options: [
+                    { text: "Azure Synapse Analytics", correct: true },
+                    { text: "Local Excel file", correct: false },
+                    { text: "Personal Access Database", correct: false },
+                    { text: "CSV file on your computer", correct: false }
+                ]
+            }
+        ];
+
+        let quizAnswers = {};
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Initialize quiz if switching to quiz tab
+            if (tabName === 'quiz') {
+                initializeQuiz();
+            }
+        }
+
+        function toggleExpandable(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function toggleScenario(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            const completeDiv = document.getElementById('quiz-complete');
+            
+            if (container.innerHTML) return; // Already initialized
+
+            quizQuestions.forEach((q, idx) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'quiz-question';
+                questionDiv.id = `question-${q.id}`;
+
+                let optionsHTML = '';
+                q.options.forEach((opt, optIdx) => {
+                    optionsHTML += `
+                        <button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})">
+                            <span class="option-radio"></span>
+                            <span>${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                questionDiv.innerHTML = `
+                    <div class="question-text">${q.question}</div>
+                    ${optionsHTML}
+                    <div class="question-number">Question ${idx + 1} of ${quizQuestions.length}</div>
+                `;
+
+                container.appendChild(questionDiv);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return; // Already answered
+
+            quizAnswers[questionId] = isCorrect;
+            
+            // Update UI
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) {
+                    btn.classList.add('correct');
+                } else if (btn === event.target) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            updateProgress();
+
+            // Check if all questions answered
+            if (Object.keys(quizAnswers).length === quizQuestions.length) {
+                showQuizComplete();
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+
+            const completeDiv = document.getElementById('quiz-complete');
+            const isGood = percentage >= 0.75;
+
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `
+                <h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3>
+                <div class="quiz-score">${Math.round(percentage * 100)}%</div>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                    ${isGood 
+                        ? "Excellent work! You're ready for the exam." 
+                        : "Review the concepts and try again to strengthen your understanding."}
+                </p>
+                <button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>
+            `;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+    </script>
+</body>
+</html>

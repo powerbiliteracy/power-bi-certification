@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: Create Fact Tables and Dimension Tables</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0f1a2e 0%, #1a2d4e 50%, #0f1a2e 100%); color: #e2e8f0; min-height: 100vh; }
+        .header { background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%); border-bottom: 1px solid rgba(59, 130, 246, 0.3); padding: 3rem 0; position: relative; }
+        .header::before { content: ''; position: absolute; inset: 0; opacity: 0.1; background: radial-gradient(circle at 20% 50%, #3b82f6 0%, transparent 50%), radial-gradient(circle at 80% 80%, #60a5fa 0%, transparent 50%); pointer-events: none; }
+        .header-content { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 1; display: flex; gap: 1rem; align-items: center; }
+        .header-icon { width: 3.5rem; height: 3.5rem; padding: 0.75rem; border-radius: 0.5rem; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .header-text h1 { font-size: 2.25rem; font-weight: bold; margin-bottom: 0.25rem; font-family: 'Georgia', serif; }
+        .header-text p { color: rgba(59, 130, 246, 0.8); font-size: 1.125rem; }
+        .tabs { max-width: 80rem; margin: 2rem auto 0; padding: 0 1.5rem; display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; }
+        .tab-button { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 500; border: 1px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.4); color: #cbd5e1; cursor: pointer; white-space: nowrap; transition: all 0.3s ease; }
+        .tab-button.active { background: rgba(59, 130, 246, 0.3); border-color: rgba(59, 130, 246, 1); color: rgba(59, 130, 246, 1); box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .container { max-width: 80rem; margin: 2rem auto; padding: 0 1.5rem; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .card { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(59, 130, 246, 0.2); background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05)); }
+        .card-title { font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem; }
+        .expandable { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.3); margin-bottom: 1rem; cursor: pointer; }
+        .expandable-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #ffffff; }
+        .expandable-content { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(51, 65, 85, 0.3); }
+        .expandable.expanded .expandable-content { display: block; }
+        .expandable-toggle { transition: transform 0.3s ease; color: rgba(59, 130, 246, 1); }
+        .expandable.expanded .expandable-toggle { transform: rotate(180deg); }
+        .example-box { padding: 1rem; border-radius: 0.5rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(59, 130, 246, 0.3); font-family: 'Courier New', monospace; font-size: 0.8rem; color: #cbd5e1; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin: 0.75rem 0; }
+        .list-item { display: flex; gap: 0.5rem; padding: 0.5rem 0; color: #cbd5e1; font-size: 0.875rem; }
+        .scenario-item { padding: 1.5rem; border-radius: 0.75rem; background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.3); margin-bottom: 1rem; cursor: pointer; }
+        .scenario-title { font-weight: bold; color: #ffffff; font-size: 1.125rem; margin-bottom: 0.5rem; }
+        .scenario-expanded { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(51, 65, 85, 0.3); }
+        .scenario-item.expanded .scenario-expanded { display: block; }
+        .step { padding: 1rem; border-radius: 0.5rem; background: rgba(30, 41, 59, 0.3); border-left: 3px solid rgba(59, 130, 246, 0.5); margin-bottom: 1rem; display: flex; gap: 1rem; }
+        .step-number { width: 2rem; height: 2rem; min-width: 2rem; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 1px solid rgba(59, 130, 246, 0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: rgba(59, 130, 246, 1); }
+        .step-content h4 { color: #ffffff; margin-bottom: 0.25rem; }
+        .step-content p { color: #cbd5e1; font-size: 0.875rem; }
+        .quiz-question { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.3); margin-bottom: 1.5rem; }
+        .quiz-question.answered { border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.05); }
+        .quiz-question.answered.incorrect { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
+        .question-text { font-weight: bold; color: #ffffff; margin-bottom: 1rem; }
+        .option { padding: 1rem; border-radius: 0.5rem; border: 2px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.3); margin-bottom: 0.5rem; cursor: pointer; color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem; }
+        .option:hover:not(:disabled) { background: rgba(51, 65, 85, 0.5); }
+        .option.correct { background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.5); color: rgba(134, 239, 172, 1); }
+        .option.incorrect { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); }
+        .option-radio { width: 1rem; height: 1rem; border: 2px solid currentColor; border-radius: 50%; flex-shrink: 0; }
+        .progress-bar { width: 100%; height: 0.5rem; background: rgba(51, 65, 85, 0.5); border-radius: 9999px; overflow: hidden; margin-top: 1rem; }
+        .progress-fill { height: 100%; background: linear-gradient(to right, #3b82f6, #60a5fa); transition: width 0.5s ease; }
+        .footer { border-top: 1px solid rgba(51, 65, 85, 0.3); background: rgba(15, 23, 42, 0.5); margin-top: 3rem; padding: 2rem 0; text-align: center; color: #64748b; font-size: 0.875rem; }
+        h2, h3, h4 { color: #ffffff; }
+        h2 { font-size: 1.875rem; margin-bottom: 1.5rem; font-family: 'Georgia', serif; }
+        h3 { font-size: 1.125rem; margin-bottom: 1rem; }
+        .btn-retake { padding: 0.5rem 1.5rem; border-radius: 0.5rem; background: rgba(59, 130, 246, 0.3); border: 1px solid rgba(59, 130, 246, 1); color: rgba(59, 130, 246, 1); font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+        .btn-retake:hover { background: rgba(59, 130, 246, 0.4); }
+        .quiz-complete { padding: 2rem; text-align: center; border-radius: 0.75rem; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); }
+        .quiz-complete.low { background: rgba(250, 204, 21, 0.15); border: 1px solid rgba(250, 204, 21, 0.4); }
+        .quiz-complete h3 { color: #86efac; }
+        .quiz-complete.low h3 { color: #fde047; }
+        .quiz-score { font-size: 2rem; font-weight: bold; color: #3b82f6; margin-bottom: 0.5rem; }
+        .info-box { padding: 1.5rem; border-radius: 0.75rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); margin-bottom: 1.5rem; display: flex; gap: 1rem; }
+        .info-box-content { flex: 1; }
+        .info-title { font-weight: bold; color: #60a5fa; margin-bottom: 0.5rem; }
+        .info-text { color: #cbd5e1; font-size: 0.875rem; line-height: 1.6; }
+        .comparison-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        .comparison-table td { padding: 0.75rem; border: 1px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.3); font-size: 0.875rem; }
+        .comparison-table .header { font-weight: bold; color: #ffffff; background: rgba(59, 130, 246, 0.1); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">⭐</div>
+            <div class="header-text">
+                <h1>Create Fact Tables and Dimension Tables</h1>
+                <p>PL-300: Star Schema Design, Data Warehouse Structure & Relationships</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('design', event)">🔗 Schema Design</button>
+        <button class="tab-button" onclick="switchTab('scenarios', event)">🎯 Real Scenarios</button>
+        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">⭐</div>
+                    <div class="card-title">Fact Tables</div>
+                    <div class="list-item">Central table with measures (Sales, Revenue)</div>
+                </div>
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔵</div>
+                    <div class="card-title">Dimension Tables</div>
+                    <div class="list-item">Context attributes (Date, Product, Customer)</div>
+                </div>
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">✨</div>
+                    <div class="card-title">Star Schema</div>
+                    <div class="list-item">Fact center with dimensions radiating</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(59, 130, 246, 0.3); background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));">
+                <h2>Dimensional Modeling Fundamentals</h2>
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem; line-height: 1.6;"><span style="font-weight: bold; color: rgba(59, 130, 246, 1);">Fact tables</span> store measurable events (sales, transactions). <span style="font-weight: bold; color: rgba(59, 130, 246, 1);">Dimension tables</span> store context. Together they form a <span style="font-weight: bold; color: rgba(59, 130, 246, 1);">star schema</span> for analytics.</p>
+
+                <table class="comparison-table">
+                    <tr><td class="header">Aspect</td><td class="header">Fact Table</td><td class="header">Dimension Table</td></tr>
+                    <tr><td>Purpose</td><td>Measures & events</td><td>Attributes & context</td></tr>
+                    <tr><td>Rows</td><td>Many (millions)</td><td>Few (thousands)</td></tr>
+                    <tr><td>Columns</td><td>Few measures</td><td>Many attributes</td></tr>
+                    <tr><td>Example</td><td>FactSales</td><td>DimProduct, DimDate</td></tr>
+                </table>
+            </div>
+
+            <div class="info-box">
+                <div style="font-size: 1.5rem;">💡</div>
+                <div class="info-box-content">
+                    <div class="info-title">Key Principle</div>
+                    <div class="info-text">Star schema optimizes analytics by separating measures from attributes. Fact tables connect to multiple dimensions via foreign keys, enabling fast queries and dimensional slicing.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="design" class="tab-content">
+            <h2>Star Schema Design</h2>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>⭐ Fact Table Structure</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Central table with measurable events and foreign keys.</p>
+                    <div class="example-box">FactSales
+├── SalesID (PK)
+├── DateID (FK)
+├── ProductID (FK)
+├── CustomerID (FK)
+├── Amount (Measure)
+├── Quantity (Measure)
+└── Profit (Measure)</div>
+                    <p style="color: #cbd5e1; margin-top: 1rem;"><strong>Characteristics:</strong> Many rows, multiple FKs, additive measures</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🔵 Dimension Table Structure</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Context and descriptive attributes.</p>
+                    <div class="example-box">DimProduct
+├── ProductID (PK)
+├── ProductName
+├── Category
+├── Subcategory
+├── Price
+└── Supplier
+
+DimDate
+├── DateID (PK)
+├── FullDate
+├── Year, Month, Quarter
+├── DayOfWeek
+└── IsWeekday</div>
+                    <p style="color: #cbd5e1; margin-top: 1rem;"><strong>Characteristics:</strong> Fewer rows, many attributes, no FKs (except PK)</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🔗 Grain & Relationships</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Grain:</strong> Level of detail for each fact row (e.g., one row per transaction, per day, per region).</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Relationships:</strong> Many-to-One from fact to each dimension via foreign keys.</p>
+                    <div class="example-box">FactSales (Grain: per transaction)
+  ├─→ DimDate (Many transactions per date)
+  ├─→ DimProduct (Many transactions per product)
+  ├─→ DimCustomer (Many transactions per customer)
+  └─→ DimRegion (Many transactions per region)</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="scenarios" class="tab-content">
+            <h2>Real-World Scenarios</h2>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 1: Retail Sales Data Warehouse</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Store transactions across multiple locations and products</div>
+                <div class="scenario-expanded">
+                    <h4>Fact Table: FactSales</h4>
+                    <div class="example-box">SalesID, DateID, ProductID, StoreID, CustomerID, Amount, Quantity, DiscountAmount</div>
+                    <h4 style="margin-top: 1rem;">Dimension Tables:</h4>
+                    <div class="list-item" style="margin-bottom: 0.5rem;">• DimDate: Date, Month, Year, Quarter, DayOfWeek</div>
+                    <div class="list-item" style="margin-bottom: 0.5rem;">• DimProduct: ProductName, Category, Price</div>
+                    <div class="list-item" style="margin-bottom: 0.5rem;">• DimStore: StoreName, City, Region, Manager</div>
+                    <div class="list-item">• DimCustomer: CustomerName, Segment, Loyalty</div>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 2: Website Analytics</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Track page views and user interactions</div>
+                <div class="scenario-expanded">
+                    <h4>Fact Table: FactPageViews</h4>
+                    <div class="example-box">PageViewID, DateID, TimeID, UserID, PageID, Views, Bounces</div>
+                    <h4 style="margin-top: 1rem;">Dimensions:</h4>
+                    <div class="list-item" style="margin-bottom: 0.5rem;">• DimDate (Year, Month, Week)</div>
+                    <div class="list-item" style="margin-bottom: 0.5rem;">• DimTime (Hour, Minute)</div>
+                    <div class="list-item" style="margin-bottom: 0.5rem;">• DimUser (UserID, Region, Device)</div>
+                    <div class="list-item">• DimPage (PageName, Category, Type)</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.2)); border: 1px solid rgba(59, 130, 246, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div><div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div><div id="score-text" style="color: #cbd5e1;"></div></div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #3b82f6; display: none;">0%</div>
+                </div>
+                <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width: 0%;"></div></div>
+            </div>
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Master the PL-300 Certification • Creating Fact and Dimension Tables for Star Schema</p>
+    </div>
+
+    <script>
+        const quizQuestions = [
+            { id: 1, question: "In a star schema, which table is at the center?", options: [{ text: "Fact table (transactions and measures)", correct: true }, { text: "Dimension table (attributes)", correct: false }, { text: "Both equally", correct: false }, { text: "Lookup table", correct: false }] },
+            { id: 2, question: "What does a fact table primarily contain?", options: [{ text: "Measures and foreign keys", correct: true }, { text: "Descriptive attributes only", correct: false }, { text: "Historical data", correct: false }, { text: "Configuration settings", correct: false }] },
+            { id: 3, question: "Which relationship connects fact to dimension?", options: [{ text: "Many-to-One", correct: true }, { text: "One-to-One", correct: false }, { text: "Many-to-Many", correct: false }, { text: "Self-referential", correct: false }] },
+            { id: 4, question: "Dimensions typically have which characteristics?", options: [{ text: "Few rows, many attributes", correct: true }, { text: "Many rows, few attributes", correct: false }, { text: "Large and unstructured", correct: false }, { text: "Only numeric data", correct: false }] },
+            { id: 5, question: "What are 'measures' in a fact table?", options: [{ text: "Numeric values to aggregate (Sum, Avg)", correct: true }, { text: "Column names", correct: false }, { text: "Row counts", correct: false }, { text: "File sizes", correct: false }] },
+            { id: 6, question: "What is 'grain' in dimensional modeling?", options: [{ text: "Level of detail for each fact row", correct: true }, { text: "Size of the database", correct: false }, { text: "Number of dimensions", correct: false }, { text: "Data quality measure", correct: false }] },
+            { id: 7, question: "Primary benefit of star schema design?", options: [{ text: "Fast queries and easy understanding", correct: true }, { text: "Minimal data storage", correct: false }, { text: "No relationships needed", correct: false }, { text: "Single table only", correct: false }] },
+            { id: 8, question: "How many fact tables can a star schema have?", options: [{ text: "One or more (flexible)", correct: true }, { text: "Always exactly one", correct: false }, { text: "Never more than one", correct: false }, { text: "Unlimited with no structure", correct: false }] }
+        ];
+
+        let quizAnswers = {};
+
+        function switchTab(tabName, e) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+            if (tabName === 'quiz') initializeQuiz();
+        }
+
+        function toggleExpandable(e) { e.classList.toggle('expanded'); }
+        function toggleScenario(e) { e.classList.toggle('expanded'); }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            if (container.innerHTML) return;
+            quizQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-question';
+                div.id = `question-${q.id}`;
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    optionsHTML += `<button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})"><span class="option-radio"></span><span>${opt.text}</span></button>`;
+                });
+                div.innerHTML = `<div class="question-text">${q.question}</div>${optionsHTML}<div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return;
+            quizAnswers[questionId] = isCorrect;
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) btn.classList.add('correct');
+                else if (btn === event.target) btn.classList.add('incorrect');
+                btn.disabled = true;
+            });
+            updateProgress();
+            if (Object.keys(quizAnswers).length === quizQuestions.length) showQuizComplete();
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+            const isGood = percentage >= 0.75;
+            const completeDiv = document.getElementById('quiz-complete');
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `<h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3><div class="quiz-score">${Math.round(percentage * 100)}%</div><p style="color: #cbd5e1; margin-bottom: 1rem;">${isGood ? "Outstanding! You've mastered fact and dimension tables." : "Review the design and scenarios to strengthen your knowledge."}</p><button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>`;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+    </script>
+</body>
+</html>

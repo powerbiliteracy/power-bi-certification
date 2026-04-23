@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: Group and Aggregate Rows</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0f2e 0%, #2d1b4e 50%, #1a0f2e 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background: radial-gradient(circle at 20% 50%, #a855f7 0%, transparent 50%), 
+                        radial-gradient(circle at 80% 80%, #c084fc 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .header-text h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            font-family: 'Georgia', serif;
+        }
+
+        .header-text p {
+            color: rgba(168, 85, 247, 0.8);
+            font-size: 1.125rem;
+        }
+
+        .tabs {
+            max-width: 80rem;
+            margin: 2rem auto 0;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.4);
+            color: #cbd5e1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: rgba(168, 85, 247, 0.3);
+            border-color: rgba(168, 85, 247, 1);
+            color: rgba(168, 85, 247, 1);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .container {
+            max-width: 80rem;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            background: linear-gradient(to bottom right, rgba(168, 85, 247, 0.1), rgba(168, 85, 247, 0.05));
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .function-card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .function-name {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .function-description {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .example-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 0.75rem 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .comparison-table td {
+            padding: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            font-size: 0.875rem;
+        }
+
+        .comparison-table .header {
+            font-weight: bold;
+            color: #ffffff;
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .expandable {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .expandable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .expandable-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .expandable.expanded .expandable-content {
+            display: block;
+        }
+
+        .expandable-toggle {
+            transition: transform 0.3s ease;
+            color: rgba(168, 85, 247, 1);
+        }
+
+        .expandable.expanded .expandable-toggle {
+            transform: rotate(180deg);
+        }
+
+        .scenario-item {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .scenario-title {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-expanded {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .scenario-item.expanded .scenario-expanded {
+            display: block;
+        }
+
+        .step {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-left: 3px solid rgba(168, 85, 247, 0.5);
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .step-number {
+            width: 2rem;
+            height: 2rem;
+            min-width: 2rem;
+            border-radius: 50%;
+            background: rgba(168, 85, 247, 0.3);
+            border: 1px solid rgba(168, 85, 247, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: rgba(168, 85, 247, 1);
+        }
+
+        .step-content h4 {
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .pros, .cons {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .pros {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .cons {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .pros h4 {
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .cons h4 {
+            color: rgba(252, 165, 165, 1);
+        }
+
+        .list-item {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .before, .after {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        .before-title, .after-title {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.75rem;
+        }
+
+        .before-title {
+            color: rgba(239, 68, 68, 1);
+        }
+
+        .after-title {
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .table-demo {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.8rem;
+        }
+
+        .table-demo td {
+            padding: 0.5rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .quiz-question {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question.answered {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .quiz-question.answered.incorrect {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .question-text {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .option {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option:hover:not(:disabled) {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .option.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .option-radio {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #a855f7, #c084fc);
+            transition: width 0.5s ease;
+        }
+
+        .footer {
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            margin-top: 3rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        h2, h3, h4 {
+            color: #ffffff;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            margin-bottom: 1.5rem;
+            font-family: 'Georgia', serif;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-retake {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(168, 85, 247, 0.3);
+            border: 1px solid rgba(168, 85, 247, 1);
+            color: rgba(168, 85, 247, 1);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retake:hover {
+            background: rgba(168, 85, 247, 0.4);
+        }
+
+        .quiz-complete {
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.75rem;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .quiz-complete.low {
+            background: rgba(250, 204, 21, 0.15);
+            border: 1px solid rgba(250, 204, 21, 0.4);
+        }
+
+        .quiz-complete h3 {
+            color: #86efac;
+        }
+
+        .quiz-complete.low h3 {
+            color: #fde047;
+        }
+
+        .quiz-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #a855f7;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .info-box-content {
+            flex: 1;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-text {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">📊</div>
+            <div class="header-text">
+                <h1>Group and Aggregate Rows</h1>
+                <p>PL-300: Summarization, Grouping, and Data Aggregation in Power Query</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('functions', event)">⚙️ Functions</button>
+        <button class="tab-button" onclick="switchTab('comparison', event)">⚖️ Comparison</button>
+        <button class="tab-button" onclick="switchTab('scenarios', event)">🎯 Real Scenarios</button>
+        <button class="tab-button" onclick="switchTab('best', event)">⭐ Best Practices</button>
+        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">📊</div>
+                    <div class="card-title">Group Rows</div>
+                    <div class="list-item">Combine rows by common values</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">➕</div>
+                    <div class="card-title">Aggregate Data</div>
+                    <div class="list-item">Summarize with SUM, AVG, COUNT, etc.</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚡</div>
+                    <div class="card-title">Reduce Size</div>
+                    <div class="list-item">Smaller datasets, faster models</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(168, 85, 247, 0.3); background: linear-gradient(to right, rgba(168, 85, 247, 0.1), rgba(168, 85, 247, 0.05));">
+                <h2>What is Grouping and Aggregation?</h2>
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem; line-height: 1.6;">
+                    <span style="font-weight: bold; color: rgba(168, 85, 247, 1);">Grouping</span> combines rows with the same value(s) in specified columns. <span style="font-weight: bold; color: rgba(168, 85, 247, 1);">Aggregation</span> summarizes numerical data (sum, average, count, etc.) for each group. Together, they transform detailed transaction data into summary reports.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3 style="color: rgba(168, 85, 247, 1); margin-bottom: 1rem;">Key Benefits</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Reduce data volume</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Create summary tables</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Improve query speed</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Simplify reporting</div>
+                        <div class="list-item">✓ Pre-aggregate data</div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: rgba(168, 85, 247, 1); margin-bottom: 1rem;">Common Use Cases</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">Sales by Region</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">Total by Product</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">Customer Totals</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">Monthly Revenue</div>
+                        <div class="list-item">Count by Category</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div style="font-size: 1.5rem;">💡</div>
+                <div class="info-box-content">
+                    <div class="info-title">Key Principle</div>
+                    <div class="info-text">Grouping and aggregation are done at the data source (Power Query) for best performance. This reduces file size and improves model refresh speed significantly.</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(168, 85, 247, 0.3); margin-top: 1.5rem;">
+                <h3>Before & After Example</h3>
+                <div class="before-after">
+                    <div class="before">
+                        <div class="before-title">❌ Before: Detailed Rows</div>
+                        <table class="table-demo">
+                            <tr>
+                                <td><strong>Date</strong></td>
+                                <td><strong>Region</strong></td>
+                                <td><strong>Amount</strong></td>
+                            </tr>
+                            <tr>
+                                <td>1/1/2024</td>
+                                <td>North</td>
+                                <td>$1,000</td>
+                            </tr>
+                            <tr>
+                                <td>1/1/2024</td>
+                                <td>North</td>
+                                <td>$500</td>
+                            </tr>
+                            <tr>
+                                <td>1/1/2024</td>
+                                <td>South</td>
+                                <td>$2,000</td>
+                            </tr>
+                            <tr>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                            </tr>
+                        </table>
+                        <p style="color: #cbd5e1; font-size: 0.875rem;">10,000+ rows</p>
+                    </div>
+                    <div class="after">
+                        <div class="after-title">✓ After: Grouped & Aggregated</div>
+                        <table class="table-demo">
+                            <tr>
+                                <td><strong>Date</strong></td>
+                                <td><strong>Region</strong></td>
+                                <td><strong>Total</strong></td>
+                            </tr>
+                            <tr>
+                                <td>1/1/2024</td>
+                                <td>North</td>
+                                <td>$1,500</td>
+                            </tr>
+                            <tr>
+                                <td>1/1/2024</td>
+                                <td>South</td>
+                                <td>$2,000</td>
+                            </tr>
+                            <tr>
+                                <td>1/2/2024</td>
+                                <td>North</td>
+                                <td>$3,200</td>
+                            </tr>
+                            <tr>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                            </tr>
+                        </table>
+                        <p style="color: #cbd5e1; font-size: 0.875rem;">500 rows (95% reduction!)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Functions Tab -->
+        <div id="functions" class="tab-content">
+            <h2>Grouping & Aggregation Functions</h2>
+            <div id="functions-container"></div>
+        </div>
+
+        <!-- Comparison Tab -->
+        <div id="comparison" class="tab-content">
+            <h2>When to Use Each Function</h2>
+            
+            <div class="card">
+                <h3>Aggregation Function Comparison</h3>
+                <table class="comparison-table">
+                    <tr>
+                        <td class="header">Function</td>
+                        <td class="header">Purpose</td>
+                        <td class="header">Returns</td>
+                        <td class="header">Use Case</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sum</strong></td>
+                        <td>Total of values</td>
+                        <td>Total amount</td>
+                        <td>Sales, Revenue, Totals</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Average</strong></td>
+                        <td>Mean value</td>
+                        <td>Average amount</td>
+                        <td>Avg price, Rating</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Count</strong></td>
+                        <td>Number of items</td>
+                        <td>Quantity</td>
+                        <td>Transactions, Orders</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Min/Max</strong></td>
+                        <td>Smallest/Largest</td>
+                        <td>Single value</td>
+                        <td>Price range, Extremes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Distinct Count</strong></td>
+                        <td>Unique items</td>
+                        <td>Count of unique</td>
+                        <td>Unique customers</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card" style="border-color: rgba(168, 85, 247, 0.3); margin-top: 1.5rem;">
+                <h3>Grouping Columns: Single vs. Multiple</h3>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Single Column Grouping</h4>
+                        <div class="list-item">✓ Group by Region only</div>
+                        <div class="list-item">✓ Fewer result rows</div>
+                        <div class="list-item">✓ High-level summary</div>
+                        <div class="list-item">✓ Simpler logic</div>
+                    </div>
+                    <div class="cons">
+                        <h4>Multiple Column Grouping</h4>
+                        <div class="list-item">⚠ Group by Region + Product</div>
+                        <div class="list-item">⚠ More granular detail</div>
+                        <div class="list-item">⚠ More result rows</div>
+                        <div class="list-item">⚠ More flexible</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenarios Tab -->
+        <div id="scenarios" class="tab-content">
+            <h2>Real-World Scenarios</h2>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 1: Total Sales by Region</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">You have 10,000 daily transactions. Group by Region and Sum Amount.</div>
+                <div class="scenario-expanded">
+                    <h4>Goal:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Get total sales per region for dashboard.</p>
+                    <h4>Approach:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 0.75rem;"><strong>Group By:</strong> Region</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Aggregate:</strong> Sum(Amount)</p>
+                    <div class="example-box">Table.Group(Source, {"Region"}, 
+  {{"Total", each List.Sum([Amount]), type number}})</div>
+                    <p style="color: rgba(134, 239, 172, 1); margin-top: 1rem;"><strong>Result:</strong> 4-5 rows (one per region) instead of 10,000</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 2: Average Rating by Product</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">50,000 customer reviews. Find average rating per product.</div>
+                <div class="scenario-expanded">
+                    <h4>Goal:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Create product rating summary.</p>
+                    <h4>Approach:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 0.75rem;"><strong>Group By:</strong> Product</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Aggregate:</strong> Average(Rating), Count (for review count)</p>
+                    <div class="example-box">Table.Group(Source, {"Product"}, 
+  {{"AvgRating", each List.Average([Rating]), type number},
+   {"ReviewCount", each List.Count([Rating]), type number}})</div>
+                    <p style="color: rgba(134, 239, 172, 1); margin-top: 1rem;"><strong>Result:</strong> 200 products with ratings (99.6% reduction)</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 3: Monthly Revenue by Region & Product</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">100,000 daily transactions. Need month/region/product breakdown.</div>
+                <div class="scenario-expanded">
+                    <h4>Goal:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Multi-dimensional summary for pivot tables.</p>
+                    <h4>Approach:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 0.75rem;"><strong>Group By:</strong> YearMonth, Region, Product (3 columns)</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Aggregate:</strong> Sum(Revenue), Count, Average(Price)</p>
+                    <div class="example-box">Table.Group(Source, {"YearMonth", "Region", "Product"}, 
+  {{"TotalRevenue", each List.Sum([Amount]), type number},
+   {"TransactionCount", each List.Count([ID]), type number}})</div>
+                    <p style="color: rgba(134, 239, 172, 1); margin-top: 1rem;"><strong>Result:</strong> 5,000 rows (95% smaller, enables rich reporting)</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 4: Unique Customer Count by Month</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Track customer acquisition across months.</div>
+                <div class="scenario-expanded">
+                    <h4>Goal:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">See how many unique customers per month.</p>
+                    <h4>Approach:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 0.75rem;"><strong>Group By:</strong> Month</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Aggregate:</strong> Count of Distinct CustomerID</p>
+                    <div class="example-box">Table.Group(Source, {"Month"}, 
+  {{"UniqueCustomers", each List.Count(List.Distinct([CustomerID])), type number}})</div>
+                    <p style="color: rgba(134, 239, 172, 1); margin-top: 1rem;"><strong>Result:</strong> 12 rows (one per month) with unique customer counts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Best Practices Tab -->
+        <div id="best" class="tab-content">
+            <h2>Best Practices for Grouping & Aggregation</h2>
+            
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🎯 Aggregate Early in Power Query</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Group and aggregate as soon as possible after loading data. Do this <strong>before</strong> any complex transformations.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Smaller datasets are faster to process. Subsequent transformations work on summary data instead of millions of rows.</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Can reduce query time by 50-80% compared to aggregating in DAX.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>📊 Choose the Right Aggregation Function</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Sum:</strong> Financial totals (revenue, costs)</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Average:</strong> Ratings, metrics, performance</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Count:</strong> Transaction count, occurrences</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Distinct Count:</strong> Unique values (customers, products)</p>
+                    <p style="color: #cbd5e1;"><strong>Min/Max:</strong> Ranges, outliers</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>📝 Use Meaningful Column Names</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Good:</strong> TotalSales, AverageRating, UniqueCustomers</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Bad:</strong> Sum1, Agg2, Count3</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Clear names make models easier to understand and maintain.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🔍 Handle NULL Values Before Aggregating</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">NULL values can distort aggregation results.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Options:</strong> Remove them, replace with 0, or keep and test impact.</p>
+                    <p style="color: #cbd5e1;"><strong>Example:</strong> If averaging prices with NULL values, result might be wrong. Remove or replace first.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>📌 Order Grouping Columns Strategically</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Order grouping columns from highest to lowest level of detail.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Good order:</strong> Date → Region → Product → SKU</p>
+                    <p style="color: #cbd5e1;"><strong>Bad order:</strong> SKU → Product → Region → Date (confusing hierarchy)</p>
+                    <p style="color: #cbd5e1; margin-top: 1rem;"><strong>Impact:</strong> Makes data easier to work with in downstream tables.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>💾 Keep Original Key Columns</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Always include key columns (IDs, dates, categories) even if not displayed in reports.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Why:</strong> Need them to create relationships to other tables.</p>
+                    <p style="color: #cbd5e1;"><strong>Example:</strong> Keep RegionID even if RegionName is the display column.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🧪 Test Aggregation Results</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Verify aggregation is correct by spot-checking results manually.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Steps:</strong> Take one group, manually calculate sum/avg/count, compare with grouped result.</p>
+                    <p style="color: #cbd5e1;"><strong>Example:</strong> If grouping by Region, manually sum one region's sales and verify match.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.2)); border: 1px solid rgba(168, 85, 247, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div>
+                        <div id="score-text" style="color: #cbd5e1;"></div>
+                    </div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #a855f7; display: none;">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Master the PL-300 Certification • Grouping and Aggregating Rows in Power Query</p>
+    </div>
+
+    <script>
+        const functions = [
+            {
+                name: "Table.Group()",
+                description: "Main function for grouping and aggregating data",
+                syntax: "Table.Group(table, grouping_columns, aggregations)",
+                when: ["Most grouping scenarios", "Multiple aggregations needed", "Complex hierarchies"],
+                example: `Table.Group(Sales, {"Region", "Product"}, 
+  {{"TotalAmount", each List.Sum([Amount]), type number},
+   {"Count", each List.Count([Amount]), type number}})`
+            },
+            {
+                name: "List.Sum()",
+                description: "Sums all values in a list",
+                syntax: "List.Sum(list)",
+                when: ["Financial totals", "Revenue calculations", "Quantity summation"],
+                example: `each List.Sum([Amount])  // In Table.Group`
+            },
+            {
+                name: "List.Average()",
+                description: "Calculates average of values",
+                syntax: "List.Average(list)",
+                when: ["Average price", "Rating calculations", "Performance metrics"],
+                example: `each List.Average([Price])  // Average price per product`
+            },
+            {
+                name: "List.Count()",
+                description: "Counts items in a list",
+                syntax: "List.Count(list)",
+                when: ["Transaction count", "Item quantities", "Occurrence count"],
+                example: `each List.Count([ID])  // Number of transactions per region`
+            },
+            {
+                name: "List.Max() / List.Min()",
+                description: "Finds highest or lowest value",
+                syntax: "List.Max(list) or List.Min(list)",
+                when: ["Price ranges", "Maximum/minimum values", "Data validation"],
+                example: `each List.Max([Price])  // Highest price in category`
+            },
+            {
+                name: "List.Distinct()",
+                description: "Gets unique values from a list",
+                syntax: "List.Distinct(list)",
+                when: ["Unique customer count", "Distinct products", "Cardinality"],
+                example: `each List.Count(List.Distinct([CustomerID]))  // Unique customers`
+            }
+        ];
+
+        const quizQuestions = [
+            {
+                id: 1,
+                question: "You have 100,000 daily sales transactions and need total sales by region. What should you do?",
+                options: [
+                    { text: "Leave as detail rows, aggregate later in DAX", correct: false },
+                    { text: "Group and aggregate in Power Query to get one row per region", correct: true },
+                    { text: "Import everything, summarize in Excel", correct: false },
+                    { text: "Create separate queries for each region", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                question: "Which function calculates the SUM of amounts in each group?",
+                options: [
+                    { text: "List.Count()", correct: false },
+                    { text: "List.Sum()", correct: true },
+                    { text: "List.Distinct()", correct: false },
+                    { text: "List.Average()", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                question: "You need average rating per product from 50,000 reviews. Best approach?",
+                options: [
+                    { text: "Group by Product, aggregate with List.Average([Rating])", correct: true },
+                    { text: "Group by ReviewID", correct: false },
+                    { text: "Don't group, calculate average in report", correct: false },
+                    { text: "Use List.Sum() to total ratings", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                question: "What's the benefit of grouping/aggregating in Power Query vs. DAX?",
+                options: [
+                    { text: "It's easier to write", correct: false },
+                    { text: "Smaller file size, faster refresh, better performance", correct: true },
+                    { text: "More detailed data preserved", correct: false },
+                    { text: "No difference in outcome", correct: false }
+                ]
+            },
+            {
+                id: 5,
+                question: "You want unique customer count per month. Which function?",
+                options: [
+                    { text: "List.Sum()", correct: false },
+                    { text: "List.Count(List.Distinct([CustomerID]))", correct: true },
+                    { text: "List.Average()", correct: false },
+                    { text: "Table.Select()", correct: false }
+                ]
+            },
+            {
+                id: 6,
+                question: "When grouping by multiple columns (Date, Region, Product), what order is best?",
+                options: [
+                    { text: "Product → Region → Date (alphabetical)", correct: false },
+                    { text: "Date → Region → Product (hierarchical, logical)", correct: true },
+                    { text: "Region → Date → Product", correct: false },
+                    { text: "Order doesn't matter", correct: false }
+                ]
+            },
+            {
+                id: 7,
+                question: "NULL values in a column being summed. What should you do?",
+                options: [
+                    { text: "Ignore them, SUM handles NULL fine", correct: false },
+                    { text: "Remove or replace NULL before aggregating", correct: true },
+                    { text: "Count them as zero in the SUM", correct: false },
+                    { text: "Aggregate anyway, they won't affect results", correct: false }
+                ]
+            },
+            {
+                id: 8,
+                question: "10,000 rows grouped to 500 rows. This is good because...",
+                options: [
+                    { text: "We lost data and can't see details anymore", correct: false },
+                    { text: "Smaller file, faster refresh, sufficient for reporting", correct: true },
+                    { text: "It's impossible to group data that much", correct: false },
+                    { text: "We need to keep all 10,000 rows", correct: false }
+                ]
+            }
+        ];
+
+        let quizAnswers = {};
+
+        function switchTab(tabName, e) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+
+            if (tabName === 'functions') {
+                initializeFunctions();
+            } else if (tabName === 'quiz') {
+                initializeQuiz();
+            }
+        }
+
+        function initializeFunctions() {
+            const container = document.getElementById('functions-container');
+            if (container.innerHTML) return;
+
+            functions.forEach((func, idx) => {
+                const div = document.createElement('div');
+                div.className = 'function-card';
+
+                const whenHTML = func.when.map(w => `<div class="list-item">✓ ${w}</div>`).join('');
+
+                div.innerHTML = `
+                    <div class="function-name">${func.name}</div>
+                    <div class="function-description">${func.description}</div>
+                    
+                    <h4 style="margin-top: 1rem; margin-bottom: 0.5rem; color: rgba(168, 85, 247, 1);">Syntax:</h4>
+                    <div class="example-box">${func.syntax}</div>
+
+                    <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">When to Use:</h4>
+                    ${whenHTML}
+
+                    <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Example:</h4>
+                    <div class="example-box">${func.example}</div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function toggleExpandable(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function toggleScenario(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            if (container.innerHTML) return;
+
+            quizQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-question';
+                div.id = `question-${q.id}`;
+
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    optionsHTML += `
+                        <button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})">
+                            <span class="option-radio"></span>
+                            <span>${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                div.innerHTML = `
+                    <div class="question-text">${q.question}</div>
+                    ${optionsHTML}
+                    <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return;
+
+            quizAnswers[questionId] = isCorrect;
+            
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) {
+                    btn.classList.add('correct');
+                } else if (btn === event.target) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            updateProgress();
+
+            if (Object.keys(quizAnswers).length === quizQuestions.length) {
+                showQuizComplete();
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+            const isGood = percentage >= 0.75;
+
+            const completeDiv = document.getElementById('quiz-complete');
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `
+                <h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3>
+                <div class="quiz-score">${Math.round(percentage * 100)}%</div>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                    ${isGood ? "Outstanding! You've mastered grouping and aggregation in Power Query." : "Review the functions and scenarios to strengthen your knowledge."}
+                </p>
+                <button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>
+            `;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+    </script>
+</body>
+</html>

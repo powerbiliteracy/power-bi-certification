@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: Resolve Data Import Errors</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d0a0a 0%, #4e1a1a 50%, #2d0a0a 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background: radial-gradient(circle at 20% 50%, #ef4444 0%, transparent 50%), 
+                        radial-gradient(circle at 80% 80%, #f87171 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .header-text h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            font-family: 'Georgia', serif;
+        }
+
+        .header-text p {
+            color: rgba(239, 68, 68, 0.8);
+            font-size: 1.125rem;
+        }
+
+        .tabs {
+            max-width: 80rem;
+            margin: 2rem auto 0;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.4);
+            color: #cbd5e1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 1);
+            color: rgba(239, 68, 68, 1);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .container {
+            max-width: 80rem;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            background: linear-gradient(to bottom right, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid rgba(239, 68, 68, 0.6);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .error-card:hover {
+            background: rgba(30, 41, 59, 0.5);
+            border-left-color: rgba(239, 68, 68, 1);
+        }
+
+        .error-title {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-message {
+            color: rgba(239, 68, 68, 1);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .error-cause {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .expanded-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .error-card.expanded .expanded-content {
+            display: block;
+        }
+
+        .solution-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            margin-top: 0.75rem;
+        }
+
+        .solution-title {
+            font-weight: bold;
+            color: rgba(134, 239, 172, 1);
+            margin-bottom: 0.5rem;
+        }
+
+        .solution-text {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .step {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-left: 3px solid rgba(239, 68, 68, 0.5);
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .step-number {
+            width: 2rem;
+            height: 2rem;
+            min-width: 2rem;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.3);
+            border: 1px solid rgba(239, 68, 68, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: rgba(239, 68, 68, 1);
+        }
+
+        .step-content h4 {
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .code-block {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            overflow-x: auto;
+            margin-top: 0.75rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .checklist {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin-bottom: 1rem;
+        }
+
+        .checklist-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .checkbox {
+            color: rgba(239, 68, 68, 1);
+            flex-shrink: 0;
+        }
+
+        .quiz-question {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question.answered {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .quiz-question.answered.incorrect {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .question-text {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .option {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option:hover:not(:disabled) {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .option.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .option-radio {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #ef4444, #f87171);
+            transition: width 0.5s ease;
+        }
+
+        .footer {
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            margin-top: 3rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        h2, h3, h4 {
+            color: #ffffff;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            margin-bottom: 1.5rem;
+            font-family: 'Georgia', serif;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-retake {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(239, 68, 68, 0.3);
+            border: 1px solid rgba(239, 68, 68, 1);
+            color: rgba(239, 68, 68, 1);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retake:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+
+        .quiz-complete {
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.75rem;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .quiz-complete.low {
+            background: rgba(250, 204, 21, 0.15);
+            border: 1px solid rgba(250, 204, 21, 0.4);
+        }
+
+        .quiz-complete h3 {
+            color: #86efac;
+        }
+
+        .quiz-complete.low h3 {
+            color: #fde047;
+        }
+
+        .quiz-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ef4444;
+            margin-bottom: 0.5rem;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .info-box {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .info-box-content {
+            flex: 1;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-text {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">🔧</div>
+            <div class="header-text">
+                <h1>Resolve Data Import Errors</h1>
+                <p>PL-300: Troubleshooting, Diagnostics & Error Resolution Strategies</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('errors', event)">⚠️ Common Errors</button>
+        <button class="tab-button" onclick="switchTab('diagnosis', event)">🔍 Diagnosis Guide</button>
+        <button class="tab-button" onclick="switchTab('solutions', event)">✓ Solutions</button>
+        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔍</div>
+                    <div class="card-title">Identify Issues</div>
+                    <div class="list-item">Recognize error messages and patterns</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">📋</div>
+                    <div class="card-title">Diagnose Root Causes</div>
+                    <div class="list-item">Understand what went wrong and why</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">✓</div>
+                    <div class="card-title">Implement Solutions</div>
+                    <div class="list-item">Fix errors and prevent recurrence</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(239, 68, 68, 0.3); background: linear-gradient(to right, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));">
+                <h2>Why Data Import Errors Happen</h2>
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem; line-height: 1.6;">
+                    Data import errors occur at the intersection of data sources, network connectivity, authentication, data types, and system resources. They can happen at any stage: connection, authentication, data retrieval, transformation, or loading. Understanding error types helps you diagnose and resolve issues quickly.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3 style="color: rgba(239, 68, 68, 1); margin-bottom: 1rem;">Common Scenarios</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">Connection failures</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">Authentication issues</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">Timeout errors</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">Data type conflicts</div>
+                        <div class="list-item">Permission denied</div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: rgba(239, 68, 68, 1); margin-bottom: 1rem;">Resolution Approach</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">1. Read error message carefully</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">2. Identify error category</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">3. Check prerequisites</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">4. Test with simple query</div>
+                        <div class="list-item">5. Apply specific fix</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div style="font-size: 1.5rem;">💡</div>
+                <div class="info-box-content">
+                    <div class="info-title">Key Principle</div>
+                    <div class="info-text">Most data import errors are preventable through proper configuration, validation, and testing. Understanding error messages is half the battle - they tell you exactly what went wrong.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Errors Tab -->
+        <div id="errors" class="tab-content">
+            <h2>Common Data Import Errors</h2>
+            <div id="errors-container"></div>
+        </div>
+
+        <!-- Diagnosis Tab -->
+        <div id="diagnosis" class="tab-content">
+            <h2>Diagnosis Troubleshooting Guide</h2>
+            <div id="diagnosis-container"></div>
+        </div>
+
+        <!-- Solutions Tab -->
+        <div id="solutions" class="tab-content">
+            <h2>Error Resolution Strategies</h2>
+            <div id="solutions-container"></div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.2)); border: 1px solid rgba(239, 68, 68, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div>
+                        <div id="score-text" style="color: #cbd5e1;"></div>
+                    </div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #ef4444; display: none;">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Master the PL-300 Certification • Resolving Data Import Errors & Troubleshooting</p>
+    </div>
+
+    <script>
+        const commonErrors = [
+            {
+                error: "Connection Timeout",
+                message: "An error occurred while processing the data. Please check your connection and try again.",
+                category: "Network",
+                causes: [
+                    "Server is slow or unresponsive",
+                    "Network bandwidth limited",
+                    "Firewall blocking connection",
+                    "Invalid server address",
+                    "Server temporarily unavailable"
+                ]
+            },
+            {
+                error: "Authentication Failed",
+                message: "The credentials you provided are not valid or don't have access to this resource.",
+                category: "Security",
+                causes: [
+                    "Wrong username or password",
+                    "User account disabled",
+                    "Insufficient permissions",
+                    "Credentials expired",
+                    "MFA enabled but not configured"
+                ]
+            },
+            {
+                error: "File Not Found",
+                message: "The specified file location does not exist or is inaccessible.",
+                category: "File Access",
+                causes: [
+                    "Wrong file path",
+                    "File was moved or deleted",
+                    "Network path disconnected",
+                    "File name typo",
+                    "Insufficient permissions"
+                ]
+            },
+            {
+                error: "Data Type Mismatch",
+                message: "Cannot convert data type. Expected [type], but found [different type].",
+                category: "Data Validation",
+                causes: [
+                    "Column contains mixed data types",
+                    "Date format not recognized",
+                    "Number stored as text",
+                    "NULL values in numeric column",
+                    "Decimal vs integer mismatch"
+                ]
+            },
+            {
+                error: "Out of Memory",
+                message: "Insufficient memory to complete the operation. Dataset is too large.",
+                category: "Resource",
+                causes: [
+                    "Importing billions of rows",
+                    "System RAM exhausted",
+                    "Power BI model too large",
+                    "Other applications consuming memory",
+                    "64-bit vs 32-bit architecture"
+                ]
+            },
+            {
+                error: "Access Denied / Forbidden",
+                message: "You do not have permission to access this resource.",
+                category: "Security",
+                causes: [
+                    "No read permissions on file",
+                    "SharePoint access restricted",
+                    "Database user lacks privileges",
+                    "File share permissions",
+                    "Row-level security blocking"
+                ]
+            }
+        ];
+
+        const diagnosisSteps = [
+            {
+                title: "Step 1: Read the Error Message",
+                description: "Take time to understand exactly what the error says. Most error messages describe the problem clearly.",
+                checklist: [
+                    "What is the exact error text?",
+                    "When did it occur (connection, loading, transformation)?",
+                    "Does it mention a specific file, table, or column?",
+                    "Is there a timestamp or event ID?"
+                ]
+            },
+            {
+                title: "Step 2: Check Prerequisites",
+                description: "Verify that basic requirements are met before troubleshooting deeper issues.",
+                checklist: [
+                    "Is your internet connection active?",
+                    "Are you logged in with correct credentials?",
+                    "Do you have access to the data source?",
+                    "Is the file/server still available?",
+                    "Is Power BI updated to latest version?"
+                ]
+            },
+            {
+                title: "Step 3: Reproduce the Error",
+                description: "Try to reproduce the error consistently to identify patterns.",
+                checklist: [
+                    "Does the error happen every time or intermittently?",
+                    "Does it happen with all files or just one?",
+                    "Does it happen with all users or just you?",
+                    "Can you reproduce it in a simple test?",
+                    "Did it work before (what changed)?"
+                ]
+            },
+            {
+                title: "Step 4: Isolate the Problem",
+                description: "Narrow down the exact source by testing components separately.",
+                checklist: [
+                    "Test connection with simple query first",
+                    "Try different data source (test server)",
+                    "Import smaller subset of data",
+                    "Try different authentication method",
+                    "Test on different computer"
+                ]
+            },
+            {
+                title: "Step 5: Apply Targeted Fix",
+                description: "Once you know the root cause, apply the specific solution.",
+                checklist: [
+                    "Check error category in documentation",
+                    "Follow recommended resolution steps",
+                    "Test fix with simple case first",
+                    "Document the solution for future reference",
+                    "Monitor for similar errors"
+                ]
+            }
+        ];
+
+        const solutions = [
+            {
+                error: "Connection Timeout",
+                fixes: [
+                    {
+                        approach: "Increase Timeout Value",
+                        steps: [
+                            "Open Power Query Editor",
+                            "Go to Home → Options → Options & Settings → Query Options",
+                            "Under Data Load, increase timeout (default 30 sec)",
+                            "Try importing again with longer timeout",
+                            "Note: Only temporary fix; address root cause"
+                        ]
+                    },
+                    {
+                        approach: "Check Network & Firewall",
+                        steps: [
+                            "Verify internet connection is active",
+                            "Test if you can access server URL in browser",
+                            "Check firewall isn't blocking port (typically 80/443)",
+                            "Contact IT if behind corporate firewall",
+                            "Try VPN if accessing remote server"
+                        ]
+                    },
+                    {
+                        approach: "Verify Server Address",
+                        steps: [
+                            "Double-check server name for typos",
+                            "Confirm server is online and accessible",
+                            "Try with IP address instead of hostname",
+                            "Ping server to verify connectivity",
+                            "Check if DNS resolution is working"
+                        ]
+                    }
+                ]
+            },
+            {
+                error: "Authentication Failed",
+                fixes: [
+                    {
+                        approach: "Verify Credentials",
+                        steps: [
+                            "Confirm username and password are correct",
+                            "Check if CAPS LOCK is on",
+                            "Verify account isn't locked or disabled",
+                            "Try authenticating in another application first",
+                            "Ask IT to verify account status"
+                        ]
+                    },
+                    {
+                        approach: "Check Multi-Factor Authentication",
+                        steps: [
+                            "If MFA is enabled, ensure it's configured",
+                            "Use app-specific password if required",
+                            "Check email for MFA approval requests",
+                            "Verify MFA method (code, authenticator, etc)",
+                            "Contact IT to temporarily disable MFA for testing"
+                        ]
+                    },
+                    {
+                        approach: "Use Different Auth Method",
+                        steps: [
+                            "Try Windows authentication instead of database auth",
+                            "Use service principal for automated refresh",
+                            "Test with anonymous access (if available)",
+                            "Try OAuth 2.0 for SaaS applications",
+                            "Check if older auth methods are deprecated"
+                        ]
+                    }
+                ]
+            },
+            {
+                error: "File Not Found",
+                fixes: [
+                    {
+                        approach: "Verify File Path",
+                        steps: [
+                            "Copy and paste correct file path",
+                            "Check for typos in filename and path",
+                            "Verify file extension (.xlsx, .csv, etc)",
+                            "Use full UNC path for network files (\\\\server\\share)",
+                            "Check if file was moved or deleted"
+                        ]
+                    },
+                    {
+                        approach: "Check File Permissions",
+                        steps: [
+                            "Verify you have read access to the file",
+                            "Check file isn't opened exclusively by another user",
+                            "Verify network share is accessible",
+                            "Run Power BI as administrator if needed",
+                            "Check file isn't marked as read-only"
+                        ]
+                    },
+                    {
+                        approach: "Use Correct File Format",
+                        steps: [
+                            "Ensure file is in supported format",
+                            "Try copying file to local drive first",
+                            "Open file in native application to verify",
+                            "Check file isn't corrupted",
+                            "Save in different format if needed"
+                        ]
+                    }
+                ]
+            },
+            {
+                error: "Data Type Mismatch",
+                fixes: [
+                    {
+                        approach: "Fix in Power Query",
+                        steps: [
+                            "Open Power Query Editor",
+                            "Select problematic column",
+                            "Click Data Type dropdown and select correct type",
+                            "For mixed types, use 'Text' first, then fix",
+                            "Handle errors with 'Replace Errors' function"
+                        ]
+                    },
+                    {
+                        approach: "Handle NULL/Empty Values",
+                        steps: [
+                            "Filter out or replace NULL values",
+                            "Use Table.SelectRows to remove problematic records",
+                            "Apply Table.ReplaceValue for empty strings",
+                            "Convert empty to appropriate default value",
+                            "Document handling approach"
+                        ]
+                    },
+                    {
+                        approach: "Transform Source Data",
+                        steps: [
+                            "Fix data types at source if possible",
+                            "Use 'Replace Errors' to handle conversion failures",
+                            "Apply custom transformation formulas",
+                            "Split columns with mixed content",
+                            "Test with sample data first"
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const quizQuestions = [
+            {
+                id: 1,
+                question: "You get a 'Connection Timeout' error. What should you check FIRST?",
+                options: [
+                    { text: "Increase the timeout value in Query Options", correct: false },
+                    { text: "Verify your internet connection is active", correct: true },
+                    { text: "Contact IT to check firewall", correct: false },
+                    { text: "Try a different data source", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                question: "What does 'Authentication Failed' typically mean?",
+                options: [
+                    { text: "The server is down", correct: false },
+                    { text: "Your credentials are incorrect or you lack permissions", correct: true },
+                    { text: "The file is corrupted", correct: false },
+                    { text: "Your internet is too slow", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                question: "You get 'File Not Found' for a network path. What's the best fix?",
+                options: [
+                    { text: "Copy file to your local drive first, then import", correct: true },
+                    { text: "Just try again in a few minutes", correct: false },
+                    { text: "Use a different file format", correct: false },
+                    { text: "Increase Power BI memory", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                question: "A column shows 'Data Type Mismatch' error. How do you fix this in Power Query?",
+                options: [
+                    { text: "Delete the problematic rows", correct: false },
+                    { text: "Select column and change Data Type from dropdown", correct: true },
+                    { text: "Close and reopen Power BI", correct: false },
+                    { text: "Re-download the file", correct: false }
+                ]
+            },
+            {
+                id: 5,
+                question: "You get 'Access Denied' error. What might NOT be the issue?",
+                options: [
+                    { text: "Missing file read permissions", correct: false },
+                    { text: "Insufficient database user privileges", correct: false },
+                    { text: "Server is experiencing slow network", correct: true },
+                    { text: "SharePoint access restricted", correct: false }
+                ]
+            },
+            {
+                id: 6,
+                question: "Best practice when you get an import error?",
+                options: [
+                    { text: "Keep trying the same import over and over", correct: false },
+                    { text: "Read the error message carefully and isolate the problem", correct: true },
+                    { text: "Just delete and re-create the query", correct: false },
+                    { text: "Wait 24 hours and try again", correct: false }
+                ]
+            },
+            {
+                id: 7,
+                question: "What error would MFA (Multi-Factor Authentication) cause?",
+                options: [
+                    { text: "Connection Timeout", correct: false },
+                    { text: "File Not Found", correct: false },
+                    { text: "Authentication Failed", correct: true },
+                    { text: "Out of Memory", correct: false }
+                ]
+            },
+            {
+                id: 8,
+                question: "You get 'Out of Memory' error. Why might increasing timeout NOT help?",
+                options: [
+                    { text: "The dataset is genuinely too large for the system", correct: true },
+                    { text: "It's a network issue", correct: false },
+                    { text: "Your credentials are wrong", correct: false },
+                    { text: "The file is corrupted", correct: false }
+                ]
+            }
+        ];
+
+        let quizAnswers = {};
+
+        function switchTab(tabName, e) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+
+            if (tabName === 'errors') {
+                initializeErrors();
+            } else if (tabName === 'diagnosis') {
+                initializeDiagnosis();
+            } else if (tabName === 'solutions') {
+                initializeSolutions();
+            } else if (tabName === 'quiz') {
+                initializeQuiz();
+            }
+        }
+
+        function initializeErrors() {
+            const container = document.getElementById('errors-container');
+            if (container.innerHTML) return;
+
+            commonErrors.forEach((error, idx) => {
+                const div = document.createElement('div');
+                div.className = 'error-card';
+                div.onclick = function() { this.classList.toggle('expanded'); };
+
+                const causesHTML = error.causes.map(c => `<div class="list-item">• ${c}</div>`).join('');
+
+                div.innerHTML = `
+                    <div class="error-title">${error.error}</div>
+                    <div class="error-message">"${error.message}"</div>
+                    <div class="error-cause">Category: <strong>${error.category}</strong></div>
+                    <div class="expanded-content">
+                        <h4 style="color: rgba(239, 68, 68, 1); margin-bottom: 0.75rem; margin-top: 0.75rem;">Common Causes:</h4>
+                        ${causesHTML}
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function initializeDiagnosis() {
+            const container = document.getElementById('diagnosis-container');
+            if (container.innerHTML) return;
+
+            diagnosisSteps.forEach((step, idx) => {
+                const div = document.createElement('div');
+                div.className = 'step';
+
+                const checklistHTML = step.checklist.map(item => `
+                    <div class="checklist-item">
+                        <span class="checkbox">☐</span>
+                        <span>${item}</span>
+                    </div>
+                `).join('');
+
+                div.innerHTML = `
+                    <div class="step-number">${idx + 1}</div>
+                    <div class="step-content" style="flex: 1;">
+                        <h4>${step.title}</h4>
+                        <p style="margin-bottom: 1rem;">${step.description}</p>
+                        <div class="checklist">
+                            ${checklistHTML}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function initializeSolutions() {
+            const container = document.getElementById('solutions-container');
+            if (container.innerHTML) return;
+
+            solutions.forEach((solution) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                div.style.marginBottom = '2rem';
+
+                let fixesHTML = solution.fixes.map(fix => `
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(51, 65, 85, 0.3);">
+                        <h4 style="color: rgba(34, 197, 94, 1); margin-bottom: 0.75rem;">✓ ${fix.approach}</h4>
+                        <ol style="margin-left: 1.5rem;">
+                            ${fix.steps.map(s => `<li style="color: #cbd5e1; margin-bottom: 0.5rem; font-size: 0.875rem;">${s}</li>`).join('')}
+                        </ol>
+                    </div>
+                `).join('');
+
+                div.innerHTML = `
+                    <h3 style="color: rgba(239, 68, 68, 1); margin-bottom: 1rem;">Error: ${solution.error}</h3>
+                    ${fixesHTML}
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            if (container.innerHTML) return;
+
+            quizQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-question';
+                div.id = `question-${q.id}`;
+
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    optionsHTML += `
+                        <button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})">
+                            <span class="option-radio"></span>
+                            <span>${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                div.innerHTML = `
+                    <div class="question-text">${q.question}</div>
+                    ${optionsHTML}
+                    <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return;
+
+            quizAnswers[questionId] = isCorrect;
+            
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) {
+                    btn.classList.add('correct');
+                } else if (btn === event.target) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            updateProgress();
+
+            if (Object.keys(quizAnswers).length === quizQuestions.length) {
+                showQuizComplete();
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+            const isGood = percentage >= 0.75;
+
+            const completeDiv = document.getElementById('quiz-complete');
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `
+                <h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3>
+                <div class="quiz-score">${Math.round(percentage * 100)}%</div>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                    ${isGood ? "Outstanding! You've mastered data import error troubleshooting." : "Review the diagnosis guide and solutions to strengthen your skills."}
+                </p>
+                <button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>
+            `;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+    </script>
+</body>
+</html>

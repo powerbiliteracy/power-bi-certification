@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: Merge and Append Queries</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a2d0f 0%, #2d4e1a 50%, #1a2d0f 100%); color: #e2e8f0; min-height: 100vh; }
+        .header { background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%); border-bottom: 1px solid rgba(34, 197, 94, 0.3); padding: 3rem 0; position: relative; }
+        .header::before { content: ''; position: absolute; inset: 0; opacity: 0.1; background: radial-gradient(circle at 20% 50%, #22c55e 0%, transparent 50%), radial-gradient(circle at 80% 80%, #86efac 0%, transparent 50%); pointer-events: none; }
+        .header-content { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 1; display: flex; gap: 1rem; align-items: center; }
+        .header-icon { width: 3.5rem; height: 3.5rem; padding: 0.75rem; border-radius: 0.5rem; background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .header-text h1 { font-size: 2.25rem; font-weight: bold; margin-bottom: 0.25rem; font-family: 'Georgia', serif; }
+        .header-text p { color: rgba(34, 197, 94, 0.8); font-size: 1.125rem; }
+        .tabs { max-width: 80rem; margin: 2rem auto 0; padding: 0 1.5rem; display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; }
+        .tab-button { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 500; border: 1px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.4); color: #cbd5e1; cursor: pointer; white-space: nowrap; transition: all 0.3s ease; }
+        .tab-button.active { background: rgba(34, 197, 94, 0.3); border-color: rgba(34, 197, 94, 1); color: rgba(34, 197, 94, 1); box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
+        .container { max-width: 80rem; margin: 2rem auto; padding: 0 1.5rem; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .card { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(34, 197, 94, 0.2); background: linear-gradient(to bottom right, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05)); }
+        .card-title { font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem; }
+        .expandable { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.3); margin-bottom: 1rem; cursor: pointer; }
+        .expandable-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #ffffff; }
+        .expandable-content { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(51, 65, 85, 0.3); }
+        .expandable.expanded .expandable-content { display: block; }
+        .expandable-toggle { transition: transform 0.3s ease; color: rgba(34, 197, 94, 1); }
+        .expandable.expanded .expandable-toggle { transform: rotate(180deg); }
+        .example-box { padding: 1rem; border-radius: 0.5rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(34, 197, 94, 0.3); font-family: 'Courier New', monospace; font-size: 0.8rem; color: #cbd5e1; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin: 0.75rem 0; }
+        .scenario-item { padding: 1.5rem; border-radius: 0.75rem; background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.3); margin-bottom: 1rem; cursor: pointer; }
+        .scenario-title { font-weight: bold; color: #ffffff; font-size: 1.125rem; margin-bottom: 0.5rem; }
+        .scenario-expanded { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(51, 65, 85, 0.3); }
+        .scenario-item.expanded .scenario-expanded { display: block; }
+        .step { padding: 1rem; border-radius: 0.5rem; background: rgba(30, 41, 59, 0.3); border-left: 3px solid rgba(34, 197, 94, 0.5); margin-bottom: 1rem; display: flex; gap: 1rem; }
+        .step-number { width: 2rem; height: 2rem; min-width: 2rem; border-radius: 50%; background: rgba(34, 197, 94, 0.3); border: 1px solid rgba(34, 197, 94, 0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: rgba(34, 197, 94, 1); }
+        .step-content h4 { color: #ffffff; margin-bottom: 0.25rem; }
+        .step-content p { color: #cbd5e1; font-size: 0.875rem; }
+        .list-item { display: flex; gap: 0.5rem; padding: 0.5rem 0; color: #cbd5e1; font-size: 0.875rem; }
+        .comparison-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        .comparison-table td { padding: 0.75rem; border: 1px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.3); font-size: 0.875rem; }
+        .comparison-table .header { font-weight: bold; color: #ffffff; background: rgba(34, 197, 94, 0.1); }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+        .pros, .cons { padding: 1rem; border-radius: 0.5rem; font-size: 0.875rem; }
+        .pros { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .cons { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .pros h4 { color: rgba(134, 239, 172, 1); }
+        .cons h4 { color: rgba(252, 165, 165, 1); }
+        .quiz-question { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.3); margin-bottom: 1.5rem; }
+        .quiz-question.answered { border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.05); }
+        .quiz-question.answered.incorrect { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
+        .question-text { font-weight: bold; color: #ffffff; margin-bottom: 1rem; }
+        .option { padding: 1rem; border-radius: 0.5rem; border: 2px solid rgba(51, 65, 85, 0.3); background: rgba(30, 41, 59, 0.3); margin-bottom: 0.5rem; cursor: pointer; color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem; }
+        .option:hover:not(:disabled) { background: rgba(51, 65, 85, 0.5); }
+        .option.correct { background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.5); color: rgba(134, 239, 172, 1); }
+        .option.incorrect { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); }
+        .option-radio { width: 1rem; height: 1rem; border: 2px solid currentColor; border-radius: 50%; flex-shrink: 0; }
+        .progress-bar { width: 100%; height: 0.5rem; background: rgba(51, 65, 85, 0.5); border-radius: 9999px; overflow: hidden; margin-top: 1rem; }
+        .progress-fill { height: 100%; background: linear-gradient(to right, #22c55e, #86efac); transition: width 0.5s ease; }
+        .footer { border-top: 1px solid rgba(51, 65, 85, 0.3); background: rgba(15, 23, 42, 0.5); margin-top: 3rem; padding: 2rem 0; text-align: center; color: #64748b; font-size: 0.875rem; }
+        h2, h3, h4 { color: #ffffff; }
+        h2 { font-size: 1.875rem; margin-bottom: 1.5rem; font-family: 'Georgia', serif; }
+        h3 { font-size: 1.125rem; margin-bottom: 1rem; }
+        .btn-retake { padding: 0.5rem 1.5rem; border-radius: 0.5rem; background: rgba(34, 197, 94, 0.3); border: 1px solid rgba(34, 197, 94, 1); color: rgba(34, 197, 94, 1); font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+        .btn-retake:hover { background: rgba(34, 197, 94, 0.4); }
+        .quiz-complete { padding: 2rem; text-align: center; border-radius: 0.75rem; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); }
+        .quiz-complete.low { background: rgba(250, 204, 21, 0.15); border: 1px solid rgba(250, 204, 21, 0.4); }
+        .quiz-complete h3 { color: #86efac; }
+        .quiz-complete.low h3 { color: #fde047; }
+        .quiz-score { font-size: 2rem; font-weight: bold; color: #22c55e; margin-bottom: 0.5rem; }
+        .info-box { padding: 1.5rem; border-radius: 0.75rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); margin-bottom: 1.5rem; display: flex; gap: 1rem; }
+        .info-box-content { flex: 1; }
+        .info-title { font-weight: bold; color: #60a5fa; margin-bottom: 0.5rem; }
+        .info-text { color: #cbd5e1; font-size: 0.875rem; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">🔀</div>
+            <div class="header-text">
+                <h1>Merge and Append Queries</h1>
+                <p>PL-300: Combining Data from Multiple Sources</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('operations', event)">🔀 Merge vs Append</button>
+        <button class="tab-button" onclick="switchTab('joins', event)">🔗 Join Types</button>
+        <button class="tab-button" onclick="switchTab('scenarios', event)">🎯 Real Scenarios</button>
+        <button class="tab-button" onclick="switchTab('best', event)">⭐ Best Practices</button>
+        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔗</div>
+                    <div class="card-title">Merge</div>
+                    <div class="list-item">Join tables side-by-side (columns)</div>
+                </div>
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">📚</div>
+                    <div class="card-title">Append</div>
+                    <div class="list-item">Stack tables vertically (rows)</div>
+                </div>
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🎯</div>
+                    <div class="card-title">Choose Wisely</div>
+                    <div class="list-item">Different operations for different needs</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(34, 197, 94, 0.3); background: linear-gradient(to right, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));">
+                <h2>Merge and Append Fundamentals</h2>
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem; line-height: 1.6;"><span style="font-weight: bold; color: rgba(34, 197, 94, 1);">Merge</span> combines queries horizontally (adds columns). <span style="font-weight: bold; color: rgba(34, 197, 94, 1);">Append</span> combines vertically (adds rows).</p>
+
+                <table class="comparison-table">
+                    <tr><td class="header">Aspect</td><td class="header">Merge</td><td class="header">Append</td></tr>
+                    <tr><td>Direction</td><td>Horizontal (columns)</td><td>Vertical (rows)</td></tr>
+                    <tr><td>Result</td><td>More columns</td><td>More rows</td></tr>
+                    <tr><td>Join Key</td><td>Matching column</td><td>Same schema</td></tr>
+                    <tr><td>Join Types</td><td>Inner, Left, Right, Full</td><td>N/A</td></tr>
+                    <tr><td>Example</td><td>Add names to sales</td><td>Stack Q1+Q2+Q3</td></tr>
+                </table>
+            </div>
+
+            <div class="info-box">
+                <div style="font-size: 1.5rem;">💡</div>
+                <div class="info-box-content">
+                    <div class="info-title">Key Principle</div>
+                    <div class="info-text">Merge for enriching (more attributes). Append for combining (more records). Choose based on data structure needs.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="operations" class="tab-content">
+            <h2>Merge vs Append Operations</h2>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🔗 Merge: Add Columns from Another Table</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Combines tables horizontally using matching key.</p>
+                    <h4>Steps:</h4>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Select Merge from Home tab</div>
+                            <div class="step-description">Choose which table to merge with</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Select join key columns</div>
+                            <div class="step-description">Match columns that link tables (e.g., CustomerID)</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Choose join type</div>
+                            <div class="step-description">Inner, Left, Right, or Full Outer</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Select columns to keep</div>
+                            <div class="step-description">Choose which columns to include from merged table</div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 1.5rem;">When to Use:</h4>
+                    <div class="list-item">✓ Add customer info to sales transactions</div>
+                    <div class="list-item">✓ Combine lookup tables with fact data</div>
+                    <div class="list-item">✓ Enrich with attributes</div>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>📚 Append: Stack Rows from Multiple Tables</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Combines tables vertically by stacking rows.</p>
+                    <h4>Steps:</h4>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Ensure tables have same schema</div>
+                            <div class="step-description">Same column names and types</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Select Append Queries</div>
+                            <div class="step-description">Choose "Append Queries" from Home tab</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Select queries to append</div>
+                            <div class="step-description">Can add 2+ queries at once</div>
+                        </div>
+                    </div>
+                    <div class="step" style="border-left: none;">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Review combined result</div>
+                            <div class="step-description">All rows from all tables combined</div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 1.5rem;">When to Use:</h4>
+                    <div class="list-item">✓ Combine quarterly/monthly data</div>
+                    <div class="list-item">✓ Stack data from multiple files</div>
+                    <div class="list-item">✓ Add new records to existing data</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="joins" class="tab-content">
+            <h2>Merge Join Types</h2>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>➡️ Inner Join (Matches Only)</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Returns only matching rows from both tables.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Use:</strong> Only rows with matching keys in both tables</p>
+                    <p style="color: #cbd5e1;">❌ Drops unmatched rows from both tables</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>⬅️ Left Outer Join (Keep Left)</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Returns all rows from left table + matching from right.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Use:</strong> All your primary data + enriched where possible</p>
+                    <p style="color: #cbd5e1;">Unmatched rows show NULL in merged columns</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>➡️ Right Outer Join (Keep Right)</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Returns all rows from right table + matching from left.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Use:</strong> Less common; prefer Left Outer</p>
+                    <p style="color: #cbd5e1;">Mirror of Left Outer (opposite)</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>⬌ Full Outer Join (Keep All)</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Returns all rows from both tables.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Use:</strong> Keep everything, fill gaps with NULL</p>
+                    <p style="color: #cbd5e1;">Best for reconciliation and completeness</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="scenarios" class="tab-content">
+            <h2>Real-World Scenarios</h2>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 1: Merge Sales with Customer Info</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Add customer names and cities to sales transactions</div>
+                <div class="scenario-expanded">
+                    <h4>Tables:</h4>
+                    <div class="list-item">Sales: SalesID, CustomerID, Amount</div>
+                    <div class="list-item">Customers: CustomerID, CustomerName, City</div>
+
+                    <h4 style="margin-top: 1rem;">Operation:</h4>
+                    <div class="list-item">✓ Merge Sales with Customers</div>
+                    <div class="list-item">✓ Join on CustomerID</div>
+                    <div class="list-item">✓ Use Left Outer (keep all sales)</div>
+                    <div class="list-item">✓ Result: Sales + CustomerName + City columns</div>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 2: Append Monthly Sales Files</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Combine 12 months of data from separate files</div>
+                <div class="scenario-expanded">
+                    <h4>Tables:</h4>
+                    <div class="list-item">JanuarySales, FebruarySales, ... DecemberSales</div>
+                    <div class="list-item">All have: SalesID, CustomerID, Amount, Date</div>
+
+                    <h4 style="margin-top: 1rem;">Operation:</h4>
+                    <div class="list-item">✓ Append all 12 queries together</div>
+                    <div class="list-item">✓ No join key needed</div>
+                    <div class="list-item">✓ Result: Single table with all year's data</div>
+                    <div class="list-item">✓ Total: 12× rows, same columns</div>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Scenario 3: Merge with Different Join Types</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Same data, different join choices</div>
+                <div class="scenario-expanded">
+                    <h4>Situation:</h4>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Sales: 100 rows | Customers: 80 rows | Match: 75 rows</p>
+
+                    <table class="comparison-table">
+                        <tr><td class="header">Join Type</td><td class="header">Result Rows</td><td class="header">Use Case</td></tr>
+                        <tr><td>Inner</td><td>75 (only matches)</td><td>Verified data only</td></tr>
+                        <tr><td>Left Outer</td><td>100 (all sales)</td><td>Keep all sales, mark missing</td></tr>
+                        <tr><td>Right Outer</td><td>80 (all customers)</td><td>All customers, with sales</td></tr>
+                        <tr><td>Full Outer</td><td>105 (all data)</td><td>Complete reconciliation</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="best" class="tab-content">
+            <h2>Best Practices</h2>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>✓ Merge Best Practices</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Verify join key columns match in both tables</div>
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Check data types are compatible</div>
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Use Left Outer by default (preserves primary table)</div>
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Remove duplicate columns after merge</div>
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Validate result row count matches expectations</div>
+                    <div class="list-item">✓ Be aware of many-to-many (causes row explosion)</div>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>✓ Append Best Practices</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Ensure identical column names in all tables</div>
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Verify same data types for matching columns</div>
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Use dynamic source for scalability (folders)</div>
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Add source column to track origin</div>
+                    <div class="list-item" style="margin-bottom: 1rem;">✓ Order queries logically (chronological, alphabetical)</div>
+                    <div class="list-item">✓ Test with small dataset first</div>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>⚠️ Common Mistakes</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="cons">
+                        <h4>Merge Mistakes:</h4>
+                        <div class="list-item">⚠ Using Inner Join when Left Outer needed (lose data)</div>
+                        <div class="list-item">⚠ Merging on mismatched data types</div>
+                        <div class="list-item">⚠ Many-to-many relationships (exponential rows)</div>
+                    </div>
+                    <div class="cons" style="margin-top: 1rem;">
+                        <h4>Append Mistakes:</h4>
+                        <div class="list-item">⚠ Different column names between tables</div>
+                        <div class="list-item">⚠ Appending incompatible schemas</div>
+                        <div class="list-item">⚠ No way to track data source</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.2)); border: 1px solid rgba(34, 197, 94, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div><div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div><div id="score-text" style="color: #cbd5e1;"></div></div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #22c55e; display: none;">0%</div>
+                </div>
+                <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width: 0%;"></div></div>
+            </div>
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Master the PL-300 Certification • Merge and Append Queries for Data Combination</p>
+    </div>
+
+    <script>
+        const quizQuestions = [
+            { id: 1, question: "Merge adds columns, Append adds?", options: [{ text: "Rows", correct: true }, { text: "Columns", correct: false }, { text: "Tables", correct: false }, { text: "Data types", correct: false }] },
+            { id: 2, question: "What's needed for a merge operation?", options: [{ text: "Matching key column between tables", correct: true }, { text: "Same column names", correct: false }, { text: "Same number of rows", correct: false }, { text: "Same table size", correct: false }] },
+            { id: 3, question: "Which join keeps all rows from left table?", options: [{ text: "Inner Join", correct: false }, { text: "Left Outer Join", correct: true }, { text: "Right Outer Join", correct: false }, { text: "Full Outer Join", correct: false }] },
+            { id: 4, question: "Append requires?", options: [{ text: "Join key matching", correct: false }, { text: "Identical schema (columns)", correct: true }, { text: "Same number of rows", correct: false }, { text: "Different data types", correct: false }] },
+            { id: 5, question: "Many-to-many relationship in merge results in?", options: [{ text: "Normal merge", correct: false }, { text: "Row explosion (many result rows)", correct: true }, { text: "Error (blocked)", correct: false }, { text: "Automatic aggregation", correct: false }] },
+            { id: 6, question: "Combine 12 monthly sales files. Use?", options: [{ text: "Merge", correct: false }, { text: "Append (stack rows)", correct: true }, { text: "Group & Aggregate", correct: false }, { text: "Pivot", correct: false }] },
+            { id: 7, question: "Inner Join on 100 left + 80 right, 75 match?", options: [{ text: "75 rows", correct: true }, { text: "100 rows", correct: false }, { text: "80 rows", correct: false }, { text: "180 rows", correct: false }] },
+            { id: 8, question: "Add customer names to sales transactions. Use?", options: [{ text: "Merge on CustomerID", correct: true }, { text: "Append", correct: false }, { text: "Group by", correct: false }, { text: "Pivot", correct: false }] }
+        ];
+
+        let quizAnswers = {};
+
+        function switchTab(tabName, e) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+            if (tabName === 'quiz') initializeQuiz();
+        }
+
+        function toggleExpandable(e) { e.classList.toggle('expanded'); }
+        function toggleScenario(e) { e.classList.toggle('expanded'); }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            if (container.innerHTML) return;
+            quizQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-question';
+                div.id = `question-${q.id}`;
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    optionsHTML += `<button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})"><span class="option-radio"></span><span>${opt.text}</span></button>`;
+                });
+                div.innerHTML = `<div class="question-text">${q.question}</div>${optionsHTML}<div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return;
+            quizAnswers[questionId] = isCorrect;
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) btn.classList.add('correct');
+                else if (btn === event.target) btn.classList.add('incorrect');
+                btn.disabled = true;
+            });
+            updateProgress();
+            if (Object.keys(quizAnswers).length === quizQuestions.length) showQuizComplete();
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+            const isGood = percentage >= 0.75;
+            const completeDiv = document.getElementById('quiz-complete');
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `<h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3><div class="quiz-score">${Math.round(percentage * 100)}%</div><p style="color: #cbd5e1; margin-bottom: 1rem;">${isGood ? "Outstanding! You've mastered merge and append queries." : "Review the operations and scenarios to strengthen knowledge."}</p><button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>`;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL-300: Select Appropriate Column Data Types</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2d1a 0%, #1a4e2e 50%, #0f2d1a 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(to right, #0f0f1e 0%, #1a1a2e 50%, #0f0f1e 100%);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background: radial-gradient(circle at 20% 50%, #10b981 0%, transparent 50%), 
+                        radial-gradient(circle at 80% 80%, #34d399 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .header-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .header-text h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            font-family: 'Georgia', serif;
+        }
+
+        .header-text p {
+            color: rgba(16, 185, 129, 0.8);
+            font-size: 1.125rem;
+        }
+
+        .tabs {
+            max-width: 80rem;
+            margin: 2rem auto 0;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.4);
+            color: #cbd5e1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 1);
+            color: rgba(16, 185, 129, 1);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .container {
+            max-width: 80rem;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            background: linear-gradient(to bottom right, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .type-card {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .type-card:hover {
+            border-color: rgba(16, 185, 129, 0.6);
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .type-card.active {
+            border-color: rgba(16, 185, 129, 1);
+            background: rgba(16, 185, 129, 0.2);
+            color: rgba(16, 185, 129, 1);
+        }
+
+        .type-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .type-name {
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        .type-detail {
+            padding: 2rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .expandable {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .expandable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .expandable-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .expandable.expanded .expandable-content {
+            display: block;
+        }
+
+        .expandable-toggle {
+            transition: transform 0.3s ease;
+            color: rgba(16, 185, 129, 1);
+        }
+
+        .expandable.expanded .expandable-toggle {
+            transform: rotate(180deg);
+        }
+
+        .decision-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .decision-matrix td {
+            padding: 1rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        .decision-matrix .header {
+            font-weight: bold;
+            color: #ffffff;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .example-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            margin: 0.75rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+        }
+
+        .scenario-item {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .scenario-title {
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-expanded {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .scenario-item.expanded .scenario-expanded {
+            display: block;
+        }
+
+        .recommendation {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: rgba(134, 239, 172, 1);
+            font-weight: bold;
+            margin-top: 0.75rem;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .pros, .cons {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .pros {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .cons {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .pros h4 {
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .cons h4 {
+            color: rgba(252, 165, 165, 1);
+        }
+
+        .list-item {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .quiz-question {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question.answered {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .quiz-question.answered.incorrect {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .question-text {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .option {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid rgba(51, 65, 85, 0.3);
+            background: rgba(30, 41, 59, 0.3);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option:hover:not(:disabled) {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .option.correct {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: rgba(134, 239, 172, 1);
+        }
+
+        .option.incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .option-radio {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #10b981, #34d399);
+            transition: width 0.5s ease;
+        }
+
+        .footer {
+            border-top: 1px solid rgba(51, 65, 85, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            margin-top: 3rem;
+            padding: 2rem 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        h2, h3, h4 {
+            color: #ffffff;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            margin-bottom: 1.5rem;
+            font-family: 'Georgia', serif;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-retake {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            background: rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(16, 185, 129, 1);
+            color: rgba(16, 185, 129, 1);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retake:hover {
+            background: rgba(16, 185, 129, 0.4);
+        }
+
+        .quiz-complete {
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.75rem;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .quiz-complete.low {
+            background: rgba(250, 204, 21, 0.15);
+            border: 1px solid rgba(250, 204, 21, 0.4);
+        }
+
+        .quiz-complete h3 {
+            color: #86efac;
+        }
+
+        .quiz-complete.low h3 {
+            color: #fde047;
+        }
+
+        .quiz-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #10b981;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .info-box-content {
+            flex: 1;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-text {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">🔢</div>
+            <div class="header-text">
+                <h1>Select Appropriate Column Data Types</h1>
+                <p>PL-300: Data Type Fundamentals, Performance & Best Practices</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('overview', event)">📚 Overview</button>
+        <button class="tab-button" onclick="switchTab('types', event)">🔢 Data Types</button>
+        <button class="tab-button" onclick="switchTab('comparison', event)">⚖️ Comparison</button>
+        <button class="tab-button" onclick="switchTab('scenarios', event)">🎯 Real Scenarios</button>
+        <button class="tab-button" onclick="switchTab('best', event)">⭐ Best Practices</button>
+        <button class="tab-button" onclick="switchTab('quiz', event)">✓ Test Knowledge</button>
+    </div>
+
+    <div class="container">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚡</div>
+                    <div class="card-title">Performance Impact</div>
+                    <div class="list-item">Proper data types improve query speed and reduce file size</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">✓</div>
+                    <div class="card-title">Data Validation</div>
+                    <div class="list-item">Right types prevent calculation errors and invalid data</div>
+                </div>
+
+                <div class="card">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem;">🎯</div>
+                    <div class="card-title">Accurate Reporting</div>
+                    <div class="list-item">Ensures correct calculations, filtering, and sorting</div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: rgba(16, 185, 129, 0.3); background: linear-gradient(to right, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));">
+                <h2>Why Column Data Types Matter</h2>
+                <p style="color: #cbd5e1; margin-bottom: 1.5rem; line-height: 1.6;">
+                    <span style="font-weight: bold; color: rgba(16, 185, 129, 1);">Data types</span> define what kind of information a column stores and how Power BI processes it. Choosing the right type ensures data accuracy, improves performance, and enables proper calculations and filtering.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3 style="color: rgba(16, 185, 129, 1); margin-bottom: 1rem;">Key Benefits</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Prevents calculation errors</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Improves query performance</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Reduces model file size</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Enables proper aggregation</div>
+                        <div class="list-item">✓ Ensures correct sorting</div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: rgba(16, 185, 129, 1); margin-bottom: 1rem;">Data Type Categories</h3>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">📝 Text (String)</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">🔢 Numeric (Int, Decimal, Double)</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">📅 Date/Time</div>
+                        <div class="list-item" style="margin-bottom: 0.5rem;">✓ Boolean (True/False)</div>
+                        <div class="list-item">💰 Currency</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div style="font-size: 1.5rem;">💡</div>
+                <div class="info-box-content">
+                    <div class="info-title">Key Principle</div>
+                    <div class="info-text">Set data types as early as possible in Power Query. It's easier to set them correctly during import than to fix them later across multiple queries and reports.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Types Tab -->
+        <div id="types" class="tab-content">
+            <h2>Power Query & Power BI Data Types</h2>
+            
+            <div class="type-grid">
+                <div class="type-card active" onclick="switchType(0, event)">
+                    <div class="type-icon">📝</div>
+                    <div class="type-name">Text</div>
+                </div>
+                <div class="type-card" onclick="switchType(1, event)">
+                    <div class="type-icon">🔢</div>
+                    <div class="type-name">Whole #</div>
+                </div>
+                <div class="type-card" onclick="switchType(2, event)">
+                    <div class="type-icon">💯</div>
+                    <div class="type-name">Decimal</div>
+                </div>
+                <div class="type-card" onclick="switchType(3, event)">
+                    <div class="type-icon">💰</div>
+                    <div class="type-name">Currency</div>
+                </div>
+                <div class="type-card" onclick="switchType(4, event)">
+                    <div class="type-icon">📅</div>
+                    <div class="type-name">Date</div>
+                </div>
+                <div class="type-card" onclick="switchType(5, event)">
+                    <div class="type-icon">⏰</div>
+                    <div class="type-name">DateTime</div>
+                </div>
+                <div class="type-card" onclick="switchType(6, event)">
+                    <div class="type-icon">✓</div>
+                    <div class="type-name">Boolean</div>
+                </div>
+            </div>
+
+            <div id="type-detail" class="type-detail"></div>
+        </div>
+
+        <!-- Comparison Tab -->
+        <div id="comparison" class="tab-content">
+            <h2>Data Type Comparison & Selection Guide</h2>
+            
+            <div class="card">
+                <h3>Numeric Types: When to Use Each</h3>
+                <table class="decision-matrix">
+                    <tr>
+                        <td class="header">Use Case</td>
+                        <td class="header">Whole Number</td>
+                        <td class="header">Decimal</td>
+                        <td class="header">Currency</td>
+                    </tr>
+                    <tr>
+                        <td class="header">Example Data</td>
+                        <td>123, 5000, -50</td>
+                        <td>3.14, 99.99, 0.001</td>
+                        <td>$1,234.56, €500.25</td>
+                    </tr>
+                    <tr>
+                        <td class="header">Counting/Quantities</td>
+                        <td style="color: rgba(34, 197, 94, 1);">✓ Best Choice</td>
+                        <td>Not needed</td>
+                        <td>Not recommended</td>
+                    </tr>
+                    <tr>
+                        <td class="header">Precise Calculations</td>
+                        <td>Limited precision</td>
+                        <td style="color: rgba(34, 197, 94, 1);">✓ Best Choice</td>
+                        <td>Not recommended</td>
+                    </tr>
+                    <tr>
+                        <td class="header">Financial Data</td>
+                        <td>Not recommended</td>
+                        <td>Can work</td>
+                        <td style="color: rgba(34, 197, 94, 1);">✓ Best Choice</td>
+                    </tr>
+                    <tr>
+                        <td class="header">File Size</td>
+                        <td style="color: rgba(34, 197, 94, 1);">Smallest (Int64)</td>
+                        <td>Medium (Double)</td>
+                        <td>Medium (Currency)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card" style="border-color: rgba(16, 185, 129, 0.3); margin-top: 1.5rem;">
+                <h3>Text vs. Numeric: Performance Impact</h3>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✓ Use Numeric Type</h4>
+                        <div class="list-item">Faster calculations</div>
+                        <div class="list-item">Smaller file size</div>
+                        <div class="list-item">Proper sorting</div>
+                        <div class="list-item">Accurate aggregations</div>
+                    </div>
+                    <div class="cons">
+                        <h4>⚠ Don't Store as Text</h4>
+                        <div class="list-item">Slower performance</div>
+                        <div class="list-item">Can't do math</div>
+                        <div class="list-item">Sorting issues</div>
+                        <div class="list-item">Larger file size</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenarios Tab -->
+        <div id="scenarios" class="tab-content">
+            <h2>Real-World Scenarios: Choosing the Right Type</h2>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Product ID: "SKU-12345"</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Is this a number or text?</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation">📝 Text</div>
+                    <p style="color: #cbd5e1; margin-top: 0.75rem; margin-bottom: 0.75rem;"><strong>Why:</strong> Contains letters, so must be Text. Cannot be stored as number.</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Filtering and grouping work fine. You won't do math on it, so no performance penalty.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Quantity Sold: 500, 1200, 45</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Pure whole numbers - no decimals</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation">🔢 Whole Number (Int64)</div>
+                    <p style="color: #cbd5e1; margin-top: 0.75rem; margin-bottom: 0.75rem;"><strong>Why:</strong> Pure integers with no decimals. Best for counting.</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Smallest file size, fastest calculations, accurate SUM/AVG.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Temperature: 98.6, 22.3, -5.2</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Numbers with decimal precision</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation">💯 Decimal Number</div>
+                    <p style="color: #cbd5e1; margin-top: 0.75rem; margin-bottom: 0.75rem;"><strong>Why:</strong> Requires decimal places for accuracy. Whole Number would truncate.</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Preserves precision needed for scientific/measurements data.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Price: $99.99, €150.50, £75.00</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Financial amounts</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation">💰 Currency</div>
+                    <p style="color: #cbd5e1; margin-top: 0.75rem; margin-bottom: 0.75rem;"><strong>Why:</strong> Financial data needs precise decimal handling. Currency type includes formatting.</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Proper rounding for money, displays currency symbols in reports.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Date of Sale: 1/15/2024, 3/22/2024</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Date values only, no time</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation">📅 Date</div>
+                    <p style="color: #cbd5e1; margin-top: 0.75rem; margin-bottom: 0.75rem;"><strong>Why:</strong> Contains only date portion. Date type supports date-specific functions.</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Enables time intelligence DAX functions, proper sorting, filtering by date ranges.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Date & Time: 1/15/2024 14:30:45</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Full date and time stamp</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation">⏰ DateTime</div>
+                    <p style="color: #cbd5e1; margin-top: 0.75rem; margin-bottom: 0.75rem;"><strong>Why:</strong> Contains both date and time. DateTime captures full precision.</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Enables timestamped transactions, hourly analysis, event sequencing.</p>
+                </div>
+            </div>
+
+            <div class="scenario-item" onclick="toggleScenario(this)">
+                <div class="scenario-title">Is Active: TRUE, FALSE, TRUE</div>
+                <div style="color: #cbd5e1; font-size: 0.875rem;">Yes/No, True/False, 1/0</div>
+                <div class="scenario-expanded">
+                    <div class="recommendation">✓ Boolean</div>
+                    <p style="color: #cbd5e1; margin-top: 0.75rem; margin-bottom: 0.75rem;"><strong>Why:</strong> Binary values (two states). Boolean is purpose-built for this.</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Enables IF logic in DAX, clear filtering in reports.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Best Practices Tab -->
+        <div id="best" class="tab-content">
+            <h2>Best Practices for Data Type Selection</h2>
+            
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🎯 Set Types Early in Power Query</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;">Set data types as soon as you load data, before any transformations.</p>
+                    <div class="example-box">// Good: Set type immediately after loading
+let
+  Source = Csv.Document(File.Contents("sales.csv")),
+  #"Changed Type" = Table.TransformColumnTypes(Source, {
+    {"Date", type date},
+    {"Quantity", Int64.Type},
+    {"Price", type number},
+    {"IsActive", type logical}
+  })
+in
+  #"Changed Type"</div>
+                    <p style="color: #cbd5e1; margin-top: 1rem;"><strong>Why:</strong> Easier to catch type issues early. Transformations are cleaner. Less rework later.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🔍 Use Whole Number for Counting, Decimal for Calculations</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Whole Number:</strong> Fastest, smallest. Use for counts, IDs, quantities (no decimals).</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Decimal:</strong> For percentages, rates, measurements. Example: 3.14159, 0.95, 98.6</p>
+                    <p style="color: #cbd5e1;"><strong>Currency:</strong> For money only. Includes formatting and rounding rules.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>📅 Use Date for Date-Only, DateTime for Timestamps</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Date:</strong> If you only need the date. Smaller file size, faster DAX time intelligence.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>DateTime:</strong> If you need time precision (transactions, events, logs).</p>
+                    <p style="color: #cbd5e1;"><strong>Tip:</strong> Don't use DateTime if you only need dates - it wastes storage and slows calculations.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>⚠️ Never Store Numbers as Text</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Problem:</strong> Numbers stored as text can't be summed, averaged, or compared properly.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Example:</strong> If "100" is text and "50" is text, "100" + "50" = "10050" (string concatenation), not 150.</p>
+                    <p style="color: #cbd5e1;"><strong>Solution:</strong> Use Value() function in Power Query to convert text to number first.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>🛡️ Handle NULL and Empty Values Properly</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Before setting type:</strong> Clean NULL/empty values or they'll cause conversion errors.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Options:</strong> Remove rows, replace with default, or handle errors with Table.ReplaceErrorValues().</p>
+                    <p style="color: #cbd5e1;"><strong>Impact:</strong> Clean data = successful type conversion = no transformation errors.</p>
+                </div>
+            </div>
+
+            <div class="expandable" onclick="toggleExpandable(this)">
+                <div class="expandable-header">
+                    <span>📊 Review Types After Import</span>
+                    <span class="expandable-toggle">▼</span>
+                </div>
+                <div class="expandable-content">
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>In Power BI Desktop:</strong> Go to Data View and check the data type icon next to each column header.</p>
+                    <p style="color: #cbd5e1; margin-bottom: 1rem;"><strong>Column Header Icons:</strong> # = Number, ABC = Text, 📅 = Date, etc.</p>
+                    <p style="color: #cbd5e1;"><strong>Fix if needed:</strong> Select column → Data Type dropdown in Home ribbon → choose correct type.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            <div id="quiz-progress" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; background: linear-gradient(to right, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.2)); border: 1px solid rgba(16, 185, 129, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <div style="font-weight: bold; color: #ffffff; margin-bottom: 0.25rem;">Current Progress</div>
+                        <div id="score-text" style="color: #cbd5e1;"></div>
+                    </div>
+                    <div id="score-display" style="font-size: 2.25rem; font-weight: bold; color: #10b981; display: none;">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div id="quiz-container"></div>
+            <div id="quiz-complete" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Master the PL-300 Certification • Selecting Appropriate Column Data Types for Power BI</p>
+    </div>
+
+    <script>
+        const dataTypes = [
+            {
+                name: "Text",
+                icon: "📝",
+                description: "Stores alphanumeric characters and strings",
+                examples: ["SKU-12345", "Product Name", "USA", "John Smith"],
+                when: ["Product names", "Addresses", "Descriptions", "IDs with letters", "Category labels"],
+                pros: ["Accepts any characters", "No conversion needed", "Great for filtering/grouping"],
+                cons: ["Larger file size", "Can't do math", "Slower for large datasets", "Sorting issues with numbers"]
+            },
+            {
+                name: "Whole Number (Int64)",
+                icon: "🔢",
+                description: "Stores integers only, no decimals",
+                examples: ["100", "5000", "-50", "1234"],
+                when: ["Quantity sold", "Number of items", "Age", "Count of transactions", "Customer ID (numeric)"],
+                pros: ["Smallest file size", "Fastest math", "Proper sorting", "Accurate SUM/AVG"],
+                cons: ["No decimals allowed", "Can't store 98.6 or 3.14", "Truncates decimals if converted"]
+            },
+            {
+                name: "Decimal Number",
+                icon: "💯",
+                description: "Stores numbers with decimal precision",
+                examples: ["3.14159", "98.6", "0.95", "-5.2"],
+                when: ["Percentages", "Rates", "Measurements", "Temperature", "Probability/KPI targets"],
+                pros: ["Preserves precision", "Good for calculations", "Math works perfectly"],
+                cons: ["Larger than Int64", "Floating-point precision issues possible", "Rounding required"]
+            },
+            {
+                name: "Currency",
+                icon: "💰",
+                description: "Stores decimal numbers formatted as money",
+                examples: ["$99.99", "€150.50", "£75.00", "¥1000"],
+                when: ["Price", "Revenue", "Cost", "Payment amount", "Budget/Forecast"],
+                pros: ["Currency formatting included", "Proper rounding for money", "Clear in reports"],
+                cons: ["Specific to currency", "Not ideal for non-financial decimals", "Limited calculation functions"]
+            },
+            {
+                name: "Date",
+                icon: "📅",
+                description: "Stores calendar dates only, no time component",
+                examples: ["1/15/2024", "2024-03-22", "2024-12-31"],
+                when: ["Sale date", "Birth date", "Hire date", "Transaction date", "Report date"],
+                pros: ["Enables time intelligence", "Smallest date storage", "Proper sorting", "DAX date functions"],
+                cons: ["No time component", "Loses time precision", "Not for timestamps"]
+            },
+            {
+                name: "DateTime",
+                icon: "⏰",
+                description: "Stores dates with time stamps (hours, minutes, seconds)",
+                examples: ["1/15/2024 14:30:45", "2024-03-22 09:15:00"],
+                when: ["Event timestamp", "Log entry time", "Transaction time", "Hourly data", "Sequence order"],
+                pros: ["Full time precision", "Enables hourly analysis", "Event sequencing"],
+                cons: ["Larger file size", "Slower than Date only", "Not needed if only date"]
+            },
+            {
+                name: "Boolean (True/False)",
+                icon: "✓",
+                description: "Stores binary values: TRUE or FALSE (yes/no, 1/0)",
+                examples: ["TRUE", "FALSE", "1", "0", "Yes", "No"],
+                when: ["Is Active?", "Completed?", "Approved?", "Flag fields", "Status indicators"],
+                pros: ["Smallest storage", "Fastest for IF logic", "Clear in filters", "Simple"],
+                cons: ["Only two values", "Not for multiple categories", "Limited calculations"]
+            }
+        ];
+
+        const quizQuestions = [
+            {
+                id: 1,
+                question: "You have a column with product codes like 'SKU-12345'. What data type should it be?",
+                options: [
+                    { text: "Whole Number (the numbers are stored as numeric)", correct: false },
+                    { text: "Text (contains both letters and numbers)", correct: true },
+                    { text: "Currency (it has numbers in it)", correct: false },
+                    { text: "Date (it's a unique identifier)", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                question: "You're storing quantity sold (500, 1200, 45). Which type is best?",
+                options: [
+                    { text: "Text (easier to read)", correct: false },
+                    { text: "Decimal (more precision)", correct: false },
+                    { text: "Whole Number (no decimals needed, fastest)", correct: true },
+                    { text: "Currency (it's a count)", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                question: "You need to store a temperature of 98.6°F. What type?",
+                options: [
+                    { text: "Whole Number (it's a number)", correct: false },
+                    { text: "Decimal Number (needs decimal precision)", correct: true },
+                    { text: "Currency (it has decimals)", correct: false },
+                    { text: "Text (safest option)", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                question: "Financial data like prices ($99.99, €150.50). Best type?",
+                options: [
+                    { text: "Decimal (works but no currency formatting)", correct: false },
+                    { text: "Text (for the currency symbol)", correct: false },
+                    { text: "Currency (includes formatting and rounding)", correct: true },
+                    { text: "Whole Number (only integers)", correct: false }
+                ]
+            },
+            {
+                id: 5,
+                question: "You only need dates (1/15/2024), no time. Which type?",
+                options: [
+                    { text: "DateTime (more precise)", correct: false },
+                    { text: "Text (safest)", correct: false },
+                    { text: "Date (no time needed, smaller storage)", correct: true },
+                    { text: "Whole Number (dates are numbers)", correct: false }
+                ]
+            },
+            {
+                id: 6,
+                question: "Event log with timestamp (1/15/2024 14:30:45). Which type?",
+                options: [
+                    { text: "Date (only dates needed)", correct: false },
+                    { text: "Text (safest for mixed content)", correct: false },
+                    { text: "DateTime (includes hours/minutes/seconds)", correct: true },
+                    { text: "Whole Number (timestamp as integer)", correct: false }
+                ]
+            },
+            {
+                id: 7,
+                question: "A column of Yes/No values. What type?",
+                options: [
+                    { text: "Text ('Yes' and 'No' are text)", correct: false },
+                    { text: "Boolean (True/False binary values)", correct: true },
+                    { text: "Whole Number (1 and 0)", correct: false },
+                    { text: "Date (depends on context)", correct: false }
+                ]
+            },
+            {
+                id: 8,
+                question: "What happens if you store a number like 100 as Text?",
+                options: [
+                    { text: "Nothing, it works fine for calculations", correct: false },
+                    { text: "You can't sum it or do math correctly (100 + 50 = '10050')", correct: true },
+                    { text: "Power BI automatically converts it", correct: false },
+                    { text: "It becomes a date", correct: false }
+                ]
+            }
+        ];
+
+        let quizAnswers = {};
+        let currentType = 0;
+
+        function switchTab(tabName, e) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            e.target.classList.add('active');
+
+            if (tabName === 'types') {
+                switchType(0);
+            } else if (tabName === 'best') {
+                // Initialize best practices
+            } else if (tabName === 'quiz') {
+                initializeQuiz();
+            }
+        }
+
+        function switchType(index, e) {
+            if (e) {
+                document.querySelectorAll('.type-card').forEach(t => t.classList.remove('active'));
+                e.target.closest('.type-card').classList.add('active');
+            }
+            
+            currentType = index;
+            const type = dataTypes[index];
+            
+            const detail = document.getElementById('type-detail');
+            
+            const whenHTML = type.when.map(w => `<div class="list-item">✓ ${w}</div>`).join('');
+            const examplesHTML = type.examples.map(ex => `<div class="example-box">${ex}</div>`).join('');
+            
+            detail.innerHTML = `
+                <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 2rem;">
+                    <span style="font-size: 3rem;">${type.icon}</span>
+                    <div>
+                        <h2 style="margin: 0 0 0.5rem 0;">${type.name}</h2>
+                        <p style="color: rgba(16, 185, 129, 1); font-size: 1rem; margin: 0;">${type.description}</p>
+                    </div>
+                </div>
+
+                <h4 style="margin-bottom: 1rem;">Examples:</h4>
+                ${examplesHTML}
+
+                <h4 style="margin-top: 1.5rem; margin-bottom: 1rem;">When to Use:</h4>
+                ${whenHTML}
+
+                <div class="pros-cons" style="margin-top: 1.5rem;">
+                    <div class="pros">
+                        <h4>Advantages</h4>
+                        ${type.pros.map(p => `<div class="list-item">✓ ${p}</div>`).join('')}
+                    </div>
+                    <div class="cons">
+                        <h4>Considerations</h4>
+                        ${type.cons.map(c => `<div class="list-item">⚠ ${c}</div>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleExpandable(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function toggleScenario(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function initializeQuiz() {
+            const container = document.getElementById('quiz-container');
+            if (container.innerHTML) return;
+
+            quizQuestions.forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-question';
+                div.id = `question-${q.id}`;
+
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    optionsHTML += `
+                        <button class="option" onclick="answerQuestion(${q.id}, ${opt.correct})">
+                            <span class="option-radio"></span>
+                            <span>${opt.text}</span>
+                        </button>
+                    `;
+                });
+
+                div.innerHTML = `
+                    <div class="question-text">${q.question}</div>
+                    ${optionsHTML}
+                    <div style="color: #94a3b8; font-size: 0.875rem; margin-top: 0.5rem;">Question ${idx + 1} of ${quizQuestions.length}</div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        function answerQuestion(questionId, isCorrect) {
+            if (quizAnswers[questionId] !== undefined) return;
+
+            quizAnswers[questionId] = isCorrect;
+            
+            const questionDiv = document.getElementById(`question-${questionId}`);
+            questionDiv.classList.add('answered');
+            if (!isCorrect) questionDiv.classList.add('incorrect');
+
+            const buttons = questionDiv.querySelectorAll('.option');
+            buttons.forEach((btn, idx) => {
+                const isCorrectOption = quizQuestions.find(q => q.id === questionId).options[idx].correct;
+                if (isCorrectOption) {
+                    btn.classList.add('correct');
+                } else if (btn === event.target) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            updateProgress();
+
+            if (Object.keys(quizAnswers).length === quizQuestions.length) {
+                showQuizComplete();
+            }
+        }
+
+        function updateProgress() {
+            const answered = Object.keys(quizAnswers).length;
+            const total = quizQuestions.length;
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const percentage = Math.round((correct / total) * 100);
+
+            const progressDiv = document.getElementById('quiz-progress');
+            progressDiv.style.display = 'block';
+            document.getElementById('score-text').textContent = `${correct} of ${total} questions correct`;
+            document.getElementById('score-display').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+        }
+
+        function showQuizComplete() {
+            const correct = Object.values(quizAnswers).filter(v => v === true).length;
+            const total = quizQuestions.length;
+            const percentage = (correct / total);
+            const isGood = percentage >= 0.75;
+
+            const completeDiv = document.getElementById('quiz-complete');
+            completeDiv.className = isGood ? 'quiz-complete' : 'quiz-complete low';
+            completeDiv.innerHTML = `
+                <h3>${isGood ? 'Excellent!' : 'Good effort!'}</h3>
+                <div class="quiz-score">${Math.round(percentage * 100)}%</div>
+                <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                    ${isGood ? "Outstanding! You've mastered column data type selection." : "Review the data type characteristics and scenarios to strengthen your knowledge."}
+                </p>
+                <button class="btn-retake" onclick="retakeQuiz()">Retake Quiz</button>
+            `;
+            completeDiv.style.display = 'block';
+        }
+
+        function retakeQuiz() {
+            quizAnswers = {};
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-complete').style.display = 'none';
+            document.getElementById('quiz-progress').style.display = 'none';
+            initializeQuiz();
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            switchType(0);
+        });
+    </script>
+</body>
+</html>

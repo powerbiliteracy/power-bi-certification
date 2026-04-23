@@ -29,7 +29,7 @@ const SYLLABUS: Domain[] = [
       },
       {
         title: "Profile and clean the data",
-        slugs: ["resolve-import-errors"],
+        slugs: ["evaluate-data", "resolve-inconsistencies", "resolve-import-errors"],
       },
       {
         title: "Transform and load the data",

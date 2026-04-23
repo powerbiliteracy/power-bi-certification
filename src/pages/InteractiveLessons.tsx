@@ -153,6 +153,26 @@ export default function InteractiveLessons() {
   const sortedDomains = Object.keys(groups).sort(
     (a, b) => domainOrder.indexOf(a) - domainOrder.indexOf(b)
   );
+
+  return (
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--indigo))] to-[hsl(var(--violet))] flex items-center justify-center">
+            <BookOpen className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Interactive Lessons</h1>
+            <p className="text-muted-foreground">
+              Hands-on, scenario-driven walkthroughs for the trickiest PL-300 skills.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {sortedDomains.map((domain) => {
+        const lessons = groups[domain];
+        return (
         <section key={domain} className="space-y-3">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-foreground">{domain}</h2>

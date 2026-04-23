@@ -50,11 +50,109 @@ export default function InteractiveLessons() {
     );
   }
 
-  // Group by domain
+  // Official PL-300 exam syllabus order
+  const domainOrder = [
+    "Prepare the data",
+    "Model the data",
+    "Visualize and analyze",
+    "Deploy and maintain",
+  ];
+
+  // Slug order within each domain, following the syllabus topic order
+  const slugOrder: string[] = [
+    // Prepare the data
+    "data-sources",
+    "settings-credentials-privacy",
+    "directquery-import",
+    "parameters",
+    "resolve-import-errors",
+    "column-data-types",
+    "group-aggregate-rows",
+    "semi-structured-data",
+    "fact-dimension-tables",
+    "reference-duplicate-queries",
+    "merge-append-queries",
+    "configure-data-loading",
+    // Model the data
+    "role-playing-dimensions",
+    "cardinality-cross-filter",
+    "common-date-table",
+    "calculated-columns-tables",
+    "calculate-function",
+    "time-intelligence-measures",
+    "semi-additive-measures",
+    "quick-measures",
+    "calculation-groups",
+    "optimize-rows-columns",
+    "performance-analyzer",
+    "reduce-granularity",
+    "visual-calculations-dax",
+    // Visualize and analyze
+    "select-appropriate-visual",
+    "format-configure-visuals",
+    "narrative-copilot",
+    "apply-customize-theme",
+    "apply-conditional-formatting",
+    "apply-slicing-filtering",
+    "copilot-report-page",
+    "copilot-suggest-content",
+    "configure-report-page",
+    "paginated-reports",
+    "configure-bookmarks",
+    "custom-tooltips",
+    "visual-interactions",
+    "report-navigation",
+    "apply-sorting",
+    "sync-slicers",
+    "selection-pane",
+    "drill-through",
+    "export-settings",
+    "mobile-design",
+    "personalized-visuals",
+    "accessibility",
+    "auto-refresh",
+    "analyze-feature",
+    "grouping-binning",
+    "ai-visuals",
+    "reference-lines",
+    "outliers-anomalies",
+    "copilot-summarize-model",
+    "dashboards",
+    // Deploy and maintain
+    "workspace",
+    "workspace-app",
+    "publish-import",
+    "manage-publish",
+    "distribution",
+    "subscriptions-alerts",
+    "promote-certify",
+    "gateway",
+    "semantic-refresh",
+    "workspace-roles",
+    "item-level-access",
+    "semantic-model-access",
+    "rls-roles",
+    "rls-groups",
+    "dynamic-rls",
+    "sensitivity-labels",
+  ];
+
+  const slugIndex = (s: string) => {
+    const i = slugOrder.indexOf(s);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+
+  // Group by domain and sort
   const groups = interactiveLessons.reduce<Record<string, typeof interactiveLessons>>((acc, l) => {
     (acc[l.domain] ||= []).push(l);
     return acc;
   }, {});
+
+  Object.values(groups).forEach((arr) => arr.sort((a, b) => slugIndex(a.slug) - slugIndex(b.slug)));
+
+  const sortedDomains = Object.keys(groups).sort(
+    (a, b) => domainOrder.indexOf(a) - domainOrder.indexOf(b)
+  );
 
   return (
     <div className="space-y-8">
@@ -72,7 +170,9 @@ export default function InteractiveLessons() {
         </div>
       </div>
 
-      {Object.entries(groups).map(([domain, lessons]) => (
+      {sortedDomains.map((domain) => {
+        const lessons = groups[domain];
+        return (
         <section key={domain} className="space-y-3">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-foreground">{domain}</h2>
@@ -103,7 +203,8 @@ export default function InteractiveLessons() {
             ))}
           </div>
         </section>
-      ))}
+        );
+      })}
     </div>
   );
 }

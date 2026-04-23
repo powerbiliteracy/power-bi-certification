@@ -568,4 +568,12 @@ export const interactiveLessons: InteractiveLesson[] = [
     file: "/lessons/pl300-resolve-import-errors.html",
     accent: "from-red-500/20 to-rose-500/10 border-red-400/30",
   },
+  {
+    slug: "data-sources",
+    title: "Identify and Connect to Data Sources",
+    description: "Choose the right connector and connect to files, databases, services, and OData feeds in Power BI.",
+    domain: "Prepare the data",
+    file: "/lessons/pl300-data-sources.html",
+    accent: "from-cyan-500/20 to-sky-500/10 border-cyan-400/30",
+  },
 ];

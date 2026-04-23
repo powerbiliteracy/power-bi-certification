@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL-300: Evaluate Data — Statistics & Column Properties</title>
+<link rel="stylesheet" href="/lessons/shared.css">
+</head>
+<body>
+<div class="header">
+  <div class="header-content">
+    <div class="header-icon">🔎</div>
+    <div class="header-text">
+      <h1>Evaluate Data — Statistics & Column Properties</h1>
+      <p>PL-300: Profile data in Power Query before you model it</p>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-button active" data-tab="overview">📚 Overview</button>
+  <button class="tab-button" data-tab="profiling">📊 Profiling Tools</button>
+  <button class="tab-button" data-tab="properties">🧬 Column Properties</button>
+  <button class="tab-button" data-tab="scenarios">🏢 Scenarios</button>
+  <button class="tab-button" data-tab="best">⭐ Best Practices</button>
+  <button class="tab-button" data-tab="quiz">✓ Quiz</button>
+</div>
+
+<div class="container">
+  <div id="overview" class="tab-content active">
+    <div class="grid">
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">📐</div><div class="card-title">Column Quality</div><div class="list-item">% Valid, Error, Empty for every column</div></div>
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">📈</div><div class="card-title">Column Distribution</div><div class="list-item">Distinct & unique counts, value spread</div></div>
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">📊</div><div class="card-title">Column Profile</div><div class="list-item">Min, max, mean, std-dev, value frequency</div></div>
+    </div>
+    <div class="info-box">
+      <div style="font-size:1.5rem;">💡</div>
+      <div class="info-box-content">
+        <div class="info-title">Why this matters on the exam</div>
+        <div class="info-text">The latest PL-300 syllabus calls this out explicitly under <strong>Profile and clean the data → Evaluate data, including data statistics and column properties</strong>. You need to know how to surface profiling info in the Power Query editor and what to do with it.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="profiling" class="tab-content">
+    <h2>Three profiling tools in Power Query</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>📐 Column quality</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">View → Column quality (or thin coloured bar above each column header).</div>
+        <div class="list-item">Shows <strong>Valid / Error / Empty</strong> percentages.</div>
+        <div class="list-item">First red flag: high Error % means a type mismatch or bad source data; high Empty % means nulls.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>📈 Column distribution</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">View → Column distribution.</div>
+        <div class="list-item">Shows <strong>Distinct count</strong> and <strong>Unique count</strong> per column.</div>
+        <div class="list-item">Use it to confirm a key column is truly unique (Distinct = Unique = row count).</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>📊 Column profile</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">View → Column profile (best with a single column selected).</div>
+        <div class="list-item">Numeric columns: count, min, max, average, standard deviation, even/odd, zero, distinct.</div>
+        <div class="list-item">Text columns: shortest/longest length, character distribution.</div>
+        <div class="list-item">Value distribution chart shows the most frequent values.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🔢 Profile based on top 1,000 rows vs entire data set</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Bottom-left status bar lets you switch between <strong>Top 1000 rows</strong> (default, fast) and <strong>Entire data set</strong>.</div>
+        <div class="list-item">Always switch to the entire data set before publishing — top 1,000 can lie about distinct counts and quality.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="properties" class="tab-content">
+    <h2>Column properties to set early</h2>
+    <table class="comparison-table">
+      <tr><td class="header">Property</td><td class="header">Where</td><td class="header">Why</td></tr>
+      <tr><td>Data type</td><td>Power Query type icon / Transform tab</td><td>Drives compression, DAX behaviour, sort order</td></tr>
+      <tr><td>Locale</td><td>Right-click column → Change Type → Using Locale</td><td>Avoid date/number parsing errors across regions</td></tr>
+      <tr><td>Column name</td><td>Rename in Power Query</td><td>Friendly names flow into the model and visuals</td></tr>
+      <tr><td>Data category</td><td>Model view → Properties → Data category</td><td>Tags Address, City, URL, Image — drives map visuals & images</td></tr>
+      <tr><td>Summarize by</td><td>Model view → Properties</td><td>Set numeric IDs to "Don't summarize"</td></tr>
+      <tr><td>Sort by column</td><td>Model view → Sort by column</td><td>Sort Month Name by Month Number, etc.</td></tr>
+      <tr><td>Hidden</td><td>Right-click in Model view → Hide</td><td>Hide keys & technical columns from report view</td></tr>
+    </table>
+    <div class="info-box">
+      <div style="font-size:1.5rem;">⚠️</div>
+      <div class="info-box-content">
+        <div class="info-title">Set types in Power Query, not the model</div>
+        <div class="info-text">Always change data types upstream in Power Query, not on the loaded model. Type changes in the model can silently break refresh.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scenarios" class="tab-content">
+    <h2>Scenarios</h2>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 1 — Customer ID column should be a key but Distinct ≠ Unique</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Diagnosis:</strong> The column has duplicates. Switch to "Profile based on entire data set" to confirm, then de-duplicate or pick a different key.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 2 — Sales column shows 7% Errors</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Diagnosis:</strong> Column quality reveals errors. Use "Keep Errors" to inspect them — usually text values where numbers were expected. Fix in source or replace value before changing type.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 3 — Address column doesn't show on a map visual</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Fix:</strong> In Model view set Data category = Address (or City/Country). Power BI uses this to geocode for map visuals.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 4 — Months sort alphabetically (April, August, December…)</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Fix:</strong> In Model view, set Month Name's "Sort by column" property to MonthNumber. The visual will then sort correctly.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="best" class="tab-content">
+    <h2>Best practices</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>✅ Always profile before modelling</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Turn on all three profiling views (View tab) on day one.</div>
+        <div class="list-item">Switch to "Entire data set" before signing off on the model.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>✅ Lock down data types & locale</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Change types explicitly in Power Query — never rely on type detection alone.</div>
+        <div class="list-item">Use "Change Type → Using Locale" for international date/number formats.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>✅ Set model-level properties</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Hide keys, set Summarize by = Don't summarize on IDs, set Data category for geo / URL / image columns.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz" class="tab-content">
+    <h2>Test your knowledge</h2>
+    <div id="quiz-progress" style="display:none;margin-bottom:1.5rem;padding:1.25rem 1.5rem;border-radius:.75rem;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <div><div style="font-weight:bold;color:#fff;margin-bottom:.25rem">Progress</div><div id="score-text" style="color:#a5a8d4"></div></div>
+        <div id="score-display" style="font-size:2rem;font-weight:bold;color:#6366f1">0%</div>
+      </div>
+      <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div id="quiz-container"></div>
+    <div id="quiz-complete" style="display:none"></div>
+  </div>
+</div>
+
+<div class="footer"><p>Master the PL-300 Certification • Evaluate Data — Statistics & Column Properties</p></div>
+
+<script>
+const quizQuestions = [
+  {id:1, question:"Which Power Query view shows % Valid / Error / Empty for every column?", options:[
+    {text:"Column quality",correct:true},
+    {text:"Column distribution",correct:false},
+    {text:"Column profile",correct:false},
+    {text:"Query dependencies",correct:false}
+  ]},
+  {id:2, question:"By default, profiling is based on…", options:[
+    {text:"The top 1,000 rows",correct:true},
+    {text:"The entire data set",correct:false},
+    {text:"A 10% sample",correct:false},
+    {text:"Whatever the source returns first",correct:false}
+  ]},
+  {id:3, question:"For a column to be a valid primary key, what must be true in Column distribution?", options:[
+    {text:"Distinct count = Unique count = row count",correct:true},
+    {text:"Distinct count is 1",correct:false},
+    {text:"Unique count is 0",correct:false},
+    {text:"Errors percentage is 100%",correct:false}
+  ]},
+  {id:4, question:"Where is the safest place to change a column's data type?", options:[
+    {text:"In Power Query during transformation",correct:true},
+    {text:"In the model after loading",correct:false},
+    {text:"In the visual's format pane",correct:false},
+    {text:"By renaming the column",correct:false}
+  ]},
+  {id:5, question:"Which property lets a map visual recognise a City column?", options:[
+    {text:"Data category = City",correct:true},
+    {text:"Summarize by = Sum",correct:false},
+    {text:"Sort by column",correct:false},
+    {text:"Hidden = true",correct:false}
+  ]},
+  {id:6, question:"To prevent Power BI from summing a numeric Customer ID, set…", options:[
+    {text:"Summarize by = Don't summarize",correct:true},
+    {text:"Data category = ID",correct:false},
+    {text:"Hide the column",correct:false},
+    {text:"Change type to text",correct:false}
+  ]},
+  {id:7, question:"Why switch profiling to 'Entire data set' before publishing?", options:[
+    {text:"Top 1,000 rows can hide errors and misreport distinct counts",correct:true},
+    {text:"It's required for refresh to work",correct:false},
+    {text:"It enables DirectQuery",correct:false},
+    {text:"It hides empty columns",correct:false}
+  ]},
+  {id:8, question:"Month names sort alphabetically. The fix is…", options:[
+    {text:"Set Sort by column to MonthNumber on the Month Name column",correct:true},
+    {text:"Hide the column",correct:false},
+    {text:"Convert to text type",correct:false},
+    {text:"Add a calculated column called SortHelper",correct:false}
+  ]}
+];
+
+let quizAnswers = {};
+function switchTab(tab, e) { document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.tab-button').forEach(t=>t.classList.remove('active')); document.getElementById(tab).classList.add('active'); e.currentTarget.classList.add('active'); if (tab==='quiz') initializeQuiz(); }
+document.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', e => switchTab(btn.dataset.tab, e)));
+function toggleExpandable(el){el.classList.toggle('expanded');}
+function toggleScenario(el){el.classList.toggle('expanded');}
+function initializeQuiz(){const c=document.getElementById('quiz-container');if(c.innerHTML)return;quizQuestions.forEach((q,i)=>{const d=document.createElement('div');d.className='quiz-question';d.id=`question-${q.id}`;let s='';q.options.forEach(o=>{s+=`<button class="option" onclick="answerQuestion(${q.id},${o.correct},this)"><span class="option-radio"></span><span>${o.text}</span></button>`;});d.innerHTML=`<div class="question-text">${q.question}</div>${s}<div style="color:#7c80b0;font-size:.85rem;margin-top:.5rem">Question ${i+1} of ${quizQuestions.length}</div>`;c.appendChild(d);});}
+function answerQuestion(id,isCorrect,btn){if(quizAnswers[id]!==undefined)return;quizAnswers[id]=isCorrect;const q=document.getElementById(`question-${id}`);q.querySelectorAll('.option').forEach((opt,i)=>{const correct=quizQuestions.find(x=>x.id===id).options[i].correct;if(correct){opt.classList.add('correct');}else if(opt===btn){opt.classList.add('incorrect');}opt.disabled=true;});updateProgress();if(Object.keys(quizAnswers).length===quizQuestions.length)showQuizComplete();}
+function updateProgress(){const a=Object.keys(quizAnswers).length,t=quizQuestions.length,c=Object.values(quizAnswers).filter(x=>x===true).length,p=Math.round(100*c/t);document.getElementById('quiz-progress').style.display='block';document.getElementById('score-text').textContent=`${c} of ${t} correct • ${a} answered`;document.getElementById('score-display').textContent=`${p}%`;document.getElementById('progress-fill').style.width=`${p}%`;}
+function showQuizComplete(){const c=Object.values(quizAnswers).filter(x=>x===true).length,t=quizQuestions.length,pass=c/t>=.75,el=document.getElementById('quiz-complete');el.className=pass?'quiz-complete':'quiz-complete low';el.innerHTML=`<h3>${pass?'Excellent!':'Keep practising'}</h3><div class="quiz-score">${Math.round(100*c/t)}%</div><p style="color:#a5a8d4;margin-bottom:1rem">${pass?"You can profile and configure columns confidently.":"Review profiling tools and column properties."}</p><button class="btn-retake" onclick="retakeQuiz()">Retake quiz</button>`;el.style.display='block';}
+function retakeQuiz(){quizAnswers={};document.getElementById('quiz-container').innerHTML='';document.getElementById('quiz-complete').style.display='none';document.getElementById('quiz-progress').style.display='none';initializeQuiz();}
+</script>
+</body>
+</html>

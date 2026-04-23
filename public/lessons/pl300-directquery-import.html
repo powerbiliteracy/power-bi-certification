@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL-300: Choose Between DirectLake, DirectQuery, and Import</title>
+<link rel="stylesheet" href="/lessons/shared.css">
+</head>
+<body>
+<div class="header">
+  <div class="header-content">
+    <div class="header-icon">⚡</div>
+    <div class="header-text">
+      <h1>Choose Between DirectLake, DirectQuery, and Import</h1>
+      <p>PL-300: Pick the right storage mode for performance, freshness, and scale</p>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-button active" data-tab="overview">📚 Overview</button>
+  <button class="tab-button" data-tab="modes">🧱 The Three Modes</button>
+  <button class="tab-button" data-tab="decision">🧭 Decision Guide</button>
+  <button class="tab-button" data-tab="composite">🧩 Composite & Dual</button>
+  <button class="tab-button" data-tab="scenarios">🏢 Scenarios</button>
+  <button class="tab-button" data-tab="best">⭐ Best Practices</button>
+  <button class="tab-button" data-tab="quiz">✓ Quiz</button>
+</div>
+
+<div class="container">
+  <div id="overview" class="tab-content active">
+    <div class="grid">
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">📦</div><div class="card-title">Import</div><div class="list-item">Data is loaded into the model (VertiPaq).</div></div>
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">🔌</div><div class="card-title">DirectQuery</div><div class="list-item">Queries are sent live to the source on every interaction.</div></div>
+      <div class="card"><div style="font-size:2rem;margin-bottom:.5rem;">🌊</div><div class="card-title">DirectLake</div><div class="list-item">Reads Delta/Parquet files directly from OneLake — no import, no DAX-to-SQL translation.</div></div>
+    </div>
+    <div class="info-box">
+      <div style="font-size:1.5rem;">💡</div>
+      <div class="info-box-content">
+        <div class="info-title">What changed in the latest exam</div>
+        <div class="info-text">DirectLake is now the third storage mode you must compare alongside Import and DirectQuery. It's exclusive to <strong>Microsoft Fabric semantic models</strong> built on OneLake (Lakehouse / Warehouse). It targets near-Import performance with near-DirectQuery freshness.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modes" class="tab-content">
+    <h2>How each mode works</h2>
+    <table class="comparison-table">
+      <tr><td class="header">Aspect</td><td class="header">Import</td><td class="header">DirectQuery</td><td class="header">DirectLake</td></tr>
+      <tr><td>Where data lives at query time</td><td>In-memory VertiPaq cache (compressed)</td><td>In the source system</td><td>OneLake Delta/Parquet, paged into memory on demand</td></tr>
+      <tr><td>Refresh model</td><td>Scheduled refresh / incremental refresh</td><td>None — always live</td><td>Automatic framing on Delta commits (no scheduled refresh)</td></tr>
+      <tr><td>Query language sent to source</td><td>None at runtime</td><td>SQL/MDX translated from DAX</td><td>None — reads columnar files directly</td></tr>
+      <tr><td>Performance</td><td>Fastest</td><td>Depends on source</td><td>Near-Import (with fallback to DirectQuery if needed)</td></tr>
+      <tr><td>Data freshness</td><td>As of last refresh</td><td>Real-time</td><td>Near real-time (after Delta commit + framing)</td></tr>
+      <tr><td>Where it's available</td><td>Power BI Desktop & Service</td><td>Power BI Desktop & Service</td><td>Fabric only — on Lakehouse / Warehouse semantic models</td></tr>
+      <tr><td>DAX support</td><td>Full</td><td>Limited (some DAX falls back / fails)</td><td>Full DAX (auto-fallback to DirectQuery for unsupported features)</td></tr>
+      <tr><td>Capacity needs</td><td>Pro / PPU / Fabric</td><td>Pro / PPU / Fabric</td><td>Fabric / Premium F-SKU only</td></tr>
+    </table>
+
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>📦 Import — when it shines</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Best raw query performance for visuals</div>
+        <div class="list-item">✓ Full DAX, calculated columns, and calculation groups</div>
+        <div class="list-item">✓ Works with any data source connector</div>
+        <div class="list-item">✗ Stale until next refresh; capacity memory limits dataset size</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🔌 DirectQuery — when it shines</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Always-live data without scheduled refresh</div>
+        <div class="list-item">✓ Bypasses model size limits — query the source</div>
+        <div class="list-item">✗ Visuals are only as fast as the source can answer DAX-to-SQL</div>
+        <div class="list-item">✗ Some DAX (time intelligence, complex measures) is restricted</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🌊 DirectLake — when it shines</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Import-like speed without copying data into the model</div>
+        <div class="list-item">✓ Auto-updates as Delta tables are written in the Lakehouse</div>
+        <div class="list-item">✓ Full DAX, with automatic fallback to DirectQuery for edge cases</div>
+        <div class="list-item">✗ Requires Fabric capacity and a Lakehouse / Warehouse source</div>
+        <div class="list-item">✗ No Power Query transformations in the semantic model — shape data upstream</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="decision" class="tab-content">
+    <h2>Quick decision guide</h2>
+    <div class="info-box">
+      <div style="font-size:1.5rem;">🧭</div>
+      <div class="info-box-content">
+        <div class="info-title">Start here</div>
+        <div class="info-text">Ask three questions: <strong>How fresh must the data be?</strong> <strong>How big is it?</strong> <strong>Is the source already in OneLake (Fabric)?</strong></div>
+      </div>
+    </div>
+
+    <table class="comparison-table">
+      <tr><td class="header">Requirement</td><td class="header">Recommended mode</td></tr>
+      <tr><td>Daily/weekly snapshot, &lt; a few GB compressed</td><td><strong>Import</strong></td></tr>
+      <tr><td>Source data is already a Fabric Lakehouse / Warehouse</td><td><strong>DirectLake</strong></td></tr>
+      <tr><td>Real-time monitoring (sensors, transactions) on a fast SQL source</td><td><strong>DirectQuery</strong> (or DirectLake if in Fabric)</td></tr>
+      <tr><td>Very large fact (hundreds of millions of rows) on Fabric</td><td><strong>DirectLake</strong></td></tr>
+      <tr><td>Very large fact, no Fabric, fast warehouse</td><td><strong>DirectQuery</strong></td></tr>
+      <tr><td>Mix of huge fact + small dims you want fast</td><td><strong>Composite</strong> (DQ fact + Import dims, or Dual)</td></tr>
+    </table>
+
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🚦 Decision flow (text)</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">1. Is the source a Fabric Lakehouse/Warehouse? → <strong>DirectLake</strong> by default.</div>
+        <div class="list-item">2. Otherwise, does the data fit in memory and is daily refresh OK? → <strong>Import</strong>.</div>
+        <div class="list-item">3. Need real-time and source can handle interactive load? → <strong>DirectQuery</strong>.</div>
+        <div class="list-item">4. Mix of needs? → <strong>Composite</strong> with Dual storage on dimensions.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="composite" class="tab-content">
+    <h2>Composite models, Dual storage & DirectLake fallback</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🧩 Composite models</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Mix Import and DirectQuery sources in one model.</div>
+        <div class="list-item">Common pattern: huge fact in DirectQuery, small dimensions in Import.</div>
+        <div class="list-item">Watch limited relationships and security boundaries between sources.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🪞 Dual storage mode</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">Set on dimension tables: behaves as Import when joined to Import facts, DirectQuery when joined to DQ facts.</div>
+        <div class="list-item">Reduces slow cross-source joins in composite models.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>♻️ DirectLake fallback</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">If a query exceeds DirectLake guardrails (row groups, column count, SKU limits), it silently falls back to <strong>DirectQuery on SQL endpoint</strong>.</div>
+        <div class="list-item">Good: queries still return. Bad: performance drops — monitor with Performance Analyzer.</div>
+        <div class="list-item">Reduce risk: keep tables tidy (V-Order optimised Delta), partition large facts, use higher Fabric SKUs.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scenarios" class="tab-content">
+    <h2>Real-world scenarios</h2>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 1 — 50M-row sales report refreshed nightly from Azure SQL</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Choose:</strong> Import. The dataset compresses well, freshness target is daily, and Import gives the fastest user experience.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 2 — Operational dashboard on the warehouse floor, must reflect every minute</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Choose:</strong> DirectQuery on a tuned source (or DirectLake if running on Fabric Lakehouse). Pair with automatic page refresh.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 3 — Enterprise has migrated to Fabric, 800M-row Lakehouse fact</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Choose:</strong> DirectLake. Skip the import refresh, get Import-like performance, stay in sync with the Lakehouse.</div>
+      </div>
+    </div>
+    <div class="scenario-item" onclick="toggleScenario(this)">
+      <div class="scenario-title">Scenario 4 — Marketing wants Snowflake live for ads, but small product dim should be fast</div>
+      <div class="scenario-expanded">
+        <div class="list-item"><strong>Choose:</strong> Composite — DirectQuery on the ad spend fact, Import (or Dual) on the product dimension.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="best" class="tab-content">
+    <h2>Best practices</h2>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>📦 Import</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Use incremental refresh on large facts.</div>
+        <div class="list-item">✓ Remove unused columns to shrink the model.</div>
+        <div class="list-item">✓ Star schema beats wide flat tables.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🔌 DirectQuery</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Push aggregates and indexes down to the source.</div>
+        <div class="list-item">✓ Use aggregations tables to accelerate common visuals.</div>
+        <div class="list-item">✓ Avoid complex DAX measures that translate to expensive SQL.</div>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpandable(this)">
+      <div class="expandable-header"><span>🌊 DirectLake</span><span class="expandable-toggle">▼</span></div>
+      <div class="expandable-content">
+        <div class="list-item">✓ Curate the Lakehouse with V-Order optimised Delta tables.</div>
+        <div class="list-item">✓ Model the star schema in the Lakehouse — DirectLake doesn't run Power Query at refresh.</div>
+        <div class="list-item">✓ Monitor for DirectQuery fallback in Performance Analyzer; size up the Fabric SKU if it happens often.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz" class="tab-content">
+    <h2>Test your knowledge</h2>
+    <div id="quiz-progress" style="display:none;margin-bottom:1.5rem;padding:1.25rem 1.5rem;border-radius:.75rem;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <div>
+          <div style="font-weight:bold;color:#fff;margin-bottom:.25rem">Progress</div>
+          <div id="score-text" style="color:#a5a8d4"></div>
+        </div>
+        <div id="score-display" style="font-size:2rem;font-weight:bold;color:#6366f1">0%</div>
+      </div>
+      <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div id="quiz-container"></div>
+    <div id="quiz-complete" style="display:none"></div>
+  </div>
+</div>
+
+<div class="footer"><p>Master the PL-300 Certification • Choose Between DirectLake, DirectQuery, and Import</p></div>
+
+<script>
+const quizQuestions = [
+  {id:1, question:"Where does DirectLake read its data from?", options:[
+    {text:"Delta/Parquet files in OneLake",correct:true},
+    {text:"The VertiPaq in-memory cache",correct:false},
+    {text:"A live SQL connection translated from DAX",correct:false},
+    {text:"A scheduled CSV export",correct:false}
+  ]},
+  {id:2, question:"Which mode requires Microsoft Fabric capacity?", options:[
+    {text:"DirectLake",correct:true},
+    {text:"Import",correct:false},
+    {text:"DirectQuery",correct:false},
+    {text:"All three",correct:false}
+  ]},
+  {id:3, question:"You need real-time data and the source is a fast Azure SQL DB (no Fabric). Best mode?", options:[
+    {text:"DirectQuery",correct:true},
+    {text:"Import with hourly refresh",correct:false},
+    {text:"DirectLake",correct:false},
+    {text:"Excel export",correct:false}
+  ]},
+  {id:4, question:"What happens when DirectLake hits a guardrail it can't handle?", options:[
+    {text:"It falls back to DirectQuery on the SQL endpoint",correct:true},
+    {text:"The visual returns an error",correct:false},
+    {text:"It triggers an Import refresh",correct:false},
+    {text:"It caches the result forever",correct:false}
+  ]},
+  {id:5, question:"Why is Import usually the fastest at query time?", options:[
+    {text:"Data is pre-compressed in the in-memory VertiPaq engine",correct:true},
+    {text:"It sends queries to the source",correct:false},
+    {text:"It uses GPU acceleration",correct:false},
+    {text:"It only loads metadata",correct:false}
+  ]},
+  {id:6, question:"In a composite model, what does Dual storage mode do for a dimension?", options:[
+    {text:"Acts as Import when joined to Import facts and as DirectQuery when joined to DQ facts",correct:true},
+    {text:"Doubles the memory used",correct:false},
+    {text:"Forces every query to run twice",correct:false},
+    {text:"Disables relationships",correct:false}
+  ]},
+  {id:7, question:"Which mode does NOT require a scheduled refresh?", options:[
+    {text:"DirectLake (and DirectQuery) — they reflect source changes automatically",correct:true},
+    {text:"Import",correct:false},
+    {text:"All modes need scheduled refresh",correct:false},
+    {text:"None — refresh is always manual",correct:false}
+  ]},
+  {id:8, question:"You have 800 million rows in a Fabric Lakehouse and want fast Power BI visuals. Best choice?", options:[
+    {text:"DirectLake",correct:true},
+    {text:"Import (refresh nightly)",correct:false},
+    {text:"DirectQuery to the SQL endpoint",correct:false},
+    {text:"Export to CSV",correct:false}
+  ]}
+];
+
+let quizAnswers = {};
+function switchTab(tab, e) { document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.tab-button').forEach(t=>t.classList.remove('active')); document.getElementById(tab).classList.add('active'); e.currentTarget.classList.add('active'); if (tab==='quiz') initializeQuiz(); }
+document.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', e => switchTab(btn.dataset.tab, e)));
+function toggleExpandable(el){el.classList.toggle('expanded');}
+function toggleScenario(el){el.classList.toggle('expanded');}
+function initializeQuiz(){const c=document.getElementById('quiz-container');if(c.innerHTML)return;quizQuestions.forEach((q,i)=>{const d=document.createElement('div');d.className='quiz-question';d.id=`question-${q.id}`;let s='';q.options.forEach(o=>{s+=`<button class="option" onclick="answerQuestion(${q.id},${o.correct},this)"><span class="option-radio"></span><span>${o.text}</span></button>`;});d.innerHTML=`<div class="question-text">${q.question}</div>${s}<div style="color:#7c80b0;font-size:.85rem;margin-top:.5rem">Question ${i+1} of ${quizQuestions.length}</div>`;c.appendChild(d);});}
+function answerQuestion(id,isCorrect,btn){if(quizAnswers[id]!==undefined)return;quizAnswers[id]=isCorrect;const q=document.getElementById(`question-${id}`);q.querySelectorAll('.option').forEach((opt,i)=>{const correct=quizQuestions.find(x=>x.id===id).options[i].correct;if(correct){opt.classList.add('correct');}else if(opt===btn){opt.classList.add('incorrect');}opt.disabled=true;});updateProgress();if(Object.keys(quizAnswers).length===quizQuestions.length)showQuizComplete();}
+function updateProgress(){const a=Object.keys(quizAnswers).length,t=quizQuestions.length,c=Object.values(quizAnswers).filter(x=>x===true).length,p=Math.round(100*c/t);document.getElementById('quiz-progress').style.display='block';document.getElementById('score-text').textContent=`${c} of ${t} correct • ${a} answered`;document.getElementById('score-display').textContent=`${p}%`;document.getElementById('progress-fill').style.width=`${p}%`;}
+function showQuizComplete(){const c=Object.values(quizAnswers).filter(x=>x===true).length,t=quizQuestions.length,pass=c/t>=.75,el=document.getElementById('quiz-complete');el.className=pass?'quiz-complete':'quiz-complete low';el.innerHTML=`<h3>${pass?'Excellent!':'Keep practising'}</h3><div class="quiz-score">${Math.round(100*c/t)}%</div><p style="color:#a5a8d4;margin-bottom:1rem">${pass?"You're ready to choose the right storage mode on the exam.":"Review the decision guide and the three-mode comparison table."}</p><button class="btn-retake" onclick="retakeQuiz()">Retake quiz</button>`;el.style.display='block';}
+function retakeQuiz(){quizAnswers={};document.getElementById('quiz-container').innerHTML='';document.getElementById('quiz-complete').style.display='none';document.getElementById('quiz-progress').style.display='none';initializeQuiz();}
+</script>
+</body>
+</html>

@@ -245,12 +245,15 @@ Create and manage workspaces and assets
 `;
 
 export default function SyllabusAudit() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, viewingAsUser } = useAuth();
   const { toast } = useToast();
   const [raw, setRaw] = useState("");
   const [analyzed, setAnalyzed] = useState<DomainCoverage[] | null>(null);
 
   const parsed = useMemo(() => (raw.trim() ? parseSyllabus(raw) : []), [raw]);
+
+  // Same pattern as Admin.tsx — viewingAsUser makes isAdmin false, so check both
+  const realIsAdmin = !loading && (isAdmin || viewingAsUser);
 
   if (loading) {
     return (
@@ -260,7 +263,7 @@ export default function SyllabusAudit() {
     );
   }
 
-  if (!isAdmin) return <Navigate to="/Dashboard" replace />;
+  if (!realIsAdmin) return <Navigate to="/Dashboard" replace />;
 
   const handleAnalyze = () => {
     if (!raw.trim()) {

@@ -288,9 +288,8 @@ export default function SyllabusSyncButton({
     }
   };
 
-  const confirmAndApplyFix = async () => {
-    if (!confirmFix || !version) return;
-    const { match, isRename } = confirmFix;
+  const applyFixCore = async (match: TopicMatch, isRename: boolean) => {
+    if (!version) return false;
     const key = topicKey(match);
     setFixingKey(key);
     try {
@@ -310,23 +309,66 @@ export default function SyllabusSyncButton({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Track the applied fix (we'll bundle them into one update event when admin closes)
       setAppliedFixes((prev) => [
         ...prev,
         { topic: match.topic.raw, isRename, closestMatch: match.bestMatch },
       ]);
       markFixed(key);
+      return true;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not apply fix";
+      toast({ title: `Fix failed: ${match.topic.raw}`, description: message, variant: "destructive" });
+      return false;
+    } finally {
+      setFixingKey(null);
+    }
+  };
+
+  const confirmAndApplyFix = async () => {
+    if (!confirmFix) return;
+    const { match, isRename } = confirmFix;
+    const ok = await applyFixCore(match, isRename);
+    if (ok) {
       toast({
         title: "Fix applied",
         description: `AI-generated content saved for "${match.topic.raw}".`,
       });
       setConfirmFix(null);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Could not apply fix";
-      toast({ title: "Fix failed", description: message, variant: "destructive" });
-    } finally {
-      setFixingKey(null);
     }
+  };
+
+  const [fixingAll, setFixingAll] = useState(false);
+  const [fixAllProgress, setFixAllProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const fixAll = async () => {
+    if (!report || !version) return;
+    const targets: Array<{ match: TopicMatch; isRename: boolean }> = [
+      ...report.missingTopics
+        .filter((m) => !fixed.has(topicKey(m)))
+        .map((m) => ({ match: m, isRename: false })),
+      ...report.partialTopics
+        .filter((m) => !fixed.has(topicKey(m)))
+        .map((m) => ({ match: m, isRename: true })),
+    ];
+    if (targets.length === 0) return;
+
+    setFixingAll(true);
+    setFixAllProgress({ done: 0, total: targets.length });
+    let ok = 0;
+    let failed = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const { match, isRename } = targets[i];
+      const success = await applyFixCore(match, isRename);
+      if (success) ok++;
+      else failed++;
+      setFixAllProgress({ done: i + 1, total: targets.length });
+    }
+    setFixingAll(false);
+    setFixAllProgress(null);
+    toast({
+      title: "Fix all complete",
+      description: `${ok} fixed${failed ? `, ${failed} failed` : ""}.`,
+    });
   };
 
   const publishUpdateEvent = async () => {

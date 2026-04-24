@@ -459,9 +459,21 @@ export default function KeyTerms() {
     };
   }, []);
 
-  // Merge overrides into the static dataset, deduped by term name
+  // Merge overrides into the static dataset, deduped by term name.
+  // Each override is slotted into the best-matching existing section
+  // (no separate "Added from latest syllabus" bucket).
   const mergedData: DomainData[] = useMemo(() => {
     if (overrides.length === 0) return keyTermsData;
+
+    const tokenize = (s: string) =>
+      new Set(
+        s
+          .toLowerCase()
+          .replace(/&/g, "and")
+          .replace(/[^a-z0-9]+/g, " ")
+          .split(" ")
+          .filter((w) => w.length > 2),
+      );
 
     // Build a fast lookup of existing term names per domain (case-insensitive)
     const existingByDomain = new Map<string, Set<string>>();
@@ -471,47 +483,67 @@ export default function KeyTerms() {
       existingByDomain.set(d.domain, set);
     }
 
-    // Group overrides by best-matching domain
-    const overridesByDomain = new Map<string, OverrideRow[]>();
+    // Pick the best section within a domain for a given override
+    const pickSection = (domain: DomainData, o: OverrideRow): string => {
+      const haystacks: string[] = [
+        o.domain_section ?? "",
+        o.generated_title ?? "",
+        o.original_topic ?? "",
+      ];
+      const overrideTokens = tokenize(haystacks.join(" "));
+      let best = domain.sections[0]?.title ?? "";
+      let bestScore = -1;
+      for (const s of domain.sections) {
+        const sectionTokens = tokenize(s.title);
+        let score = 0;
+        for (const tok of sectionTokens) if (overrideTokens.has(tok)) score++;
+        if (score > bestScore) {
+          bestScore = score;
+          best = s.title;
+        }
+      }
+      return best;
+    };
+
+    // Group overrides: domain -> sectionTitle -> TermData[]
+    const additions = new Map<string, Map<string, TermData[]>>();
     for (const o of overrides) {
       const wanted = normalizeDomain(o.domain_name ?? "");
-      const matched =
-        keyTermsData.find((d) => normalizeDomain(d.domain) === wanted)?.domain ??
-        keyTermsData[0]?.domain;
-      if (!matched) continue;
-      const existing = existingByDomain.get(matched);
-      if (existing && existing.has((o.generated_title || o.original_topic).toLowerCase())) {
-        continue; // already in static data
+      const domain =
+        keyTermsData.find((d) => normalizeDomain(d.domain) === wanted) ??
+        keyTermsData[0];
+      if (!domain) continue;
+
+      const existing = existingByDomain.get(domain.domain);
+      const termName = (o.generated_title || o.original_topic).toLowerCase();
+      if (existing && existing.has(termName)) continue; // already in static data
+
+      const sectionTitle = pickSection(domain, o);
+      const byDomain = additions.get(domain.domain) ?? new Map<string, TermData[]>();
+      const list = byDomain.get(sectionTitle) ?? [];
+      // Dedupe within additions themselves (latest override wins thanks to ORDER BY)
+      if (!list.some((t) => t.term.toLowerCase() === termName)) {
+        list.push(overrideToTerm(o));
       }
-      const list = overridesByDomain.get(matched) ?? [];
-      list.push(o);
-      overridesByDomain.set(matched, list);
+      byDomain.set(sectionTitle, list);
+      additions.set(domain.domain, byDomain);
+      // Reserve so subsequent duplicate overrides are skipped
+      existing?.add(termName);
     }
 
-    // Append a synthetic "Added from latest syllabus" section per domain
+    if (additions.size === 0) return keyTermsData;
+
+    // Splice additions into their target sections
     return keyTermsData.map((d) => {
-      const extras = overridesByDomain.get(d.domain) ?? [];
-      if (extras.length === 0) return d;
-      // Dedupe within the extras themselves
-      const seen = new Set<string>();
-      const terms: TermData[] = [];
-      for (const o of extras) {
-        const t = overrideToTerm(o);
-        const k = t.term.toLowerCase();
-        if (seen.has(k)) continue;
-        seen.add(k);
-        terms.push(t);
-      }
+      const byDomain = additions.get(d.domain);
+      if (!byDomain) return d;
       return {
         ...d,
-        sections: [
-          ...d.sections,
-          {
-            title: "✨ Added from latest syllabus",
-            emoji: "✨",
-            terms,
-          },
-        ],
+        sections: d.sections.map((s) => {
+          const extras = byDomain.get(s.title);
+          if (!extras || extras.length === 0) return s;
+          return { ...s, terms: [...s.terms, ...extras] };
+        }),
       };
     });
   }, [overrides]);

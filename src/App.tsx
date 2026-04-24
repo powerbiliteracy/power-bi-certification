@@ -34,6 +34,7 @@ import Reviews from "./pages/Reviews";
 import StudyPlan from "./pages/StudyPlan";
 import InteractiveLessons from "./pages/InteractiveLessons";
 import SyllabusAudit from "./pages/SyllabusAudit";
+import ConceptComparisons from "./pages/ConceptComparisons";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/InteractiveLessons" element={<LayoutWrapper><InteractiveLessons /></LayoutWrapper>} />
             <Route path="/Admin" element={<LayoutWrapper><Admin /></LayoutWrapper>} />
             <Route path="/SyllabusAudit" element={<LayoutWrapper><SyllabusAudit /></LayoutWrapper>} />
+            <Route path="/ConceptComparisons" element={<LayoutWrapper><ConceptComparisons /></LayoutWrapper>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

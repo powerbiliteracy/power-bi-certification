@@ -38,6 +38,7 @@ import {
   MessageSquare,
   ClipboardList,
   PlayCircle,
+  GitCompare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,7 @@ const sectionKeyMap: Record<string, string> = {
   Reviews: "reviews",
   StudyPlan: "study-plan",
   InteractiveLessons: "interactive-lessons",
+  ConceptComparisons: "concept-comparisons",
 };
 
 // All navigable items with their icons — tier assignment comes from DB
@@ -94,6 +96,7 @@ const allNavItems: { name: string; page: string; icon: any; sectionKey: string }
   { name: "Student Reviews", page: "Reviews", icon: MessageSquare, sectionKey: "reviews" },
   { name: "Study Plan", page: "StudyPlan", icon: ClipboardList, sectionKey: "study-plan" },
   { name: "Interactive Lessons", page: "InteractiveLessons", icon: PlayCircle, sectionKey: "interactive-lessons" },
+  { name: "Concept Comparisons", page: "ConceptComparisons", icon: GitCompare, sectionKey: "concept-comparisons" },
 ];
 
 const profileItems = [

@@ -35,6 +35,7 @@ import { CHECKLIST_DOMAINS } from "@/data/checklistData";
 import { FLASHCARDS } from "@/data/flashcardsData";
 import { DOS_DONTS_DOMAINS } from "@/data/dosAndDontsData";
 import { assessmentQuestions } from "@/data/AssessmentQuestions";
+import SyllabusVersionsManager from "@/components/SyllabusVersionsManager";
 
 // ---------- Parsing ----------
 interface ParsedTopic {
@@ -442,6 +443,13 @@ export default function SyllabusAudit() {
         </p>
       </div>
 
+      <Tabs defaultValue="audit" className="w-full">
+        <TabsList>
+          <TabsTrigger value="audit">Run audit</TabsTrigger>
+          <TabsTrigger value="versions">Saved versions</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="audit" className="space-y-6 mt-4">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -653,6 +661,16 @@ export default function SyllabusAudit() {
           </Tabs>
         </>
       )}
+        </TabsContent>
+
+        <TabsContent value="versions" className="mt-4">
+          <SyllabusVersionsManager
+            initialContent={raw}
+            onUseVersion={(content) => setRaw(content)}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+

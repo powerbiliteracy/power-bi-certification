@@ -445,12 +445,21 @@ export default function KeyTerms() {
       if (!cancelled) setOverrides((data as OverrideRow[]) ?? []);
     };
     load();
-    // refresh when fixes are applied elsewhere
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
+    // Refresh when an admin applies a fix from the sync dialog
+    const channel = supabase
+      .channel("key-terms-overrides")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "content_overrides", filter: "section_key=eq.key-terms" },
+        () => load(),
+      )
+      .subscribe();
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
     };
   }, []);
 

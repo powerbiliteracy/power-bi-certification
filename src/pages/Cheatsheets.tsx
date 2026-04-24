@@ -86,6 +86,8 @@ export default function Cheatsheets() {
           <FavoriteButton itemId="cheatsheets" itemType="page" />
           <SyllabusSyncButton
             sectionLabel="Cheat Sheets"
+            sectionKey="cheatsheets"
+            itemType="topic"
             corpus={domains.flatMap(d => Object.keys(d.content || {}))}
             itemCount={domains.reduce((sum, d) => sum + Object.keys(d.content || {}).length, 0)}
           />

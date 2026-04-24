@@ -398,6 +398,8 @@ export default function KeyTerms() {
         </div>
         <SyllabusSyncButton
           sectionLabel="Key Terms & Features"
+          sectionKey="key-terms"
+          itemType="key_term"
           corpus={keyTermsData.flatMap(d => d.sections.flatMap(s => s.terms.flatMap(t => [t.term, t.def])))}
           itemCount={totalTerms}
         />

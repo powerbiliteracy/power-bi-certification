@@ -223,6 +223,9 @@ export default function InteractiveLessons() {
           </div>
           <SyllabusSyncButton
             sectionLabel="Interactive Lessons"
+            sectionKey="interactive-lessons"
+            itemType="lesson"
+            progressItemTypes={["lesson", "syllabus_topic"]}
             corpus={interactiveLessons.map(l => `${l.title} ${l.description}`)}
             itemCount={interactiveLessons.length}
           />

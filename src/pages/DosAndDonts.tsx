@@ -29,6 +29,8 @@ export default function DosAndDonts() {
         <div className="flex items-center gap-2">
           <SyllabusSyncButton
             sectionLabel="Dos & Don'ts"
+            sectionKey="dos-and-donts"
+            itemType="topic"
             corpus={DOS_DONTS_DOMAINS.flatMap(d => d.subtopics.flatMap(st => [st.title, ...st.bullets, ...st.dos.map(x => x.text), ...st.donts.map(x => x.text)]))}
             itemCount={DOS_DONTS_DOMAINS.reduce((s, d) => s + d.subtopics.length, 0)}
           />

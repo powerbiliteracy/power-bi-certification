@@ -52,6 +52,8 @@ export default function Flashcards() {
           <div className="flex items-center gap-2">
             <SyllabusSyncButton
               sectionLabel="Flashcards"
+              sectionKey="flashcards"
+              itemType="flashcard"
               corpus={FLASHCARDS.map(c => `${c.q} ${c.a}`)}
               itemCount={FLASHCARDS.length}
             />

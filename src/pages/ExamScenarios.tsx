@@ -1228,6 +1228,9 @@ export default function ExamScenarios() {
         </div>
         <SyllabusSyncButton
           sectionLabel="Exam Scenarios"
+          sectionKey="exam-scenarios"
+          itemType="scenario"
+          progressItemTypes={["scenario"]}
           corpus={scenarios.flatMap(s => [s.title, s.context, s.question, ...s.relatedTopics.map(r => r.name)])}
           itemCount={scenarios.length}
         />

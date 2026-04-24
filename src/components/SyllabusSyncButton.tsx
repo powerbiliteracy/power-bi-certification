@@ -126,18 +126,37 @@ export default function SyllabusSyncButton({
 
       const parsed = parseSyllabus(data.content);
       const result = analyzeCoverage(parsed, corpus);
-      setVersion({
+      const versionMeta: VersionMeta = {
         id: data.id,
         label: data.label,
         created_at: data.created_at,
         notes: data.notes,
-      });
+      };
+      setVersion(versionMeta);
       setReport(result);
       setOpen(true);
 
+      const pctNow = result.total ? Math.round((result.covered / result.total) * 100) : 0;
+      const summary: LastSync = {
+        syncedAt: new Date().toISOString(),
+        versionLabel: data.label,
+        versionDate: data.created_at,
+        pct: pctNow,
+        covered: result.covered,
+        partial: result.partial,
+        missing: result.missing,
+        total: result.total,
+      };
+      try {
+        localStorage.setItem(lastSyncKey(sectionLabel), JSON.stringify(summary));
+      } catch {
+        /* ignore quota errors */
+      }
+      setLastSync(summary);
+
       toast({
         title: "Sync complete",
-        description: `${result.covered}/${result.total} syllabus topics covered.`,
+        description: `${result.covered}/${result.total} syllabus topics covered (${pctNow}%).`,
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unable to sync";

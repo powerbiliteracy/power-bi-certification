@@ -39,10 +39,14 @@ import { useToast } from "@/hooks/use-toast";
 import {
   parseSyllabus,
   analyzeCoverage,
+  normalize,
   type CoverageReport,
   type TopicMatch,
+  type ParsedDomain,
 } from "@/utils/syllabusSync";
 import { cn } from "@/lib/utils";
+
+type SyncMode = "topics" | "key-terms";
 
 interface SyllabusSyncButtonProps {
   /** Stable label shown in the dialog header (e.g. "Exam Checklist"). */
@@ -57,6 +61,13 @@ interface SyllabusSyncButtonProps {
   corpus: string[];
   /** Total content items in the section (for context line). */
   itemCount: number;
+  /**
+   * Sync mode:
+   * - "topics" (default) compares syllabus topics against the section corpus.
+   * - "key-terms" asks AI to extract the canonical Key Terms & Features from
+   *   the latest syllabus, then compares those against the corpus.
+   */
+  mode?: SyncMode;
 }
 
 interface VersionMeta {

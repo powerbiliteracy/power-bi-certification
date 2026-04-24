@@ -41,42 +41,76 @@ export const similarity = (a: string, b: string): number => {
 export function parseSyllabus(text: string): ParsedDomain[] {
   const lines = text
     .split(/\r?\n/)
-    .map((l) => l.replace(/\u00a0/g, " ").trimEnd())
-    .filter((l) => l.trim().length > 0);
+    .map((l) => l.replace(/\u00a0/g, " ").trim())
+    .filter((l) => l.length > 0);
 
   const domains: ParsedDomain[] = [];
   let currentDomain: ParsedDomain | null = null;
   let currentSection: ParsedSection | null = null;
+  const seenDomainNames = new Set<string>();
 
+  // Domain heading: "Prepare the data (25–30%)" or "Manage and secure Power BI (15-20%)"
   const domainRegex =
-    /^([A-Z][A-Za-z0-9 ,&'/\-]+?)\s*\(?\s*(\d{1,2}\s*[\-–]\s*\d{1,2}\s*%|\d{1,2}\s*%)\s*\)?\s*$/;
-  const bulletRegex = /^\s*([-*•·–▪◦]|\d+\.)\s+(.*)$/;
+    /^([A-Z][A-Za-z0-9 ,&'/\-]+?)\s*\(\s*(\d{1,2}\s*[\-–]\s*\d{1,2}\s*%|\d{1,2}\s*%)\s*\)\s*$/;
+  // Bullet: "- foo", "* foo", "• foo", "1. foo"
+  const bulletRegex = /^([-*•·–▪◦]|\d+\.)\s+(.*)$/;
+  // Lines to ignore entirely (preamble / meta)
+  const ignoreLine = (l: string): boolean =>
+    /^(skills measured|skills at a glance|audience profile|study resources|exam objectives?|as a candidate|as a power bi|provide meaningful|enable others|you should be|you collaborate|prepare the data$|model the data$|visualize and analyze data$|manage and secure power bi$)/i.test(
+      l,
+    );
+
+  // Heuristic: a line is a "section heading" if it's short, lowercase-ish (not all caps),
+  // doesn't end in punctuation, and looks like a topic group ("Get or connect to data").
+  // Section headings in the MS syllabus are always ≤60 chars and start with a capital verb.
+  const looksLikeSection = (l: string): boolean => {
+    if (l.length > 70) return false;
+    if (/[.!?:;]$/.test(l)) return false;
+    if (bulletRegex.test(l)) return false;
+    // Section headings rarely contain commas (topics often do)
+    if (l.includes(",")) return false;
+    // Must start with a capital letter and contain at least one space
+    if (!/^[A-Z]/.test(l)) return false;
+    if (!l.includes(" ")) return false;
+    return true;
+  };
 
   for (const line of lines) {
     const domainMatch = line.match(domainRegex);
     if (domainMatch) {
-      currentDomain = { name: domainMatch[1].trim(), weight: domainMatch[2].trim(), sections: [] };
+      const name = domainMatch[1].trim();
+      // Skip duplicate domain headers (e.g. "Skills at a glance" lists them all upfront)
+      if (seenDomainNames.has(name.toLowerCase())) {
+        currentDomain = domains.find((d) => d.name.toLowerCase() === name.toLowerCase()) || null;
+        currentSection = null;
+        continue;
+      }
+      seenDomainNames.add(name.toLowerCase());
+      currentDomain = { name, weight: domainMatch[2].trim(), sections: [] };
       currentSection = null;
       domains.push(currentDomain);
       continue;
     }
+
+    if (!currentDomain) continue;
+    if (ignoreLine(line)) continue;
+
     const bulletMatch = line.match(bulletRegex);
-    if (bulletMatch && currentDomain) {
-      const t = bulletMatch[2].trim();
-      if (!currentSection) {
-        currentSection = { title: "(uncategorized)", topics: [] };
-        currentDomain.sections.push(currentSection);
-      }
-      currentSection.topics.push({ raw: t, normalized: normalize(t) });
+    const topicText = bulletMatch ? bulletMatch[2].trim() : line;
+
+    // Section headings (only when not bulleted)
+    if (!bulletMatch && looksLikeSection(line)) {
+      currentSection = { title: line, topics: [] };
+      currentDomain.sections.push(currentSection);
       continue;
     }
-    if (currentDomain && line.trim().length > 0 && !line.startsWith("Skills measured")) {
-      if (line.length <= 120 && !line.endsWith(".")) {
-        currentSection = { title: line.trim(), topics: [] };
-        currentDomain.sections.push(currentSection);
-        continue;
-      }
+
+    // Otherwise treat as a topic
+    if (!currentSection) {
+      currentSection = { title: "(uncategorized)", topics: [] };
+      currentDomain.sections.push(currentSection);
     }
+    currentSection.topics.push({ raw: topicText, normalized: normalize(topicText) });
   }
   return domains;
 }

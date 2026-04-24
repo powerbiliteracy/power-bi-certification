@@ -51,7 +51,14 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("create-checkout error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    // Only surface known safe validation messages; otherwise return a generic error.
+    const safeMessages = ["priceId is required", "User not authenticated or email not available"];
+    const clientMessage = safeMessages.includes(message)
+      ? message
+      : "An internal error occurred. Please try again.";
+    return new Response(JSON.stringify({ error: clientMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

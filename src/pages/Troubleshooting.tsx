@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { AlertTriangle, Zap, ChevronDown, ChevronRight, ExternalLink, Check } from "lucide-react";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -570,6 +571,8 @@ export default function Troubleshooting() {
           itemCount={issues.length}
         />
       </div>
+
+      <ContentUpdateBanner sectionKey="troubleshooting" />
 
       <div className="flex flex-wrap gap-3">
         <div>

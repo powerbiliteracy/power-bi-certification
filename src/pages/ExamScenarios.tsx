@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { createPageUrl } from "@/utils";
 import { ChevronDown, ChevronRight, Lightbulb, AlertCircle, CheckCircle2, Database, LineChart, Eye, Shield, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -1235,6 +1236,8 @@ export default function ExamScenarios() {
           itemCount={scenarios.length}
         />
       </div>
+
+      <ContentUpdateBanner sectionKey="exam-scenarios" />
 
       <div className="flex gap-2">
         {["all", "Easy", "Medium", "Hard"].map((diff) => (

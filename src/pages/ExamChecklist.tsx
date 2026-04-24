@@ -8,6 +8,7 @@ import { ChevronDown, RotateCcw, Check } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "exam-checklist-checked";
@@ -64,6 +65,8 @@ export default function ExamChecklist() {
           <Button variant="outline" size="sm" onClick={reset} className="gap-1"><RotateCcw className="w-3 h-3" /> Reset</Button>
         </div>
       </div>
+
+      <ContentUpdateBanner sectionKey="exam-checklist" />
 
       <Card>
         <CardContent className="p-6">

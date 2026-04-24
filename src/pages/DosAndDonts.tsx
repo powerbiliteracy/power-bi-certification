@@ -7,6 +7,7 @@ import { ChevronDown, Check, X } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { cn } from "@/lib/utils";
 
 const domainColors = ["text-blue-400", "text-violet-400", "text-cyan-400", "text-orange-400"];
@@ -37,6 +38,8 @@ export default function DosAndDonts() {
           <FavoriteButton itemId="dos-and-donts" itemType="page" />
         </div>
       </div>
+
+      <ContentUpdateBanner sectionKey="dos-and-donts" />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {DOS_DONTS_DOMAINS.map((d, i) => (

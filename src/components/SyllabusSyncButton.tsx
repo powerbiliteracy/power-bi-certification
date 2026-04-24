@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { RefreshCw, CheckCircle2, AlertTriangle, XCircle, Copy, FileSearch } from "lucide-react";
+import { RefreshCw, CheckCircle2, AlertTriangle, XCircle, Copy, FileSearch, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +44,31 @@ interface VersionMeta {
   notes: string | null;
 }
 
+interface LastSync {
+  syncedAt: string;
+  versionLabel: string;
+  versionDate: string;
+  pct: number;
+  covered: number;
+  partial: number;
+  missing: number;
+  total: number;
+}
+
+const lastSyncKey = (label: string) => `syllabus-sync:${label}`;
+
+function formatRelative(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 export default function SyllabusSyncButton({
   sectionLabel,
   corpus,
@@ -55,6 +80,23 @@ export default function SyllabusSyncButton({
   const [loading, setLoading] = useState(false);
   const [version, setVersion] = useState<VersionMeta | null>(null);
   const [report, setReport] = useState<CoverageReport | null>(null);
+  const [lastSync, setLastSync] = useState<LastSync | null>(() => {
+    try {
+      const raw = localStorage.getItem(lastSyncKey(sectionLabel));
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(lastSyncKey(sectionLabel));
+      setLastSync(raw ? JSON.parse(raw) : null);
+    } catch {
+      setLastSync(null);
+    }
+  }, [sectionLabel]);
 
   if (!isAdmin) return null;
 

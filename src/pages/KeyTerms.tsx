@@ -249,7 +249,7 @@ const keyTermsData: DomainData[] = [
         terms: [
           { term: "Accessibility features", def: "Alt text, tab order, colour contrast, keyboard navigation.", speed: "Alt text on all visuals. Tab order via Selection pane.", tip: "Exam tests: alt text, tab order, avoid colour-only encoding.", practice: "Add descriptive alt text to every visual." },
           { term: "Mobile layout", def: "Optimised view for phone-sized screens.", speed: "Separate portrait canvas. Manually add/arrange visuals.", tip: "Mobile layout is a separate canvas — visuals must be manually added.", practice: "Prioritise top 3-4 KPIs for mobile." },
-          { term: "Automatic page refresh", def: "Auto-refreshes a report page at defined intervals.", speed: "DirectQuery or DirectLake only. Not for Import.", tip: "Not available for Import mode datasets.", practice: "Set sensible minimum refresh intervals." },
+          { term: "Automatic page refresh", def: "Auto-refreshes a report page at defined intervals — supported for DirectQuery sources (and composite models containing DirectQuery).", speed: "DirectQuery only. Not for Import or DirectLake. Composite models OK if a DQ source is included.", tip: "Two modes: Fixed interval (every N seconds) and Change detection (Premium-only, refreshes when a measure changes).", practice: "Set sensible minimum intervals (Premium capacity admin can enforce minimums) to avoid hammering the source." },
           { term: "Change detection", def: "Auto-refresh setting that only refreshes when a measure value actually changes.", speed: "Pairs with automatic page refresh. Premium.", tip: "Reduces source load vs. fixed-interval refresh.", practice: "Use for real-time DirectQuery dashboards on busy source systems." },
         ]
       },

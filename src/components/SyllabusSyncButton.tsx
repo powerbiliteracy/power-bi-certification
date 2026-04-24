@@ -357,6 +357,16 @@ export default function SyllabusSyncButton({
         { topic: match.topic.raw, isRename, closestMatch: match.bestMatch },
       ]);
       markFixed(key);
+      // Notify the host page so it can re-fetch content_overrides without a refresh
+      try {
+        window.dispatchEvent(
+          new CustomEvent("content-override-applied", {
+            detail: { sectionKey, itemType, topic: match.topic.raw },
+          }),
+        );
+      } catch {
+        /* ignore */
+      }
       return true;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Could not apply fix";

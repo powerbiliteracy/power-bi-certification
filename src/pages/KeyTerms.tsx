@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { Search, ChevronDown, ChevronRight, Lightbulb, CheckCircle, ExternalLink, Zap, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const msLearnUrl = (term: string) =>
   `https://learn.microsoft.com/en-us/search/?terms=${encodeURIComponent(term + " Power BI")}&category=Ai`;
@@ -399,15 +400,127 @@ function TermCard({ term, def, speed, tip, practice, colors }: TermData & { colo
   );
 }
 
+// Normalize a domain name for fuzzy matching ("Manage & Secure Power BI" ~= "Manage and secure Power BI")
+const normalizeDomain = (s: string) =>
+  s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
+
+interface OverrideRow {
+  id: string;
+  original_topic: string;
+  generated_title: string | null;
+  generated_body: any;
+  domain_name: string | null;
+  domain_section: string | null;
+  created_at: string;
+}
+
+function overrideToTerm(o: OverrideRow): TermData {
+  const body = o.generated_body ?? {};
+  const summary: string = body.summary ?? "";
+  const keyPoints: string[] = Array.isArray(body.keyPoints) ? body.keyPoints : [];
+  const bestPractices: string[] = Array.isArray(body.bestPractices) ? body.bestPractices : [];
+  const examTips: string[] = Array.isArray(body.examTips) ? body.examTips : [];
+  return {
+    term: o.generated_title || o.original_topic,
+    def: summary || keyPoints[0] || "Added from latest syllabus.",
+    speed: keyPoints.length ? keyPoints.slice(0, 3).join(" • ") : undefined,
+    tip: examTips[0],
+    practice: bestPractices[0],
+  };
+}
+
 export default function KeyTerms() {
   const [search, setSearch] = useState("");
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [overrides, setOverrides] = useState<OverrideRow[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("content_overrides")
+        .select("id, original_topic, generated_title, generated_body, domain_name, domain_section, created_at")
+        .eq("section_key", "key-terms")
+        .order("created_at", { ascending: false });
+      if (!cancelled) setOverrides((data as OverrideRow[]) ?? []);
+    };
+    load();
+    const onFocus = () => load();
+    const onApplied = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.sectionKey === "key-terms") load();
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("content-override-applied", onApplied);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("content-override-applied", onApplied);
+    };
+  }, []);
+
+  // Merge overrides into the static dataset, deduped by term name
+  const mergedData: DomainData[] = useMemo(() => {
+    if (overrides.length === 0) return keyTermsData;
+
+    // Build a fast lookup of existing term names per domain (case-insensitive)
+    const existingByDomain = new Map<string, Set<string>>();
+    for (const d of keyTermsData) {
+      const set = new Set<string>();
+      for (const s of d.sections) for (const t of s.terms) set.add(t.term.toLowerCase());
+      existingByDomain.set(d.domain, set);
+    }
+
+    // Group overrides by best-matching domain
+    const overridesByDomain = new Map<string, OverrideRow[]>();
+    for (const o of overrides) {
+      const wanted = normalizeDomain(o.domain_name ?? "");
+      const matched =
+        keyTermsData.find((d) => normalizeDomain(d.domain) === wanted)?.domain ??
+        keyTermsData[0]?.domain;
+      if (!matched) continue;
+      const existing = existingByDomain.get(matched);
+      if (existing && existing.has((o.generated_title || o.original_topic).toLowerCase())) {
+        continue; // already in static data
+      }
+      const list = overridesByDomain.get(matched) ?? [];
+      list.push(o);
+      overridesByDomain.set(matched, list);
+    }
+
+    // Append a synthetic "Added from latest syllabus" section per domain
+    return keyTermsData.map((d) => {
+      const extras = overridesByDomain.get(d.domain) ?? [];
+      if (extras.length === 0) return d;
+      // Dedupe within the extras themselves
+      const seen = new Set<string>();
+      const terms: TermData[] = [];
+      for (const o of extras) {
+        const t = overrideToTerm(o);
+        const k = t.term.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        terms.push(t);
+      }
+      return {
+        ...d,
+        sections: [
+          ...d.sections,
+          {
+            title: "✨ Added from latest syllabus",
+            emoji: "✨",
+            terms,
+          },
+        ],
+      };
+    });
+  }, [overrides]);
 
   const toggleSection = (key: string) => {
     setCollapsedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const allSectionKeys = keyTermsData.flatMap((d) =>
+  const allSectionKeys = mergedData.flatMap((d) =>
     d.sections.map((s) => `${d.domain}-${s.title}`)
   );
 
@@ -420,27 +533,22 @@ export default function KeyTerms() {
 
   const filtered = search.trim().toLowerCase();
 
-  const filteredData = keyTermsData
+  // Search matches the term name only — substring (not wildcard / not full-text across all fields).
+  const filteredData = mergedData
     .map((domain) => ({
       ...domain,
       sections: domain.sections
         .map((section) => ({
           ...section,
           terms: section.terms.filter(
-            (t) =>
-              !filtered ||
-              t.term.toLowerCase().includes(filtered) ||
-              t.def.toLowerCase().includes(filtered) ||
-              (t.speed && t.speed.toLowerCase().includes(filtered)) ||
-              (t.tip && t.tip.toLowerCase().includes(filtered)) ||
-              (t.practice && t.practice.toLowerCase().includes(filtered))
+            (t) => !filtered || t.term.toLowerCase().includes(filtered)
           ),
         }))
         .filter((s) => s.terms.length > 0),
     }))
     .filter((d) => d.sections.length > 0);
 
-  const totalTerms = keyTermsData.reduce(
+  const totalTerms = mergedData.reduce(
     (acc, d) => acc + d.sections.reduce((a, s) => a + s.terms.length, 0),
     0
   );
@@ -461,7 +569,7 @@ export default function KeyTerms() {
           itemType="key_term"
           mode="key-terms"
           progressItemTypes={["key_term"]}
-          corpus={keyTermsData.flatMap(d => d.sections.flatMap(s => s.terms.map(t => t.term)))}
+          corpus={mergedData.flatMap(d => d.sections.flatMap(s => s.terms.map(t => t.term)))}
           itemCount={totalTerms}
         />
       </div>
@@ -487,7 +595,7 @@ export default function KeyTerms() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search terms, definitions, speed notes, tips..."
+          placeholder="Search by term name (e.g. 'DAX', 'DirectLake')..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-card text-foreground"

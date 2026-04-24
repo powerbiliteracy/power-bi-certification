@@ -288,9 +288,8 @@ export default function SyllabusSyncButton({
     }
   };
 
-  const confirmAndApplyFix = async () => {
-    if (!confirmFix || !version) return;
-    const { match, isRename } = confirmFix;
+  const applyFixCore = async (match: TopicMatch, isRename: boolean) => {
+    if (!version) return false;
     const key = topicKey(match);
     setFixingKey(key);
     try {
@@ -310,23 +309,66 @@ export default function SyllabusSyncButton({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Track the applied fix (we'll bundle them into one update event when admin closes)
       setAppliedFixes((prev) => [
         ...prev,
         { topic: match.topic.raw, isRename, closestMatch: match.bestMatch },
       ]);
       markFixed(key);
+      return true;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not apply fix";
+      toast({ title: `Fix failed: ${match.topic.raw}`, description: message, variant: "destructive" });
+      return false;
+    } finally {
+      setFixingKey(null);
+    }
+  };
+
+  const confirmAndApplyFix = async () => {
+    if (!confirmFix) return;
+    const { match, isRename } = confirmFix;
+    const ok = await applyFixCore(match, isRename);
+    if (ok) {
       toast({
         title: "Fix applied",
         description: `AI-generated content saved for "${match.topic.raw}".`,
       });
       setConfirmFix(null);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Could not apply fix";
-      toast({ title: "Fix failed", description: message, variant: "destructive" });
-    } finally {
-      setFixingKey(null);
     }
+  };
+
+  const [fixingAll, setFixingAll] = useState(false);
+  const [fixAllProgress, setFixAllProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const fixAll = async () => {
+    if (!report || !version) return;
+    const targets: Array<{ match: TopicMatch; isRename: boolean }> = [
+      ...report.missingTopics
+        .filter((m) => !fixed.has(topicKey(m)))
+        .map((m) => ({ match: m, isRename: false })),
+      ...report.partialTopics
+        .filter((m) => !fixed.has(topicKey(m)))
+        .map((m) => ({ match: m, isRename: true })),
+    ];
+    if (targets.length === 0) return;
+
+    setFixingAll(true);
+    setFixAllProgress({ done: 0, total: targets.length });
+    let ok = 0;
+    let failed = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const { match, isRename } = targets[i];
+      const success = await applyFixCore(match, isRename);
+      if (success) ok++;
+      else failed++;
+      setFixAllProgress({ done: i + 1, total: targets.length });
+    }
+    setFixingAll(false);
+    setFixAllProgress(null);
+    toast({
+      title: "Fix all complete",
+      description: `${ok} fixed${failed ? `, ${failed} failed` : ""}.`,
+    });
   };
 
   const publishUpdateEvent = async () => {
@@ -404,8 +446,8 @@ export default function SyllabusSyncButton({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileSearch className="w-5 h-5" />
               {sectionLabel} — Syllabus Sync Report
@@ -430,7 +472,7 @@ export default function SyllabusSyncButton({
 
           {report && visible && (
             <>
-              <div className="space-y-3">
+              <div className="space-y-3 px-6 pb-3 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -457,16 +499,37 @@ export default function SyllabusSyncButton({
                 </div>
                 <Progress value={pct} className="h-2" />
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  {fixedCount > 0 ? (
-                    <Button variant="ghost" size="sm" className="text-xs h-6" onClick={clearFixed}>
-                      Reset fixed list
-                    </Button>
-                  ) : (
-                    <span />
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(visible.missing.length > 0 || visible.partial.length > 0) && (
+                      <Button
+                        size="sm"
+                        onClick={fixAll}
+                        disabled={fixingAll || !!fixingKey}
+                        className="gap-1 h-7"
+                      >
+                        {fixingAll ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Fixing {fixAllProgress?.done}/{fixAllProgress?.total}…
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Fix all ({visible.missing.length + visible.partial.length})
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {fixedCount > 0 && (
+                      <Button variant="ghost" size="sm" className="text-xs h-6" onClick={clearFixed}>
+                        Reset fixed list
+                      </Button>
+                    )}
+                  </div>
                   {appliedFixes.length > 0 && (
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={publishUpdateEvent}
                       className="gap-1"
                     >
@@ -476,8 +539,8 @@ export default function SyllabusSyncButton({
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="space-y-4">
+              <ScrollArea className="flex-1 min-h-0 px-6">
+                <div className="space-y-4 pb-4">
                   <Accordion type="multiple" defaultValue={["missing", "partial"]}>
                     {visible.missing.length > 0 && (
                       <AccordionItem value="missing">
@@ -541,7 +604,7 @@ export default function SyllabusSyncButton({
                 </div>
               </ScrollArea>
 
-              <div className="flex justify-end gap-2 pt-2 border-t">
+              <div className="flex justify-end gap-2 px-6 py-3 border-t flex-shrink-0">
                 <Button variant="outline" size="sm" onClick={copyReport} className="gap-1">
                   <Copy className="w-3 h-3" /> Copy report
                 </Button>

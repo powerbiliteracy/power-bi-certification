@@ -227,9 +227,8 @@ export const DOS_DONTS_DOMAINS: DosDontsDomain[] = [
           { text: "Don't forget to update the app after workspace changes — consumers will keep seeing the old version.", reason: "App content is a snapshot; without Update app, no changes reach end users." },
         ],
       },
-      {
         id: "4.2", title: "Secure and Govern Power BI Items",
-        bullets: ["Workspace roles", "Item-level access", "Semantic model access", "RLS roles", "RLS group membership", "Sensitivity labels"],
+        bullets: ["Assign workspace roles", "Configure item-level access", "Configure access to semantic models", "Implement row-level security roles", "Configure RLS group membership", "Apply sensitivity labels"],
         dos: [
           { text: "Implement dynamic RLS using USERPRINCIPALNAME() for per-user data filtering.", reason: "Dynamic RLS scales automatically as users are added — no role-per-user maintenance." },
           { text: "Assign Microsoft Entra security groups (not individual users) to RLS roles.", reason: "Group membership scales — HR adds a user to the group and access updates automatically." },
@@ -237,11 +236,13 @@ export const DOS_DONTS_DOMAINS: DosDontsDomain[] = [
           { text: "Grant Build permission on a semantic model only to analysts who need to create new reports off it.", reason: "Build allows new reports/composite models on top — Read alone is enough for consumers." },
           { text: "Apply sensitivity labels to classify content; they persist on exports.", reason: "Labels enforce data protection beyond Power BI — exported files inherit the label." },
           { text: "Test RLS thoroughly using 'View as Role' in Desktop before publishing.", reason: "RLS errors are invisible to admins who bypass security. Always test as a specific user." },
+          { text: "Assign workspace roles (Admin, Member, Contributor, Viewer) deliberately based on the smallest set of permissions each user needs.", reason: "The four roles map to specific capabilities — picking the wrong one either over-grants access or blocks legitimate work." },
         ],
         donts: [
           { text: "Don't rely on hiding pages or visuals as a security mechanism.", reason: "Hidden content is still accessible via the API and can be discovered." },
           { text: "Don't forget to assign users to RLS roles after publishing.", reason: "Roles defined in Desktop do nothing until users are assigned in Service." },
           { text: "Don't grant Reshare permission unless absolutely necessary.", reason: "Reshare lets a user pass access to anyone — quickly fragments your governance model." },
+          { text: "Don't grant Build permission to consumers — Read is sufficient for viewing reports.", reason: "Build allows users to create new reports off the model and pull underlying data — over-permissioning." },
         ],
       },
     ],

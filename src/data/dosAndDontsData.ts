@@ -204,23 +204,27 @@ export const DOS_DONTS_DOMAINS: DosDontsDomain[] = [
     id: "d4", title: "Deploy & Maintain", weight: "15–20%",
     subtopics: [
       {
-        id: "4.1", title: "Manage Workspaces and Assets",
-        bullets: ["Workspaces", "Apps", "Publish/import items", "Dashboards", "Distribution method", "Subscriptions & alerts", "Endorsement", "Gateways", "Scheduled refresh"],
+        id: "4.1", title: "Create and Manage Workspaces and Assets",
+        bullets: ["Create and configure a workspace", "Configure and update an app", "Publish, import, or update items", "Create dashboards", "Choose a distribution method", "Configure subscriptions and data alerts", "Promote or certify content", "Identify when a gateway is required", "Configure semantic model scheduled refresh"],
         dos: [
           { text: "Assign minimum necessary workspace roles to each user.", reason: "Least privilege prevents accidental content deletion or modification." },
           { text: "Publish workspace apps with audiences for end-user consumption.", reason: "Apps provide a curated, read-only experience and audiences let you tailor content per group." },
+          { text: "Re-publish (Update) the app every time you change content in the workspace, so consumers see the new version.", reason: "Workspace edits are not visible to app users until you click Update app." },
           { text: "Choose the distribution method that matches the audience: app for end users, sharing for ad-hoc, Teams for collaboration.", reason: "Each method has different governance, refresh, and licensing implications." },
           { text: "Use deployment pipelines for ALM (Dev → Test → Production).", reason: "Automated promotion reduces human error and ensures testing before production." },
           { text: "Pin tiles from multiple reports into a dashboard for executive monitoring.", reason: "Dashboards aggregate KPIs from many reports into one at-a-glance view." },
           { text: "Configure data alerts on dashboard tiles for KPI threshold notifications.", reason: "Alerts proactively notify owners when metrics breach thresholds." },
+          { text: "Configure subscriptions so stakeholders receive scheduled email snapshots of key reports.", reason: "Subscriptions push insight to consumers without requiring them to log in." },
           { text: "Certify the small set of trusted, governed semantic models — promote everything else lighter-touch.", reason: "Certification requires admin approval and signals enterprise-grade quality." },
           { text: "Use a gateway for any on-premises or VNet-bound source.", reason: "Without a gateway, scheduled refresh against on-prem data fails immediately." },
+          { text: "Match scheduled refresh frequency to source change rate and capacity limits (max 8/day Pro, 48/day Premium).", reason: "Aligning refresh cadence to data velocity avoids wasted refreshes and throttling." },
         ],
         donts: [
           { text: "Don't give Contributor or Member roles to report consumers.", reason: "Consumers should be Viewers. Higher roles allow content modification." },
           { text: "Don't use 'Publish to Web' for anything containing sensitive data.", reason: "Publish to Web creates a public URL with no authentication whatsoever." },
           { text: "Don't share workspace access when the user only needs one report.", reason: "Use item-level sharing to expose just the one item without granting workspace-wide access." },
           { text: "Don't schedule refresh more frequently than the source actually changes.", reason: "Wasted refreshes consume capacity and can cause throttling on the source system." },
+          { text: "Don't forget to update the app after workspace changes — consumers will keep seeing the old version.", reason: "App content is a snapshot; without Update app, no changes reach end users." },
         ],
       },
       {

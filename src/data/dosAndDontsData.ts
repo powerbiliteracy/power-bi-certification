@@ -84,17 +84,20 @@ export const DOS_DONTS_DOMAINS: DosDontsDomain[] = [
     subtopics: [
       {
         id: "2.1", title: "Design and Implement a Data Model",
-        bullets: ["Star schema design", "Relationships and cardinality", "Date tables", "Role-playing dimensions"],
+        bullets: ["Configure table and column properties", "Implement role-playing dimensions", "Define cardinality and cross-filter direction", "Create a common date table", "Identify use cases for calculated columns and tables"],
         dos: [
           { text: "Build a star schema: one central fact table related to multiple dimension tables.", reason: "Star schema produces fewest relationship hops and most predictable filter propagation." },
           { text: "Create a dedicated, contiguous date table and mark it as Date Table.", reason: "Time intelligence functions require a complete, gap-free date spine." },
           { text: "Implement role-playing dimensions using inactive relationships + USERELATIONSHIP.", reason: "Avoids duplicating dimension tables for each date role." },
           { text: "Set relationship cardinality correctly: many-to-one from fact to dimension.", reason: "Correct cardinality ensures optimised joins and predictable aggregation." },
+          { text: "Configure column properties (Data Category, Summarize By, Sort By Column) for every dimension column.", reason: "These properties drive smarter visuals (geo categories, default sort) and prevent meaningless auto-sums on IDs." },
+          { text: "Use a calculated table for static lookups (date table, parameter table) when the source can't provide one.", reason: "Calculated tables are computed once at refresh and behave like normal tables for relationships." },
         ],
         donts: [
           { text: "Don't create snowflake schemas with chains of dimension-to-dimension relationships.", reason: "Multi-hop filter chains create ambiguity and slow performance." },
           { text: "Don't enable bidirectional cross-filtering by default.", reason: "Bidirectional filtering introduces ambiguity and performance issues." },
           { text: "Don't rely on auto-detected date hierarchies instead of a proper date table.", reason: "Auto dates lack fiscal year support and create hidden tables." },
+          { text: "Don't leave Summarize By set to 'Sum' on numeric ID/key columns.", reason: "Visuals will silently sum IDs producing nonsense totals — set Summarize By to 'Don't summarize'." },
         ],
       },
       {

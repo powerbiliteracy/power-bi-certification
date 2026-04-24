@@ -125,8 +125,6 @@ export default function SyllabusSyncButton({
     }
   }, [sectionLabel]);
 
-  if (!isAdmin) return null;
-
   const persistFixed = (next: Set<string>) => {
     setFixed(next);
     try {
@@ -251,6 +249,8 @@ export default function SyllabusSyncButton({
 
   const pct = report?.total ? Math.round((report.covered / report.total) * 100) : 0;
   const fixedCount = fixed.size;
+
+  if (!isAdmin) return null;
 
   return (
     <>

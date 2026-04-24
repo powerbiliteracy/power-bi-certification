@@ -144,16 +144,24 @@ export const DOS_DONTS_DOMAINS: DosDontsDomain[] = [
     subtopics: [
       {
         id: "3.1", title: "Create Reports",
-        bullets: ["Visual selection", "Conditional formatting", "Slicers and filters", "Drill-through"],
+        bullets: ["Select an appropriate visual", "Format and configure visuals", "Create a narrative visual with Copilot", "Apply and customize a theme", "Apply conditional formatting", "Apply slicing and filtering", "Use Copilot to create / suggest a report page", "Configure the report page", "Choose when to use a paginated report", "Create visual calculations using DAX"],
         dos: [
           { text: "Choose the right visual type for the analytical question.", reason: "Line for trends, bar for comparison, scatter for correlation, donut for composition." },
           { text: "Use conditional formatting to highlight important patterns.", reason: "Visual encoding helps users spot outliers and patterns instantly." },
           { text: "Configure drill-through pages for detailed analysis.", reason: "Drill-through passes context to detail pages without cluttering the main view." },
+          { text: "Apply a custom theme JSON to enforce corporate colours, fonts, and visual defaults across every page.", reason: "Themes guarantee consistency and remove per-visual styling work — change once, apply everywhere." },
+          { text: "Use the Narrative visual with Copilot to generate auto-updating summaries of key metrics.", reason: "Copilot writes a plain-English narrative that refreshes with the data — great for executive pages." },
+          { text: "Use Copilot to create or suggest content for a new report page when you're starting from scratch.", reason: "Copilot proposes layout and visuals based on your model, accelerating draft creation." },
+          { text: "Configure page size, page type (Tooltip / Drillthrough), and canvas background under Page configuration.", reason: "Correct page setup is required for tooltip/drillthrough pages to function and for mobile rendering." },
+          { text: "Choose paginated reports for pixel-perfect, print-ready output (invoices, statements, regulatory filings).", reason: "Power BI reports are interactive but not print-optimised; paginated reports are designed for fixed layouts." },
+          { text: "Use visual calculations (DAX directly on a visual) for running totals, % of parent, and moving averages.", reason: "Visual calculations work on the visual's result, avoiding model bloat from extra measures." },
         ],
         donts: [
           { text: "Don't put more than 6-8 visuals on a single page.", reason: "Too many visuals slow rendering and overwhelm users." },
           { text: "Don't use pie charts for more than 5-6 categories.", reason: "Many slices become unreadable. Use bar charts for many categories." },
           { text: "Don't mix analytical and operational reports on the same page.", reason: "Different audiences need different levels of detail and interaction." },
+          { text: "Don't use a paginated report for interactive exploration — it's read-only and cannot drill or cross-filter.", reason: "Wrong tool: paginated is for print/export; standard reports are for exploration." },
+          { text: "Don't blindly accept Copilot-generated narratives or pages without validating the metrics it picked.", reason: "Copilot can choose misleading aggregations or visuals if the model lacks clear measure descriptions." },
         ],
       },
       {

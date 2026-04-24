@@ -76,12 +76,14 @@ export function useContentUpdates(sectionKey: string): UseContentUpdatesResult {
       const { error } = await supabase
         .from("user_content_acknowledgments")
         .upsert(
-          {
-            user_id: user.id,
-            event_id: event.id,
-            choice,
-            snapshot: snapshot ?? null,
-          },
+          [
+            {
+              user_id: user.id,
+              event_id: event.id,
+              choice,
+              snapshot: (snapshot ?? null) as never,
+            },
+          ],
           { onConflict: "user_id,event_id" },
         );
       if (error) throw error;

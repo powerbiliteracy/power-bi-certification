@@ -264,11 +264,15 @@ const keyTermsData: DomainData[] = [
         title: "Workspaces & Collaboration",
         emoji: "🔹",
         terms: [
+          { term: "Workspace", def: "A container in Power BI Service for reports, dashboards, semantic models, and dataflows.", speed: "Container for items. Roles control access.", tip: "Use separate workspaces per environment (Dev/Test/Prod).", practice: "Name workspaces with a clear prefix per business area + environment." },
           { term: "Workspace roles", def: "Admin, Member, Contributor, Viewer — each with different permissions.", speed: "Admin = full. Member = apps. Contributor = publish. Viewer = read.", tip: "Know each role's limits for the exam.", practice: "Grant Contributor to developers and Viewer to end users." },
           { term: "Apps", def: "Packaged collections of dashboards and reports for end users.", speed: "Published from workspace. Users see last published version.", tip: "Apps provide a curated, stable view of workspace content.", practice: "Use apps for end-user distribution." },
+          { term: "App audiences", def: "Per-audience content selections inside one app — different groups see different items.", speed: "App → Audience tab. Pick items per group.", tip: "Use audiences instead of multiple apps to reduce duplication.", practice: "Build one Sales app with separate Exec, Manager, and Rep audiences." },
+          { term: "Distribution method", def: "How content reaches consumers: app, direct sharing, Teams, embedded.", speed: "App = governed. Share = ad-hoc. Teams = collaboration.", tip: "Apps are the recommended distribution method for end users.", practice: "Default to apps; use direct sharing only for one-off requests." },
           { term: "Dashboards", def: "Single-page canvas in Service pinning tiles from multiple reports.", speed: "Service only. Pin tiles from reports or Q&A.", tip: "Dashboards are Service-only. Tiles from reports or Q&A.", practice: "Use for executive summaries — pin key KPI tiles." },
           { term: "Subscriptions", def: "Scheduled email snapshots of report pages.", speed: "Static image only. Recipients need Viewer access.", tip: "Subscriptions send static images, not interactive content.", practice: "Set up for daily/weekly KPI summaries." },
           { term: "Data alerts", def: "Notifications when a dashboard tile value crosses a threshold.", speed: "Dashboard tiles only (card, gauge, KPI).", tip: "Alerts only work on single-number tiles.", practice: "Set up on critical KPIs for proactive monitoring." },
+          { term: "Deployment pipelines", def: "Service feature for promoting content across Dev → Test → Production stages.", speed: "Premium feature. 3 stages. Selective deployment.", tip: "Use parameter rules to swap data sources between stages.", practice: "Set up a pipeline so Dev changes promote to Test then Prod with one click." },
         ]
       },
       {
@@ -277,6 +281,7 @@ const keyTermsData: DomainData[] = [
         terms: [
           { term: "Certified content", def: "Content reviewed and approved by a designated certifier.", speed: "Highest trust. Requires designated certifier.", tip: "Certification requires a designated certifier. Promoted is self-service.", practice: "Certify only content that meets governance standards." },
           { term: "Promoted content", def: "Content marked by the owner as recommended.", speed: "Self-service. Anyone with write access.", tip: "No approval required — lower trust than certified.", practice: "Promote content as a signal it's ready for use." },
+          { term: "Endorsement", def: "Umbrella term for Promoted and Certified labels on workspace items.", speed: "Promoted (self) + Certified (admin).", tip: "Endorsed items appear higher in search and the OneLake hub.", practice: "Endorse the canonical Sales semantic model so analysts pick it over duplicates." },
           { term: "Data lineage", def: "Visual map showing data flow from sources to reports.", speed: "Workspace → Lineage view. Impact analysis.", tip: "Shows what would break if a dataset changed.", practice: "Review lineage before changing shared datasets." },
         ]
       },
@@ -285,6 +290,7 @@ const keyTermsData: DomainData[] = [
         emoji: "🔹",
         terms: [
           { term: "On-premises data gateway", def: "Software enabling Power BI Service to access on-premises data.", speed: "Personal = 1 user. Standard = shared.", tip: "Personal gateway: one user. Standard: shared, supports DirectQuery.", practice: "Use standard (enterprise) gateway for teams." },
+          { term: "Gateway requirement", def: "A gateway is required for any on-premises or VNet-bound data source.", speed: "On-prem source = gateway needed. Cloud source = optional.", tip: "Cloud-only sources (Azure SQL, Dataverse, SharePoint Online) don't need a gateway.", practice: "Audit all data sources to confirm which need gateway routing." },
           { term: "Scheduled refresh", def: "Automated data refresh — up to 8x/day (Pro) or 48x/day (Premium).", speed: "Pro = 8x/day max. Premium = 48x/day.", tip: "Requires correct gateway and credentials.", practice: "Stagger refresh times to avoid overloading gateway." },
           { term: "Incremental refresh", def: "Refreshes only new/changed data — requires RangeStart/RangeEnd parameters.", speed: "Needs RangeStart + RangeEnd parameters (DateTime type).", tip: "Requires specific parameter naming and data type.", practice: "Use for tables with millions of rows." },
         ]
@@ -295,6 +301,9 @@ const keyTermsData: DomainData[] = [
         terms: [
           { term: "Row-level security (RLS)", def: "Restricts data rows based on user identity using DAX filters.", speed: "Define in Desktop. Assign users in Service.", tip: "RLS defined in Desktop, roles assigned in Service.", practice: "Use USERPRINCIPALNAME() for dynamic roles." },
           { term: "RLS roles", def: "Named security roles with DAX filter expressions.", speed: "Test with 'View as role' in Desktop.", tip: "Test with 'View as role' before publishing.", practice: "Create a single dynamic role using a security table." },
+          { term: "Dynamic RLS", def: "RLS pattern that filters based on the logged-in user via USERPRINCIPALNAME().", speed: "USERPRINCIPALNAME() vs. a security table.", tip: "Scales without adding a role per user.", practice: "Build a UserSecurity table mapping email → region, then filter facts via that table." },
+          { term: "RLS group membership", def: "Microsoft Entra security groups assigned to RLS roles in Service.", speed: "Assign groups, not users. Membership flows through.", tip: "Adding a user to the Entra group instantly grants RLS access.", practice: "Always assign Entra groups to RLS roles, never individual user emails." },
+          { term: "Item-level access", def: "Sharing or granting access to a single report/model without exposing the workspace.", speed: "Right-click item → Share / Manage permissions.", tip: "Use to expose one report without making the user a workspace Viewer.", practice: "Share a single executive report instead of granting workspace Viewer." },
           { term: "Semantic model permissions", def: "Controls who can read, build on, or reshare a dataset.", speed: "Read. Build. Reshare. Separate from workspace roles.", tip: "Build permission allows creating new reports.", practice: "Grant Build permission to analysts who need to create reports." },
           { term: "Sensitivity labels", def: "Microsoft Purview labels applied to classify and protect data.", speed: "Purview labels. Propagate from dataset to reports + exports.", tip: "Labels propagate from dataset to reports and exports.", practice: "Apply labels to datasets before publishing." },
         ]

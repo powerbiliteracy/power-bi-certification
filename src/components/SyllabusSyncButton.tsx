@@ -360,8 +360,4 @@ function TopicList({
     </ul>
   );
 }
-        </li>
-      ))}
-    </ul>
-  );
-}
+

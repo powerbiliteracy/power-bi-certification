@@ -11,10 +11,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch, GitCompare } from "lucide-react";
 import { Navigate, Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import SortableSectionsTable from "@/components/SortableSectionsTable";
+import ConceptComparisonsAdmin from "@/components/ConceptComparisonsAdmin";
 
 interface SectionRow {
   id: string;
@@ -439,6 +440,7 @@ export default function Admin() {
           <TabsTrigger value="announcements" className="gap-2"><Megaphone className="w-4 h-4" /> Announcements</TabsTrigger>
           <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="w-4 h-4" /> Analytics</TabsTrigger>
           <TabsTrigger value="reviews" className="gap-2"><MessageSquare className="w-4 h-4" /> Reviews</TabsTrigger>
+          <TabsTrigger value="comparisons" className="gap-2"><GitCompare className="w-4 h-4" /> Comparisons</TabsTrigger>
         </TabsList>
 
         {/* SECTIONS TAB - same as before */}
@@ -870,6 +872,11 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* COMPARISONS TAB */}
+        <TabsContent value="comparisons" className="mt-6 space-y-6">
+          <ConceptComparisonsAdmin />
         </TabsContent>
       </Tabs>
     </div>

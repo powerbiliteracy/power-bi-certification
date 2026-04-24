@@ -5,6 +5,7 @@ import { createPageUrl } from "@/utils";
 import {
   ChevronRight, ChevronDown, BookOpen, Lightbulb, ArrowRight, Info
 } from "lucide-react";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -179,9 +180,16 @@ export default function DecisionFramework() {
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
       <BadgeGrantOnVisit badgeKey="decision_framework" />
-      <div>
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">Power BI Decision Framework</h1>
-        <p className="text-muted-foreground mt-1">How a real Power BI project works — mapped to the PL-300 exam syllabus</p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Power BI Decision Framework</h1>
+          <p className="text-muted-foreground mt-1">How a real Power BI project works — mapped to the PL-300 exam syllabus</p>
+        </div>
+        <SyllabusSyncButton
+          sectionLabel="Decision Framework"
+          corpus={phases.flatMap(p => [p.title, p.section, ...p.steps.flatMap(s => [s.action, s.detail, ...s.syllabusTopics])])}
+          itemCount={phases.reduce((sum, p) => sum + p.steps.length, 0)}
+        />
       </div>
 
       <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">

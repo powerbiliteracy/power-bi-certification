@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
 import FavoriteButton from "@/components/FavoriteButton";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import { Search, ChevronDown, ChevronRight, Lightbulb, CheckCircle, ExternalLink, Zap, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -388,11 +389,18 @@ export default function KeyTerms() {
   return (
     <div className="space-y-6 animate-fade-in">
       <BadgeGrantOnVisit badgeKey="key_terms" />
-      <div>
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">📊 PL-300 Key Terms & Features</h1>
-        <p className="text-muted-foreground mt-1">
-          {totalTerms} terms — click to expand speed notes, exam tips, best practices & AI search links
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">📊 PL-300 Key Terms & Features</h1>
+          <p className="text-muted-foreground mt-1">
+            {totalTerms} terms — click to expand speed notes, exam tips, best practices & AI search links
+          </p>
+        </div>
+        <SyllabusSyncButton
+          sectionLabel="Key Terms & Features"
+          corpus={keyTermsData.flatMap(d => d.sections.flatMap(s => s.terms.flatMap(t => [t.term, t.def])))}
+          itemCount={totalTerms}
+        />
       </div>
 
       <div className="flex gap-3 items-center">

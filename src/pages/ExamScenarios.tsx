@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import FavoriteButton from "@/components/FavoriteButton";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import { createPageUrl } from "@/utils";
 import { ChevronDown, ChevronRight, Lightbulb, AlertCircle, CheckCircle2, Database, LineChart, Eye, Shield, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -1219,10 +1220,17 @@ export default function ExamScenarios() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Exam Scenario Questions</h1>
-        <p className="text-muted-foreground">Real-world scenarios with step-by-step guidance on solving them</p>
-        <p className="text-sm text-primary font-medium mt-1">{completed.size}/{scenarios.length} completed</p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Exam Scenario Questions</h1>
+          <p className="text-muted-foreground">Real-world scenarios with step-by-step guidance on solving them</p>
+          <p className="text-sm text-primary font-medium mt-1">{completed.size}/{scenarios.length} completed</p>
+        </div>
+        <SyllabusSyncButton
+          sectionLabel="Exam Scenarios"
+          corpus={scenarios.flatMap(s => [s.title, s.context, s.question, ...s.relatedTopics.map(r => r.name)])}
+          itemCount={scenarios.length}
+        />
       </div>
 
       <div className="flex gap-2">

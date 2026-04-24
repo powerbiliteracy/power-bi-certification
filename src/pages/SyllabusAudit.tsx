@@ -35,6 +35,7 @@ import { CHECKLIST_DOMAINS } from "@/data/checklistData";
 import { FLASHCARDS } from "@/data/flashcardsData";
 import { DOS_DONTS_DOMAINS } from "@/data/dosAndDontsData";
 import { assessmentQuestions } from "@/data/AssessmentQuestions";
+import SyllabusVersionsManager from "@/components/SyllabusVersionsManager";
 
 // ---------- Parsing ----------
 interface ParsedTopic {

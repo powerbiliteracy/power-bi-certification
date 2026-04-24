@@ -604,7 +604,7 @@ export default function SyllabusSyncButton({
                 </div>
               </ScrollArea>
 
-              <div className="flex justify-end gap-2 pt-2 border-t">
+              <div className="flex justify-end gap-2 px-6 py-3 border-t flex-shrink-0">
                 <Button variant="outline" size="sm" onClick={copyReport} className="gap-1">
                   <Copy className="w-3 h-3" /> Copy report
                 </Button>

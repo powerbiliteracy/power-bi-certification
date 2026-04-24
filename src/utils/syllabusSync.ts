@@ -38,6 +38,26 @@ export const similarity = (a: string, b: string): number => {
   return inter / Math.min(ta.size, tb.size);
 };
 
+// Known section headings from the official PL-300 study guide. Lines that
+// match one of these become section titles; everything else under a domain
+// is treated as a topic. This keeps the parser robust whether the user pasted
+// the syllabus with bullets, indentation, or just plain lines.
+const SECTION_HEADINGS = new Set(
+  [
+    "Get or connect to data",
+    "Profile and clean the data",
+    "Transform and load the data",
+    "Design and implement a data model",
+    "Create model calculations by using DAX",
+    "Optimize model performance",
+    "Create reports",
+    "Enhance reports for usability and storytelling",
+    "Identify patterns and trends",
+    "Create and manage workspaces and assets",
+    "Secure and govern Power BI items",
+  ].map((s) => s.toLowerCase()),
+);
+
 export function parseSyllabus(text: string): ParsedDomain[] {
   const lines = text
     .split(/\r?\n/)
@@ -48,38 +68,24 @@ export function parseSyllabus(text: string): ParsedDomain[] {
   let currentDomain: ParsedDomain | null = null;
   let currentSection: ParsedSection | null = null;
   const seenDomainNames = new Set<string>();
+  const seenTopicsPerDomain = new Map<string, Set<string>>();
 
   // Domain heading: "Prepare the data (25–30%)" or "Manage and secure Power BI (15-20%)"
   const domainRegex =
     /^([A-Z][A-Za-z0-9 ,&'/\-]+?)\s*\(\s*(\d{1,2}\s*[\-–]\s*\d{1,2}\s*%|\d{1,2}\s*%)\s*\)\s*$/;
   // Bullet: "- foo", "* foo", "• foo", "1. foo"
   const bulletRegex = /^([-*•·–▪◦]|\d+\.)\s+(.*)$/;
-  // Lines to ignore entirely (preamble / meta)
+  // Lines to ignore entirely (preamble / meta / intro)
   const ignoreLine = (l: string): boolean =>
-    /^(skills measured|skills at a glance|audience profile|study resources|exam objectives?|as a candidate|as a power bi|provide meaningful|enable others|you should be|you collaborate|prepare the data$|model the data$|visualize and analyze data$|manage and secure power bi$)/i.test(
+    /^(skills measured|skills at a glance|audience profile|study resources|exam objectives?|as a candidate|as a power bi|provide meaningful|enable others|you should be|you collaborate)/i.test(
       l,
     );
-
-  // Heuristic: a line is a "section heading" if it's short, lowercase-ish (not all caps),
-  // doesn't end in punctuation, and looks like a topic group ("Get or connect to data").
-  // Section headings in the MS syllabus are always ≤60 chars and start with a capital verb.
-  const looksLikeSection = (l: string): boolean => {
-    if (l.length > 70) return false;
-    if (/[.!?:;]$/.test(l)) return false;
-    if (bulletRegex.test(l)) return false;
-    // Section headings rarely contain commas (topics often do)
-    if (l.includes(",")) return false;
-    // Must start with a capital letter and contain at least one space
-    if (!/^[A-Z]/.test(l)) return false;
-    if (!l.includes(" ")) return false;
-    return true;
-  };
 
   for (const line of lines) {
     const domainMatch = line.match(domainRegex);
     if (domainMatch) {
       const name = domainMatch[1].trim();
-      // Skip duplicate domain headers (e.g. "Skills at a glance" lists them all upfront)
+      // Skip duplicates ("Skills at a glance" lists all four upfront)
       if (seenDomainNames.has(name.toLowerCase())) {
         currentDomain = domains.find((d) => d.name.toLowerCase() === name.toLowerCase()) || null;
         currentSection = null;
@@ -87,6 +93,7 @@ export function parseSyllabus(text: string): ParsedDomain[] {
       }
       seenDomainNames.add(name.toLowerCase());
       currentDomain = { name, weight: domainMatch[2].trim(), sections: [] };
+      seenTopicsPerDomain.set(name.toLowerCase(), new Set());
       currentSection = null;
       domains.push(currentDomain);
       continue;
@@ -95,22 +102,33 @@ export function parseSyllabus(text: string): ParsedDomain[] {
     if (!currentDomain) continue;
     if (ignoreLine(line)) continue;
 
-    const bulletMatch = line.match(bulletRegex);
-    const topicText = bulletMatch ? bulletMatch[2].trim() : line;
+    // Skip lines that just repeat the domain names (audience-profile bullet list)
+    if (seenDomainNames.has(line.toLowerCase().replace(/\s+the\s+data$/, " the data"))) continue;
 
-    // Section headings (only when not bulleted)
-    if (!bulletMatch && looksLikeSection(line)) {
-      currentSection = { title: line, topics: [] };
+    const bulletMatch = line.match(bulletRegex);
+    const text = bulletMatch ? bulletMatch[2].trim() : line;
+    const lower = text.toLowerCase();
+
+    // Recognised section heading
+    if (!bulletMatch && SECTION_HEADINGS.has(lower)) {
+      currentSection = { title: text, topics: [] };
       currentDomain.sections.push(currentSection);
       continue;
     }
 
-    // Otherwise treat as a topic
+    // Otherwise it's a topic
     if (!currentSection) {
       currentSection = { title: "(uncategorized)", topics: [] };
       currentDomain.sections.push(currentSection);
     }
-    currentSection.topics.push({ raw: topicText, normalized: normalize(topicText) });
+
+    // Dedupe topics within a domain
+    const dedupKey = lower;
+    const seenSet = seenTopicsPerDomain.get(currentDomain.name.toLowerCase())!;
+    if (seenSet.has(dedupKey)) continue;
+    seenSet.add(dedupKey);
+
+    currentSection.topics.push({ raw: text, normalized: normalize(text) });
   }
   return domains;
 }

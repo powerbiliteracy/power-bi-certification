@@ -115,6 +115,7 @@ export default function SyllabusSyncButton({
   progressItemTypes,
   corpus,
   itemCount,
+  mode = "topics",
 }: SyllabusSyncButtonProps) {
   const { isAdmin } = useAuth();
   const { toast } = useToast();

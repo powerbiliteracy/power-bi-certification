@@ -141,11 +141,18 @@ export default function Assessment() {
   if (phase === "domains") {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">Topic Assessments</h1>
-          <p className="text-muted-foreground">
-            Choose a domain, then pick a specific topic to test your knowledge. {assessmentQuestions.length} total questions.
-          </p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">Topic Assessments</h1>
+            <p className="text-muted-foreground">
+              Choose a domain, then pick a specific topic to test your knowledge. {assessmentQuestions.length} total questions.
+            </p>
+          </div>
+          <SyllabusSyncButton
+            sectionLabel="Topic Assessments"
+            corpus={(assessmentQuestions as Array<{ topic?: string; section?: string; question?: string }>).flatMap(q => [q.topic, q.section, q.question].filter((s): s is string => Boolean(s)))}
+            itemCount={assessmentQuestions.length}
+          />
         </div>
 
         {/* All domains quick start */}

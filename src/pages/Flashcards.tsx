@@ -49,7 +49,14 @@ export default function Flashcards() {
             <h1 className="text-2xl font-bold text-foreground">Flashcard Engine</h1>
             <p className="text-sm text-muted-foreground">75 cards · All 4 exam domains · Spaced repetition</p>
           </div>
-          <FavoriteButton itemId="flashcards" itemType="page" />
+          <div className="flex items-center gap-2">
+            <SyllabusSyncButton
+              sectionLabel="Flashcards"
+              corpus={FLASHCARDS.map(c => `${c.q} ${c.a}`)}
+              itemCount={FLASHCARDS.length}
+            />
+            <FavoriteButton itemId="flashcards" itemType="page" />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

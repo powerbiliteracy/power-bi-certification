@@ -210,7 +210,37 @@ export default function SyllabusSyncButton({
         return;
       }
 
-      const parsed = parseSyllabus(data.content);
+      let parsed: ParsedDomain[];
+
+      if (mode === "key-terms") {
+        // Ask the AI to extract the canonical Key Terms & Features list from
+        // the saved syllabus, then treat each term as a "topic" so we can
+        // reuse analyzeCoverage.
+        const { data: extract, error: extractErr } = await supabase.functions.invoke(
+          "extract-key-terms",
+          { body: { syllabusVersionId: data.id } },
+        );
+        if (extractErr) throw extractErr;
+        if (extract?.error) throw new Error(extract.error);
+
+        const aiDomains: Array<{
+          name: string;
+          weight?: string;
+          sections: Array<{ title: string; terms: string[] }>;
+        }> = extract?.domains ?? [];
+
+        parsed = aiDomains.map((d) => ({
+          name: d.name,
+          weight: d.weight,
+          sections: d.sections.map((s) => ({
+            title: s.title,
+            topics: s.terms.map((t) => ({ raw: t, normalized: normalize(t) })),
+          })),
+        }));
+      } else {
+        parsed = parseSyllabus(data.content);
+      }
+
       const result = analyzeCoverage(parsed, corpus);
       const versionMeta: VersionMeta = {
         id: data.id,
@@ -240,9 +270,10 @@ export default function SyllabusSyncButton({
       }
       setLastSync(summary);
 
+      const unit = mode === "key-terms" ? "key terms" : "syllabus topics";
       toast({
         title: "Sync complete",
-        description: `${result.covered}/${result.total} syllabus topics covered (${pctNow}%).`,
+        description: `${result.covered}/${result.total} ${unit} covered (${pctNow}%).`,
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unable to sync";

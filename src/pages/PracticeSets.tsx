@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import PracticeResults from "@/components/PracticeResults";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 
 import set1 from "@/data/practiceSets/set1";
 import set2 from "@/data/practiceSets/set2";

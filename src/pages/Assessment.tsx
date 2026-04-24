@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Database, LineChart, Eye, Shield, BookOpen } from "lucide-react";
 import { assessmentQuestions } from "@/data/AssessmentQuestions";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 
 const domainMeta: Record<string, { title: string; subtitle: string; icon: React.ElementType; gradient: string; border: string }> = {
   prepare_data: {

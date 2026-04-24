@@ -77,6 +77,54 @@ export type Database = {
         }
         Relationships: []
       }
+      concept_comparisons: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          left_label: string
+          notes: string | null
+          right_label: string
+          rows: Json
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          left_label: string
+          notes?: string | null
+          right_label: string
+          rows?: Json
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          left_label?: string
+          notes?: string | null
+          right_label?: string
+          rows?: Json
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_overrides: {
         Row: {
           created_at: string

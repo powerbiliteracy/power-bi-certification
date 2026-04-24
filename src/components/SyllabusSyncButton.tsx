@@ -539,7 +539,7 @@ export default function SyllabusSyncButton({
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 min-h-0 px-6">
+              <div className="flex-1 min-h-0 overflow-y-auto px-6">
                 <div className="space-y-4 pb-4">
                   <Accordion type="multiple" defaultValue={["missing", "partial"]}>
                     {visible.missing.length > 0 && (
@@ -602,7 +602,7 @@ export default function SyllabusSyncButton({
                     )}
                   </Accordion>
                 </div>
-              </ScrollArea>
+              </div>
 
               <div className="flex justify-end gap-2 px-6 py-3 border-t flex-shrink-0">
                 <Button variant="outline" size="sm" onClick={copyReport} className="gap-1">

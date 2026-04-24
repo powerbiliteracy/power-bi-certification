@@ -661,6 +661,16 @@ export default function SyllabusAudit() {
           </Tabs>
         </>
       )}
+        </TabsContent>
+
+        <TabsContent value="versions" className="mt-4">
+          <SyllabusVersionsManager
+            initialContent={raw}
+            onUseVersion={(content) => setRaw(content)}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+

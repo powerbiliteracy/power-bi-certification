@@ -730,88 +730,136 @@ function TopicList({
     toast({ title: "Topic copied", description: "Paste it into your content file or notes." });
   };
 
-  return (
-    <ul className="space-y-2">
-      {topics.map((m, i) => {
-        const key = topicKey(m);
-        const isFixed = fixed.has(key);
-        const isThisFixing = fixingKey === key;
-        return (
-          <li key={i} className={cn("rounded-md border p-3 text-sm", tone, isFixed && "opacity-60")}>
-            <div className="text-xs text-muted-foreground mb-1 flex items-center justify-between gap-2">
-              <span>
-                {m.domainName} · {m.sectionTitle}
-              </span>
-              {isFixed && (
-                <Badge variant="outline" className="text-[9px] border-primary/40 text-primary">
-                  Fixed by AI
-                </Badge>
-              )}
-            </div>
-            <div className="font-medium text-foreground">{m.topic.raw}</div>
-            {m.bestMatch ? (
-              <div className="text-xs text-muted-foreground mt-1">
-                {variant === "missing" ? "weak match" : "closest in app"}:{" "}
-                <span className="italic">"{m.bestMatch}"</span> ·{" "}
-                {Math.round(m.bestScore * 100)}% match
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground mt-1">no match in app content</div>
-            )}
+  // Group topics by domain → section, preserving original order
+  const groups: Array<{
+    domain: string;
+    sections: Array<{ title: string; items: TopicMatch[] }>;
+  }> = [];
+  for (const t of topics) {
+    let domainGroup = groups.find((g) => g.domain === t.domainName);
+    if (!domainGroup) {
+      domainGroup = { domain: t.domainName, sections: [] };
+      groups.push(domainGroup);
+    }
+    let sectionGroup = domainGroup.sections.find((s) => s.title === t.sectionTitle);
+    if (!sectionGroup) {
+      sectionGroup = { title: t.sectionTitle, items: [] };
+      domainGroup.sections.push(sectionGroup);
+    }
+    sectionGroup.items.push(t);
+  }
 
-            {variant !== "covered" && (
-              <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
-                {!isFixed && onFix && (
-                  <Button
-                    size="sm"
-                    className="h-6 text-[11px] gap-1"
-                    onClick={() => onFix(m)}
-                    disabled={isThisFixing}
-                  >
-                    {isThisFixing ? (
-                      <>
-                        <Loader2 className="w-3 h-3 animate-spin" /> Fixing…
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-3 h-3" /> Fix issue
-                      </>
-                    )}
-                  </Button>
-                )}
-                {isFixed && onUndoFix && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 text-[11px] gap-1"
-                    onClick={() => onUndoFix(key)}
-                  >
-                    <Check className="w-3 h-3" /> Undo
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 text-[11px] gap-1"
-                  onClick={() => copyTopic(m.topic.raw)}
-                >
-                  <Copy className="w-3 h-3" /> Copy topic
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 text-[11px] gap-1"
-                  asChild
-                >
-                  <Link to="/SyllabusAudit">
-                    <ExternalLink className="w-3 h-3" /> Open Syllabus Audit
-                  </Link>
-                </Button>
+  return (
+    <div className="space-y-4">
+      {groups.map((g) => (
+        <div key={g.domain} className="space-y-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-1">
+            {g.domain}
+          </div>
+          {g.sections.map((s) => (
+            <div key={s.title} className="space-y-2">
+              <div className="text-xs font-medium text-foreground/80 flex items-center gap-2">
+                <span className="text-muted-foreground">›</span>
+                {s.title}
+                <Badge variant="outline" className="text-[9px]">
+                  {s.items.length}
+                </Badge>
               </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+              <ul className="space-y-2">
+                {s.items.map((m, i) => {
+                  const key = topicKey(m);
+                  const isFixed = fixed.has(key);
+                  const isThisFixing = fixingKey === key;
+                  return (
+                    <li
+                      key={i}
+                      className={cn(
+                        "rounded-md border p-3 text-sm",
+                        tone,
+                        isFixed && "opacity-60",
+                      )}
+                    >
+                      {isFixed && (
+                        <div className="flex justify-end mb-1">
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] border-primary/40 text-primary"
+                          >
+                            Fixed by AI
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="font-medium text-foreground">{m.topic.raw}</div>
+                      {m.bestMatch ? (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {variant === "missing" ? "weak match" : "closest in app"}:{" "}
+                          <span className="italic">"{m.bestMatch}"</span> ·{" "}
+                          {Math.round(m.bestScore * 100)}% match
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          no match in app content
+                        </div>
+                      )}
+
+                      {variant !== "covered" && (
+                        <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                          {!isFixed && onFix && (
+                            <Button
+                              size="sm"
+                              className="h-6 text-[11px] gap-1"
+                              onClick={() => onFix(m)}
+                              disabled={isThisFixing}
+                            >
+                              {isThisFixing ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 animate-spin" /> Fixing…
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3 h-3" /> Fix issue
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          {isFixed && onUndoFix && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-[11px] gap-1"
+                              onClick={() => onUndoFix(key)}
+                            >
+                              <Check className="w-3 h-3" /> Undo
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 text-[11px] gap-1"
+                            onClick={() => copyTopic(m.topic.raw)}
+                          >
+                            <Copy className="w-3 h-3" /> Copy topic
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 text-[11px] gap-1"
+                            asChild
+                          >
+                            <Link to="/SyllabusAudit">
+                              <ExternalLink className="w-3 h-3" /> Open Syllabus Audit
+                            </Link>
+                          </Button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }

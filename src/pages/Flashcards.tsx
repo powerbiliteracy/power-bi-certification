@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { RotateCcw, ChevronLeft, ChevronRight, Shuffle, BookOpen } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 
 export default function Flashcards() {
   const [selectedDomains, setSelectedDomains] = useState<string[]>(FLASHCARD_DOMAINS.map(d => d.id));
@@ -60,6 +61,8 @@ export default function Flashcards() {
             <FavoriteButton itemId="flashcards" itemType="page" />
           </div>
         </div>
+
+        <ContentUpdateBanner sectionKey="flashcards" />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="text-center p-4"><div className="text-2xl font-bold text-foreground">{FLASHCARDS.length}</div><div className="text-xs text-muted-foreground">Total Cards</div></Card>

@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { prepareDataContent } from "@/data/content/PrepareDataContent";
 import { modelDataContent } from "@/data/content/ModelDataContent";
 import { visualizeAnalyzeContent } from "@/data/content/VisualizeAnalyzeContent";
@@ -93,6 +94,8 @@ export default function Cheatsheets() {
           />
         </div>
       </div>
+
+      <ContentUpdateBanner sectionKey="cheatsheets" />
 
       <Tabs defaultValue="prepare">
         <TabsList className="flex-wrap h-auto gap-1">

@@ -6,6 +6,7 @@ import {
   ChevronRight, ChevronDown, BookOpen, Lightbulb, ArrowRight, Info
 } from "lucide-react";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -193,6 +194,8 @@ export default function DecisionFramework() {
           itemCount={phases.reduce((sum, p) => sum + p.steps.length, 0)}
         />
       </div>
+
+      <ContentUpdateBanner sectionKey="decision-framework" />
 
       <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
         <CardContent className="p-5 flex gap-4">

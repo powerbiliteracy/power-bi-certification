@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import PracticeResults from "@/components/PracticeResults";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 
 import set1 from "@/data/practiceSets/set1";
 import set2 from "@/data/practiceSets/set2";
@@ -115,6 +116,8 @@ export default function PracticeSets() {
             itemCount={allSets.reduce((s, set) => s + set.length, 0)}
           />
         </div>
+
+        <ContentUpdateBanner sectionKey="exam-simulations" />
 
         <Card className="bg-card border-border">
           <CardContent className="p-4 flex items-center justify-between">

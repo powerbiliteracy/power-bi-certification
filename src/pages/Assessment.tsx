@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Database, LineChart, Eye, Shield, BookOpen } from "lucide-react";
 import { assessmentQuestions } from "@/data/AssessmentQuestions";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 
 const domainMeta: Record<string, { title: string; subtitle: string; icon: React.ElementType; gradient: string; border: string }> = {
   prepare_data: {
@@ -158,6 +159,8 @@ export default function Assessment() {
             itemCount={assessmentQuestions.length}
           />
         </div>
+
+        <ContentUpdateBanner sectionKey="topic-assessments" />
 
         {/* All domains quick start */}
         <button

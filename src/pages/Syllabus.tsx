@@ -3,6 +3,7 @@ import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
 import FavoriteButton from "@/components/FavoriteButton";
 import { useSectionAccess } from "@/hooks/useSectionAccess";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { topicContent } from "@/data/TopicContent";
 import { assessmentQuestions } from "@/data/AssessmentQuestions";
@@ -199,6 +200,9 @@ export default function Syllabus() {
               corpus={pl300Syllabus.domains.flatMap(d => d.sections.flatMap(s => s.topics))}
               itemCount={pl300Syllabus.domains.reduce((sum, d) => sum + d.sections.reduce((s, sec) => s + sec.topics.length, 0), 0)}
             />
+          </div>
+          <div className="mt-3">
+            <ContentUpdateBanner sectionKey="exam-syllabus" />
           </div>
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

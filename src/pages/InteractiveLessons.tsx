@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { interactiveLessons, type InteractiveLesson } from "@/data/interactiveLessons";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { cn } from "@/lib/utils";
 
 interface Module {
@@ -231,6 +232,8 @@ export default function InteractiveLessons() {
           />
         </div>
       </div>
+
+      <ContentUpdateBanner sectionKey="interactive-lessons" />
 
       {SYLLABUS.map((domain) => {
         const domainLessonCount = domain.modules.reduce(

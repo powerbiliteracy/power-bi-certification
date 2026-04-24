@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
+import ContentUpdateBanner from "@/components/ContentUpdateBanner";
 import { Search, ChevronDown, ChevronRight, Lightbulb, CheckCircle, ExternalLink, Zap, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -404,6 +405,8 @@ export default function KeyTerms() {
           itemCount={totalTerms}
         />
       </div>
+
+      <ContentUpdateBanner sectionKey="key-terms" />
 
       <div className="flex gap-3 items-center">
         <button

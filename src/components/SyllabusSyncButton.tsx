@@ -39,10 +39,14 @@ import { useToast } from "@/hooks/use-toast";
 import {
   parseSyllabus,
   analyzeCoverage,
+  normalize,
   type CoverageReport,
   type TopicMatch,
+  type ParsedDomain,
 } from "@/utils/syllabusSync";
 import { cn } from "@/lib/utils";
+
+type SyncMode = "topics" | "key-terms";
 
 interface SyllabusSyncButtonProps {
   /** Stable label shown in the dialog header (e.g. "Exam Checklist"). */
@@ -57,6 +61,13 @@ interface SyllabusSyncButtonProps {
   corpus: string[];
   /** Total content items in the section (for context line). */
   itemCount: number;
+  /**
+   * Sync mode:
+   * - "topics" (default) compares syllabus topics against the section corpus.
+   * - "key-terms" asks AI to extract the canonical Key Terms & Features from
+   *   the latest syllabus, then compares those against the corpus.
+   */
+  mode?: SyncMode;
 }
 
 interface VersionMeta {
@@ -104,6 +115,7 @@ export default function SyllabusSyncButton({
   progressItemTypes,
   corpus,
   itemCount,
+  mode = "topics",
 }: SyllabusSyncButtonProps) {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
@@ -198,7 +210,37 @@ export default function SyllabusSyncButton({
         return;
       }
 
-      const parsed = parseSyllabus(data.content);
+      let parsed: ParsedDomain[];
+
+      if (mode === "key-terms") {
+        // Ask the AI to extract the canonical Key Terms & Features list from
+        // the saved syllabus, then treat each term as a "topic" so we can
+        // reuse analyzeCoverage.
+        const { data: extract, error: extractErr } = await supabase.functions.invoke(
+          "extract-key-terms",
+          { body: { syllabusVersionId: data.id } },
+        );
+        if (extractErr) throw extractErr;
+        if (extract?.error) throw new Error(extract.error);
+
+        const aiDomains: Array<{
+          name: string;
+          weight?: string;
+          sections: Array<{ title: string; terms: string[] }>;
+        }> = extract?.domains ?? [];
+
+        parsed = aiDomains.map((d) => ({
+          name: d.name,
+          weight: d.weight,
+          sections: d.sections.map((s) => ({
+            title: s.title,
+            topics: s.terms.map((t) => ({ raw: t, normalized: normalize(t) })),
+          })),
+        }));
+      } else {
+        parsed = parseSyllabus(data.content);
+      }
+
       const result = analyzeCoverage(parsed, corpus);
       const versionMeta: VersionMeta = {
         id: data.id,
@@ -228,9 +270,10 @@ export default function SyllabusSyncButton({
       }
       setLastSync(summary);
 
+      const unit = mode === "key-terms" ? "key terms" : "syllabus topics";
       toast({
         title: "Sync complete",
-        description: `${result.covered}/${result.total} syllabus topics covered (${pctNow}%).`,
+        description: `${result.covered}/${result.total} ${unit} covered (${pctNow}%).`,
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unable to sync";
@@ -455,7 +498,8 @@ export default function SyllabusSyncButton({
             <DialogDescription>
               {version ? (
                 <>
-                  Comparing <strong>{itemCount}</strong> items in this section against saved
+                  Comparing <strong>{itemCount}</strong> {mode === "key-terms" ? "key terms" : "items"} in this section against
+                  the {mode === "key-terms" ? "AI-extracted Key Terms & Features for " : ""}saved
                   version <strong>{version.label}</strong> (saved{" "}
                   {new Date(version.created_at).toLocaleDateString()}).
                 </>

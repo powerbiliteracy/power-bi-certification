@@ -401,7 +401,9 @@ export default function KeyTerms() {
           sectionLabel="Key Terms & Features"
           sectionKey="key-terms"
           itemType="key_term"
-          corpus={keyTermsData.flatMap(d => d.sections.flatMap(s => s.terms.flatMap(t => [t.term, t.def])))}
+          mode="key-terms"
+          progressItemTypes={["key_term"]}
+          corpus={keyTermsData.flatMap(d => d.sections.flatMap(s => s.terms.map(t => t.term)))}
           itemCount={totalTerms}
         />
       </div>

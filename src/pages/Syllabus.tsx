@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
 import FavoriteButton from "@/components/FavoriteButton";
 import { useSectionAccess } from "@/hooks/useSectionAccess";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { topicContent } from "@/data/TopicContent";
 import { assessmentQuestions } from "@/data/AssessmentQuestions";
@@ -185,8 +186,17 @@ export default function Syllabus() {
       {/* Left Sidebar - Topics */}
       <div className="lg:col-span-4 overflow-y-auto">
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-foreground mb-1">PL-300 Exam Syllabus</h1>
-          <p className="text-sm text-muted-foreground">Select a topic to explore</p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground mb-1">PL-300 Exam Syllabus</h1>
+              <p className="text-sm text-muted-foreground">Select a topic to explore</p>
+            </div>
+            <SyllabusSyncButton
+              sectionLabel="Exam Syllabus"
+              corpus={pl300Syllabus.domains.flatMap(d => d.sections.flatMap(s => s.topics))}
+              itemCount={pl300Syllabus.domains.reduce((sum, d) => sum + d.sections.reduce((s, sec) => s + sec.topics.length, 0), 0)}
+            />
+          </div>
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input

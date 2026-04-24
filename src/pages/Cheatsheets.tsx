@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import FavoriteButton from "@/components/FavoriteButton";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import { prepareDataContent } from "@/data/content/PrepareDataContent";
 import { modelDataContent } from "@/data/content/ModelDataContent";
 import { visualizeAnalyzeContent } from "@/data/content/VisualizeAnalyzeContent";
@@ -76,12 +77,19 @@ function TopicCard({ title, content }: { title: string; content: any }) {
 export default function Cheatsheets() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold text-foreground">PL-300 Cheat Sheets</h1>
           <p className="text-sm text-muted-foreground">Quick reference for all four exam domains</p>
         </div>
-        <FavoriteButton itemId="cheatsheets" itemType="page" />
+        <div className="flex items-center gap-2">
+          <FavoriteButton itemId="cheatsheets" itemType="page" />
+          <SyllabusSyncButton
+            sectionLabel="Cheat Sheets"
+            corpus={domains.flatMap(d => Object.keys(d.content || {}))}
+            itemCount={domains.reduce((sum, d) => sum + Object.keys(d.content || {}).length, 0)}
+          />
+        </div>
       </div>
 
       <Tabs defaultValue="prepare">

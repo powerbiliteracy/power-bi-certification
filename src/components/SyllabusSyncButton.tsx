@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +17,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { RefreshCw, CheckCircle2, AlertTriangle, XCircle, Copy, FileSearch, Clock } from "lucide-react";
+import {
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Copy,
+  FileSearch,
+  Clock,
+  Wrench,
+  ExternalLink,
+  Check,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,9 +41,9 @@ import {
 import { cn } from "@/lib/utils";
 
 interface SyllabusSyncButtonProps {
-  /** Stable key shown in dialog header (e.g. "Exam Checklist") */
+  /** Stable label shown in the dialog header (e.g. "Exam Checklist"). */
   sectionLabel: string;
-  /** Strings representing every topic/lesson/card/etc. on this page. */
+  /** Strings representing every topic / lesson / card on this page. */
   corpus: string[];
   /** Total content items in the section (for context line). */
   itemCount: number;
@@ -56,6 +68,7 @@ interface LastSync {
 }
 
 const lastSyncKey = (label: string) => `syllabus-sync:${label}`;
+const fixedKey = (label: string) => `syllabus-sync-fixed:${label}`;
 
 function formatRelative(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -88,6 +101,14 @@ export default function SyllabusSyncButton({
       return null;
     }
   });
+  const [fixed, setFixed] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(fixedKey(sectionLabel));
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set<string>();
+    }
+  });
 
   useEffect(() => {
     try {
@@ -96,9 +117,31 @@ export default function SyllabusSyncButton({
     } catch {
       setLastSync(null);
     }
+    try {
+      const raw = localStorage.getItem(fixedKey(sectionLabel));
+      setFixed(new Set<string>(raw ? JSON.parse(raw) : []));
+    } catch {
+      setFixed(new Set<string>());
+    }
   }, [sectionLabel]);
 
-  if (!isAdmin) return null;
+  const persistFixed = (next: Set<string>) => {
+    setFixed(next);
+    try {
+      localStorage.setItem(fixedKey(sectionLabel), JSON.stringify(Array.from(next)));
+    } catch {
+      /* ignore quota errors */
+    }
+  };
+
+  const toggleFixed = (key: string) => {
+    const next = new Set(fixed);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    persistFixed(next);
+  };
+
+  const clearFixed = () => persistFixed(new Set());
 
   const runSync = async () => {
     setLoading(true);
@@ -171,7 +214,9 @@ export default function SyllabusSyncButton({
     const lines: string[] = [];
     lines.push(`# ${sectionLabel} — Sync vs "${version.label}"`);
     lines.push(`Saved: ${new Date(version.created_at).toLocaleString()}`);
-    lines.push(`Coverage: ${report.covered}/${report.total} covered, ${report.partial} partial, ${report.missing} missing`);
+    lines.push(
+      `Coverage: ${report.covered}/${report.total} covered, ${report.partial} partial, ${report.missing} missing`,
+    );
     lines.push("");
     if (report.missingTopics.length) {
       lines.push("## Missing topics");
@@ -191,7 +236,21 @@ export default function SyllabusSyncButton({
     toast({ title: "Report copied", description: "Paste into your notes." });
   };
 
+  // Filter out topics the admin already marked as fixed
+  const visible = useMemo(() => {
+    if (!report) return null;
+    const keep = (m: TopicMatch) => !fixed.has(topicKey(m));
+    return {
+      missing: report.missingTopics.filter(keep),
+      partial: report.partialTopics.filter(keep),
+      covered: report.coveredTopics,
+    };
+  }, [report, fixed]);
+
   const pct = report?.total ? Math.round((report.covered / report.total) * 100) : 0;
+  const fixedCount = fixed.size;
+
+  if (!isAdmin) return null;
 
   return (
     <>
@@ -238,7 +297,7 @@ export default function SyllabusSyncButton({
             </DialogDescription>
           </DialogHeader>
 
-          {report && (
+          {report && visible && (
             <>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -248,7 +307,7 @@ export default function SyllabusSyncButton({
                     </div>
                     <div className="text-3xl font-bold">{pct}%</div>
                   </div>
-                  <div className="flex gap-2 text-sm">
+                  <div className="flex gap-2 text-sm flex-wrap">
                     <Badge variant="outline" className="gap-1 border-emerald-500/40 text-emerald-400">
                       <CheckCircle2 className="w-3 h-3" /> {report.covered} covered
                     </Badge>
@@ -258,50 +317,77 @@ export default function SyllabusSyncButton({
                     <Badge variant="outline" className="gap-1 border-red-500/40 text-red-400">
                       <XCircle className="w-3 h-3" /> {report.missing} missing
                     </Badge>
+                    {fixedCount > 0 && (
+                      <Badge variant="outline" className="gap-1 border-primary/40 text-primary">
+                        <Check className="w-3 h-3" /> {fixedCount} marked fixed
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <Progress value={pct} className="h-2" />
+                {fixedCount > 0 && (
+                  <div className="flex justify-end">
+                    <Button variant="ghost" size="sm" className="text-xs h-6" onClick={clearFixed}>
+                      Reset fixed list
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <ScrollArea className="flex-1 -mx-6 px-6">
                 <div className="space-y-4">
                   <Accordion type="multiple" defaultValue={["missing", "partial"]}>
-                    {report.missingTopics.length > 0 && (
+                    {visible.missing.length > 0 && (
                       <AccordionItem value="missing">
                         <AccordionTrigger className="text-sm">
                           <span className="flex items-center gap-2">
                             <XCircle className="w-4 h-4 text-red-400" />
-                            Missing ({report.missingTopics.length}) — consider adding
+                            Missing ({visible.missing.length}) — consider adding
                           </span>
                         </AccordionTrigger>
                         <AccordionContent>
-                          <TopicList topics={report.missingTopics} variant="missing" />
+                          <TopicList
+                            topics={visible.missing}
+                            variant="missing"
+                            fixed={fixed}
+                            onToggleFixed={toggleFixed}
+                          />
                         </AccordionContent>
                       </AccordionItem>
                     )}
-                    {report.partialTopics.length > 0 && (
+                    {visible.partial.length > 0 && (
                       <AccordionItem value="partial">
                         <AccordionTrigger className="text-sm">
                           <span className="flex items-center gap-2">
                             <AlertTriangle className="w-4 h-4 text-amber-400" />
-                            Partial ({report.partialTopics.length}) — possibly renamed
+                            Partial ({visible.partial.length}) — possibly renamed
                           </span>
                         </AccordionTrigger>
                         <AccordionContent>
-                          <TopicList topics={report.partialTopics} variant="partial" />
+                          <TopicList
+                            topics={visible.partial}
+                            variant="partial"
+                            fixed={fixed}
+                            onToggleFixed={toggleFixed}
+                          />
                         </AccordionContent>
                       </AccordionItem>
                     )}
-                    {report.coveredTopics.length > 0 && (
+                    {visible.covered.length > 0 && (
                       <AccordionItem value="covered">
                         <AccordionTrigger className="text-sm">
                           <span className="flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            Covered ({report.coveredTopics.length})
+                            Covered ({visible.covered.length})
                           </span>
                         </AccordionTrigger>
                         <AccordionContent>
-                          <TopicList topics={report.coveredTopics} variant="covered" />
+                          <TopicList
+                            topics={visible.covered}
+                            variant="covered"
+                            fixed={fixed}
+                            onToggleFixed={toggleFixed}
+                          />
                         </AccordionContent>
                       </AccordionItem>
                     )}
@@ -313,7 +399,13 @@ export default function SyllabusSyncButton({
                 <Button variant="outline" size="sm" onClick={copyReport} className="gap-1">
                   <Copy className="w-3 h-3" /> Copy report
                 </Button>
-                <Button variant="outline" size="sm" onClick={runSync} disabled={loading} className="gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={runSync}
+                  disabled={loading}
+                  className="gap-1"
+                >
                   <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} /> Re-run
                 </Button>
               </div>
@@ -325,39 +417,103 @@ export default function SyllabusSyncButton({
   );
 }
 
+function topicKey(m: TopicMatch): string {
+  return `${m.domainName}|${m.sectionTitle}|${m.topic.normalized}`;
+}
+
 function TopicList({
   topics,
   variant,
+  fixed,
+  onToggleFixed,
 }: {
   topics: TopicMatch[];
   variant: "covered" | "partial" | "missing";
+  fixed: Set<string>;
+  onToggleFixed: (key: string) => void;
 }) {
+  const { toast } = useToast();
   const tone =
     variant === "covered"
       ? "border-emerald-500/30 bg-emerald-500/5"
       : variant === "partial"
         ? "border-amber-500/30 bg-amber-500/5"
         : "border-red-500/30 bg-red-500/5";
+
+  const copyTopic = (raw: string) => {
+    navigator.clipboard.writeText(raw);
+    toast({ title: "Topic copied", description: "Paste it into your content file or notes." });
+  };
+
   return (
     <ul className="space-y-2">
-      {topics.map((m, i) => (
-        <li key={i} className={cn("rounded-md border p-3 text-sm", tone)}>
-          <div className="text-xs text-muted-foreground mb-1">
-            {m.domainName} · {m.sectionTitle}
-          </div>
-          <div className="font-medium text-foreground">{m.topic.raw}</div>
-          {m.bestMatch ? (
-            <div className="text-xs text-muted-foreground mt-1">
-              {variant === "missing" ? "weak match" : "closest in app"}:{" "}
-              <span className="italic">"{m.bestMatch}"</span> ·{" "}
-              {Math.round(m.bestScore * 100)}% match
+      {topics.map((m, i) => {
+        const key = topicKey(m);
+        const isFixed = fixed.has(key);
+        return (
+          <li key={i} className={cn("rounded-md border p-3 text-sm", tone, isFixed && "opacity-60")}>
+            <div className="text-xs text-muted-foreground mb-1 flex items-center justify-between gap-2">
+              <span>
+                {m.domainName} · {m.sectionTitle}
+              </span>
+              {isFixed && (
+                <Badge variant="outline" className="text-[9px] border-primary/40 text-primary">
+                  Marked fixed
+                </Badge>
+              )}
             </div>
-          ) : (
-            <div className="text-xs text-muted-foreground mt-1">no match in app content</div>
-          )}
-        </li>
-      ))}
+            <div className="font-medium text-foreground">{m.topic.raw}</div>
+            {m.bestMatch ? (
+              <div className="text-xs text-muted-foreground mt-1">
+                {variant === "missing" ? "weak match" : "closest in app"}:{" "}
+                <span className="italic">"{m.bestMatch}"</span> ·{" "}
+                {Math.round(m.bestScore * 100)}% match
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground mt-1">no match in app content</div>
+            )}
+
+            {variant !== "covered" && (
+              <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[11px] gap-1"
+                  onClick={() => copyTopic(m.topic.raw)}
+                >
+                  <Copy className="w-3 h-3" /> Copy topic
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[11px] gap-1"
+                  asChild
+                >
+                  <Link to="/SyllabusAudit">
+                    <ExternalLink className="w-3 h-3" /> Open Syllabus Audit
+                  </Link>
+                </Button>
+                <Button
+                  variant={isFixed ? "default" : "outline"}
+                  size="sm"
+                  className="h-6 text-[11px] gap-1 ml-auto"
+                  onClick={() => onToggleFixed(key)}
+                >
+                  {isFixed ? (
+                    <>
+                      <Check className="w-3 h-3" /> Undo fix
+                    </>
+                  ) : (
+                    <>
+                      <Wrench className="w-3 h-3" /> Mark as fixed
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
-

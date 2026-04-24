@@ -124,7 +124,7 @@ export default function ConceptComparisonsAdmin() {
       description: form.description?.trim() || null,
       left_label: form.left_label.trim(),
       right_label: form.right_label.trim(),
-      rows: cleanRows,
+      rows: cleanRows as any,
       notes: form.notes?.trim() || null,
       sort_order: Number(form.sort_order) || 0,
       is_active: form.is_active,
@@ -139,7 +139,7 @@ export default function ConceptComparisonsAdmin() {
     } else {
       ({ error } = await supabase
         .from("concept_comparisons")
-        .insert({ ...payload, created_by: user?.id }));
+        .insert([{ ...payload, created_by: user?.id ?? null }]));
     }
     setSaving(false);
     if (error) {

@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import ContentUpdateBanner from "@/components/ContentUpdateBanner";
@@ -9,13 +15,40 @@ import { prepareDataContent } from "@/data/content/PrepareDataContent";
 import { modelDataContent } from "@/data/content/ModelDataContent";
 import { visualizeAnalyzeContent } from "@/data/content/VisualizeAnalyzeContent";
 import { enhanceReportsContent } from "@/data/content/EnhanceReportsContent";
+import { pl300Syllabus } from "@/data/SyllabusData";
+import { similarity } from "@/utils/syllabusSync";
 
 const domains = [
-  { id: "prepare", label: "Prepare Data", weight: "25–30%", color: "text-amber-400", content: prepareDataContent },
-  { id: "model", label: "Model Data", weight: "25–30%", color: "text-blue-400", content: modelDataContent },
-  { id: "visualize", label: "Visualize & Analyze", weight: "25–30%", color: "text-emerald-400", content: visualizeAnalyzeContent },
-  { id: "enhance", label: "Enhance Reports", weight: "25–30%", color: "text-violet-400", content: enhanceReportsContent },
+  { id: "prepare", label: "Prepare Data", weight: "25–30%", color: "text-amber-400", content: prepareDataContent, syllabusId: "prepare_data" },
+  { id: "model", label: "Model Data", weight: "25–30%", color: "text-blue-400", content: modelDataContent, syllabusId: "model_data" },
+  { id: "visualize", label: "Visualize & Analyze", weight: "25–30%", color: "text-emerald-400", content: visualizeAnalyzeContent, syllabusId: "visualize_analyze" },
+  { id: "enhance", label: "Enhance Reports", weight: "25–30%", color: "text-violet-400", content: enhanceReportsContent, syllabusId: "manage_secure" },
 ];
+
+interface SyllabusDomain {
+  id: string;
+  title: string;
+  sections: { title: string; topics: string[] }[];
+}
+
+function findBestSection(
+  topic: string,
+  syllabusDomain: SyllabusDomain | undefined,
+): string {
+  if (!syllabusDomain) return "Other";
+  let bestSection = syllabusDomain.sections[0]?.title ?? "Other";
+  let bestScore = 0;
+  for (const sec of syllabusDomain.sections) {
+    for (const synTopic of sec.topics) {
+      const s = similarity(topic, synTopic);
+      if (s > bestScore) {
+        bestScore = s;
+        bestSection = sec.title;
+      }
+    }
+  }
+  return bestSection;
+}
 
 function TopicCard({ title, content }: { title: string; content: any }) {
   const [expanded, setExpanded] = useState(false);
@@ -76,6 +109,26 @@ function TopicCard({ title, content }: { title: string; content: any }) {
 }
 
 export default function Cheatsheets() {
+  // Pre-group all topics per domain by their best-matching syllabus module
+  const groupedByDomain = useMemo(() => {
+    const result: Record<string, { module: string; topics: [string, any][] }[]> = {};
+    for (const d of domains) {
+      const syllabusDomain = pl300Syllabus.domains.find((sd) => sd.id === d.syllabusId);
+      const grouped = new Map<string, [string, any][]>();
+      // Seed in syllabus order so module order matches the official syllabus
+      syllabusDomain?.sections.forEach((sec) => grouped.set(sec.title, []));
+      for (const [title, content] of Object.entries(d.content || {})) {
+        const sectionTitle = findBestSection(title, syllabusDomain);
+        if (!grouped.has(sectionTitle)) grouped.set(sectionTitle, []);
+        grouped.get(sectionTitle)!.push([title, content]);
+      }
+      result[d.id] = Array.from(grouped.entries())
+        .filter(([, topics]) => topics.length > 0)
+        .map(([module, topics]) => ({ module, topics }));
+    }
+    return result;
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-2">
@@ -107,13 +160,40 @@ export default function Cheatsheets() {
           ))}
         </TabsList>
 
-        {domains.map(d => (
-          <TabsContent key={d.id} value={d.id} className="mt-4 space-y-3">
-            {d.content && Object.entries(d.content).map(([title, content]) => (
-              <TopicCard key={title} title={title} content={content} />
-            ))}
-          </TabsContent>
-        ))}
+        {domains.map(d => {
+          const groups = groupedByDomain[d.id] ?? [];
+          return (
+            <TabsContent key={d.id} value={d.id} className="mt-4">
+              {/* All modules collapsed by default */}
+              <Accordion type="multiple" className="space-y-2">
+                {groups.map(({ module, topics }) => (
+                  <AccordionItem
+                    key={module}
+                    value={module}
+                    className="border rounded-md px-3 bg-card"
+                  >
+                    <AccordionTrigger className="text-sm hover:no-underline py-3">
+                      <span className="flex items-center gap-2 text-left">
+                        <span className={d.color}>●</span>
+                        <span className="font-medium">{module}</span>
+                        <Badge variant="outline" className="text-[10px]">
+                          {topics.length} topic{topics.length === 1 ? "" : "s"}
+                        </Badge>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2 pt-1 pb-2">
+                        {topics.map(([title, content]) => (
+                          <TopicCard key={title} title={title} content={content} />
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </TabsContent>
+          );
+        })}
       </Tabs>
     </div>
   );

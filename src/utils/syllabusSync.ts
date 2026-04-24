@@ -38,45 +38,97 @@ export const similarity = (a: string, b: string): number => {
   return inter / Math.min(ta.size, tb.size);
 };
 
+// Known section headings from the official PL-300 study guide. Lines that
+// match one of these become section titles; everything else under a domain
+// is treated as a topic. This keeps the parser robust whether the user pasted
+// the syllabus with bullets, indentation, or just plain lines.
+const SECTION_HEADINGS = new Set(
+  [
+    "Get or connect to data",
+    "Profile and clean the data",
+    "Transform and load the data",
+    "Design and implement a data model",
+    "Create model calculations by using DAX",
+    "Optimize model performance",
+    "Create reports",
+    "Enhance reports for usability and storytelling",
+    "Identify patterns and trends",
+    "Create and manage workspaces and assets",
+    "Secure and govern Power BI items",
+  ].map((s) => s.toLowerCase()),
+);
+
 export function parseSyllabus(text: string): ParsedDomain[] {
   const lines = text
     .split(/\r?\n/)
-    .map((l) => l.replace(/\u00a0/g, " ").trimEnd())
-    .filter((l) => l.trim().length > 0);
+    .map((l) => l.replace(/\u00a0/g, " ").trim())
+    .filter((l) => l.length > 0);
 
   const domains: ParsedDomain[] = [];
   let currentDomain: ParsedDomain | null = null;
   let currentSection: ParsedSection | null = null;
+  const seenDomainNames = new Set<string>();
+  const seenTopicsPerDomain = new Map<string, Set<string>>();
 
+  // Domain heading: "Prepare the data (25–30%)" or "Manage and secure Power BI (15-20%)"
   const domainRegex =
-    /^([A-Z][A-Za-z0-9 ,&'/\-]+?)\s*\(?\s*(\d{1,2}\s*[\-–]\s*\d{1,2}\s*%|\d{1,2}\s*%)\s*\)?\s*$/;
-  const bulletRegex = /^\s*([-*•·–▪◦]|\d+\.)\s+(.*)$/;
+    /^([A-Z][A-Za-z0-9 ,&'/\-]+?)\s*\(\s*(\d{1,2}\s*[\-–]\s*\d{1,2}\s*%|\d{1,2}\s*%)\s*\)\s*$/;
+  // Bullet: "- foo", "* foo", "• foo", "1. foo"
+  const bulletRegex = /^([-*•·–▪◦]|\d+\.)\s+(.*)$/;
+  // Lines to ignore entirely (preamble / meta / intro)
+  const ignoreLine = (l: string): boolean =>
+    /^(skills measured|skills at a glance|audience profile|study resources|exam objectives?|as a candidate|as a power bi|provide meaningful|enable others|you should be|you collaborate)/i.test(
+      l,
+    );
 
   for (const line of lines) {
     const domainMatch = line.match(domainRegex);
     if (domainMatch) {
-      currentDomain = { name: domainMatch[1].trim(), weight: domainMatch[2].trim(), sections: [] };
+      const name = domainMatch[1].trim();
+      // Skip duplicates ("Skills at a glance" lists all four upfront)
+      if (seenDomainNames.has(name.toLowerCase())) {
+        currentDomain = domains.find((d) => d.name.toLowerCase() === name.toLowerCase()) || null;
+        currentSection = null;
+        continue;
+      }
+      seenDomainNames.add(name.toLowerCase());
+      currentDomain = { name, weight: domainMatch[2].trim(), sections: [] };
+      seenTopicsPerDomain.set(name.toLowerCase(), new Set());
       currentSection = null;
       domains.push(currentDomain);
       continue;
     }
+
+    if (!currentDomain) continue;
+    if (ignoreLine(line)) continue;
+
+    // Skip lines that just repeat the domain names (audience-profile bullet list)
+    if (seenDomainNames.has(line.toLowerCase().replace(/\s+the\s+data$/, " the data"))) continue;
+
     const bulletMatch = line.match(bulletRegex);
-    if (bulletMatch && currentDomain) {
-      const t = bulletMatch[2].trim();
-      if (!currentSection) {
-        currentSection = { title: "(uncategorized)", topics: [] };
-        currentDomain.sections.push(currentSection);
-      }
-      currentSection.topics.push({ raw: t, normalized: normalize(t) });
+    const text = bulletMatch ? bulletMatch[2].trim() : line;
+    const lower = text.toLowerCase();
+
+    // Recognised section heading
+    if (!bulletMatch && SECTION_HEADINGS.has(lower)) {
+      currentSection = { title: text, topics: [] };
+      currentDomain.sections.push(currentSection);
       continue;
     }
-    if (currentDomain && line.trim().length > 0 && !line.startsWith("Skills measured")) {
-      if (line.length <= 120 && !line.endsWith(".")) {
-        currentSection = { title: line.trim(), topics: [] };
-        currentDomain.sections.push(currentSection);
-        continue;
-      }
+
+    // Otherwise it's a topic
+    if (!currentSection) {
+      currentSection = { title: "(uncategorized)", topics: [] };
+      currentDomain.sections.push(currentSection);
     }
+
+    // Dedupe topics within a domain
+    const dedupKey = lower;
+    const seenSet = seenTopicsPerDomain.get(currentDomain.name.toLowerCase())!;
+    if (seenSet.has(dedupKey)) continue;
+    seenSet.add(dedupKey);
+
+    currentSection.topics.push({ raw: text, normalized: normalize(text) });
   }
   return domains;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { RefreshCw, CheckCircle2, AlertTriangle, XCircle, Copy, FileSearch } from "lucide-react";
+import { RefreshCw, CheckCircle2, AlertTriangle, XCircle, Copy, FileSearch, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +44,31 @@ interface VersionMeta {
   notes: string | null;
 }
 
+interface LastSync {
+  syncedAt: string;
+  versionLabel: string;
+  versionDate: string;
+  pct: number;
+  covered: number;
+  partial: number;
+  missing: number;
+  total: number;
+}
+
+const lastSyncKey = (label: string) => `syllabus-sync:${label}`;
+
+function formatRelative(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 export default function SyllabusSyncButton({
   sectionLabel,
   corpus,
@@ -55,6 +80,23 @@ export default function SyllabusSyncButton({
   const [loading, setLoading] = useState(false);
   const [version, setVersion] = useState<VersionMeta | null>(null);
   const [report, setReport] = useState<CoverageReport | null>(null);
+  const [lastSync, setLastSync] = useState<LastSync | null>(() => {
+    try {
+      const raw = localStorage.getItem(lastSyncKey(sectionLabel));
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(lastSyncKey(sectionLabel));
+      setLastSync(raw ? JSON.parse(raw) : null);
+    } catch {
+      setLastSync(null);
+    }
+  }, [sectionLabel]);
 
   if (!isAdmin) return null;
 
@@ -84,18 +126,37 @@ export default function SyllabusSyncButton({
 
       const parsed = parseSyllabus(data.content);
       const result = analyzeCoverage(parsed, corpus);
-      setVersion({
+      const versionMeta: VersionMeta = {
         id: data.id,
         label: data.label,
         created_at: data.created_at,
         notes: data.notes,
-      });
+      };
+      setVersion(versionMeta);
       setReport(result);
       setOpen(true);
 
+      const pctNow = result.total ? Math.round((result.covered / result.total) * 100) : 0;
+      const summary: LastSync = {
+        syncedAt: new Date().toISOString(),
+        versionLabel: data.label,
+        versionDate: data.created_at,
+        pct: pctNow,
+        covered: result.covered,
+        partial: result.partial,
+        missing: result.missing,
+        total: result.total,
+      };
+      try {
+        localStorage.setItem(lastSyncKey(sectionLabel), JSON.stringify(summary));
+      } catch {
+        /* ignore quota errors */
+      }
+      setLastSync(summary);
+
       toast({
         title: "Sync complete",
-        description: `${result.covered}/${result.total} syllabus topics covered.`,
+        description: `${result.covered}/${result.total} syllabus topics covered (${pctNow}%).`,
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unable to sync";
@@ -134,10 +195,23 @@ export default function SyllabusSyncButton({
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={runSync} disabled={loading} className="gap-1">
-        <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
-        {loading ? "Syncing…" : "Sync with latest syllabus"}
-      </Button>
+      <div className="inline-flex flex-col items-end gap-0.5">
+        <Button variant="outline" size="sm" onClick={runSync} disabled={loading} className="gap-1">
+          <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
+          {loading ? "Syncing…" : "Sync with latest syllabus"}
+        </Button>
+        {lastSync && !loading && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+            title={`Last synced ${new Date(lastSync.syncedAt).toLocaleString()} against ${lastSync.versionLabel}`}
+          >
+            <Clock className="w-2.5 h-2.5" />
+            Last sync {formatRelative(lastSync.syncedAt)} · {lastSync.pct}% match
+          </button>
+        )}
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
@@ -152,6 +226,11 @@ export default function SyllabusSyncButton({
                   Comparing <strong>{itemCount}</strong> items in this section against saved
                   version <strong>{version.label}</strong> (saved{" "}
                   {new Date(version.created_at).toLocaleDateString()}).
+                </>
+              ) : lastSync ? (
+                <>
+                  Last synced {formatRelative(lastSync.syncedAt)} against{" "}
+                  <strong>{lastSync.versionLabel}</strong>. Click <em>Re-run</em> to refresh.
                 </>
               ) : (
                 "No saved syllabus version found. Save one on the Syllabus Audit page first."
@@ -267,14 +346,18 @@ function TopicList({
             {m.domainName} · {m.sectionTitle}
           </div>
           <div className="font-medium text-foreground">{m.topic.raw}</div>
-          {m.bestMatch && variant !== "missing" && (
+          {m.bestMatch ? (
             <div className="text-xs text-muted-foreground mt-1">
-              closest in app: <span className="italic">"{m.bestMatch}"</span> ·{" "}
+              {variant === "missing" ? "weak match" : "closest in app"}:{" "}
+              <span className="italic">"{m.bestMatch}"</span> ·{" "}
               {Math.round(m.bestScore * 100)}% match
             </div>
+          ) : (
+            <div className="text-xs text-muted-foreground mt-1">no match in app content</div>
           )}
         </li>
       ))}
     </ul>
   );
 }
+

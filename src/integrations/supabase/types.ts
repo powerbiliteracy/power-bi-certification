@@ -257,6 +257,39 @@ export type Database = {
         }
         Relationships: []
       }
+      syllabus_versions: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          exam_code: string
+          id: string
+          label: string
+          notes: string | null
+          source_url: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          exam_code?: string
+          id?: string
+          label: string
+          notes?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          exam_code?: string
+          id?: string
+          label?: string
+          notes?: string | null
+          source_url?: string | null
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           badge_id: string

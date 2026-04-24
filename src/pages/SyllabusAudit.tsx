@@ -443,6 +443,13 @@ export default function SyllabusAudit() {
         </p>
       </div>
 
+      <Tabs defaultValue="audit" className="w-full">
+        <TabsList>
+          <TabsTrigger value="audit">Run audit</TabsTrigger>
+          <TabsTrigger value="versions">Saved versions</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="audit" className="space-y-6 mt-4">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import PracticeResults from "@/components/PracticeResults";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 
 import set1 from "@/data/practiceSets/set1";
 import set2 from "@/data/practiceSets/set2";
@@ -95,9 +96,21 @@ export default function PracticeSets() {
   if (phase === "select") {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Exam Simulations</h1>
-          <p className="text-muted-foreground mt-1">7 sets • 12 questions each • Real-world scenarios</p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">Exam Simulations</h1>
+            <p className="text-muted-foreground mt-1">7 sets • 12 questions each • Real-world scenarios</p>
+          </div>
+          <SyllabusSyncButton
+            sectionLabel="Exam Simulations"
+            corpus={allSets.flatMap((set, i) => [
+              setDescriptions[i]?.title || "",
+              setDescriptions[i]?.description || "",
+              ...(setDescriptions[i]?.topics || []),
+              ...set.flatMap((q: { question?: string; topic?: string }) => [q.question || "", q.topic || ""]),
+            ])}
+            itemCount={allSets.reduce((s, set) => s + set.length, 0)}
+          />
         </div>
 
         <Card className="bg-card border-border">

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { interactiveLessons, type InteractiveLesson } from "@/data/interactiveLessons";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import { cn } from "@/lib/utils";
 
 interface Module {
@@ -208,16 +209,23 @@ export default function InteractiveLessons() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--indigo))] to-[hsl(var(--violet))] flex items-center justify-center">
-            <BookOpen className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--indigo))] to-[hsl(var(--violet))] flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Interactive Lessons</h1>
+              <p className="text-muted-foreground">
+                Hands-on, scenario-driven walkthroughs for the trickiest PL-300 skills.
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Interactive Lessons</h1>
-            <p className="text-muted-foreground">
-              Hands-on, scenario-driven walkthroughs for the trickiest PL-300 skills.
-            </p>
-          </div>
+          <SyllabusSyncButton
+            sectionLabel="Interactive Lessons"
+            corpus={interactiveLessons.map(l => `${l.title} ${l.description}`)}
+            itemCount={interactiveLessons.length}
+          />
         </div>
       </div>
 

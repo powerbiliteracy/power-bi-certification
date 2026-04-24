@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, RotateCcw, Check } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import FavoriteButton from "@/components/FavoriteButton";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "exam-checklist-checked";
@@ -53,6 +54,11 @@ export default function ExamChecklist() {
         </div>
         <div className="flex items-center gap-2">
           <FavoriteButton itemId="exam-checklist" itemType="page" />
+          <SyllabusSyncButton
+            sectionLabel="Exam Checklist"
+            corpus={CHECKLIST_DOMAINS.flatMap(d => d.sections.flatMap(s => s.items.map(i => i.label)))}
+            itemCount={totalItems}
+          />
           <Button variant="outline" size="sm" onClick={reset} className="gap-1"><RotateCcw className="w-3 h-3" /> Reset</Button>
         </div>
       </div>

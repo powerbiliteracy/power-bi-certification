@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, Check, X } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import FavoriteButton from "@/components/FavoriteButton";
+import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import { cn } from "@/lib/utils";
 
 const domainColors = ["text-blue-400", "text-violet-400", "text-cyan-400", "text-orange-400"];
@@ -25,7 +26,14 @@ export default function DosAndDonts() {
           <h1 className="text-2xl font-bold text-foreground">Complete Dos & Don'ts</h1>
           <p className="text-sm text-muted-foreground">Every exam objective mapped to a best practice — with reasoning</p>
         </div>
-        <FavoriteButton itemId="dos-and-donts" itemType="page" />
+        <div className="flex items-center gap-2">
+          <SyllabusSyncButton
+            sectionLabel="Dos & Don'ts"
+            corpus={DOS_DONTS_DOMAINS.flatMap(d => d.subtopics.flatMap(st => [st.title, ...st.bullets, ...st.dos.map(x => x.text), ...st.donts.map(x => x.text)]))}
+            itemCount={DOS_DONTS_DOMAINS.reduce((s, d) => s + d.subtopics.length, 0)}
+          />
+          <FavoriteButton itemId="dos-and-donts" itemType="page" />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

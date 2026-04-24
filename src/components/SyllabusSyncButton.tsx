@@ -195,10 +195,23 @@ export default function SyllabusSyncButton({
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={runSync} disabled={loading} className="gap-1">
-        <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
-        {loading ? "Syncing…" : "Sync with latest syllabus"}
-      </Button>
+      <div className="inline-flex flex-col items-end gap-0.5">
+        <Button variant="outline" size="sm" onClick={runSync} disabled={loading} className="gap-1">
+          <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
+          {loading ? "Syncing…" : "Sync with latest syllabus"}
+        </Button>
+        {lastSync && !loading && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+            title={`Last synced ${new Date(lastSync.syncedAt).toLocaleString()} against ${lastSync.versionLabel}`}
+          >
+            <Clock className="w-2.5 h-2.5" />
+            Last sync {formatRelative(lastSync.syncedAt)} · {lastSync.pct}% match
+          </button>
+        )}
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
@@ -213,6 +226,11 @@ export default function SyllabusSyncButton({
                   Comparing <strong>{itemCount}</strong> items in this section against saved
                   version <strong>{version.label}</strong> (saved{" "}
                   {new Date(version.created_at).toLocaleDateString()}).
+                </>
+              ) : lastSync ? (
+                <>
+                  Last synced {formatRelative(lastSync.syncedAt)} against{" "}
+                  <strong>{lastSync.versionLabel}</strong>. Click <em>Re-run</em> to refresh.
                 </>
               ) : (
                 "No saved syllabus version found. Save one on the Syllabus Audit page first."

@@ -66,11 +66,17 @@ export default function DosAndDonts() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {domain.subtopics.map(st => (
+            {domain.subtopics.map((st, mIdx) => (
               <Collapsible key={st.id} open={openTopics[st.id]} onOpenChange={() => toggleTopic(st.id)}>
-                <CollapsibleTrigger className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors">
+                <CollapsibleTrigger className="w-full flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-muted/10 hover:bg-muted/30 transition-colors">
+                  <Badge variant="secondary" className={cn("text-[10px] font-mono uppercase tracking-wider", domainColors[dIdx])}>
+                    Module {mIdx + 1}
+                  </Badge>
                   <span className="text-xs text-muted-foreground font-mono">{st.id}</span>
                   <span className="text-sm font-semibold text-foreground flex-1 text-left">{st.title}</span>
+                  <span className="text-[11px] text-muted-foreground hidden md:inline">
+                    <span className="text-emerald-400 font-semibold">{st.dos.length}</span> dos · <span className="text-red-400 font-semibold">{st.donts.length}</span> don'ts
+                  </span>
                   <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", openTopics[st.id] && "rotate-180")} />
                 </CollapsibleTrigger>
                 <CollapsibleContent>

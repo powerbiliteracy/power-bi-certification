@@ -446,20 +446,16 @@ export default function KeyTerms() {
     };
     load();
     const onFocus = () => load();
+    const onApplied = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.sectionKey === "key-terms") load();
+    };
     window.addEventListener("focus", onFocus);
-    // Refresh when an admin applies a fix from the sync dialog
-    const channel = supabase
-      .channel("key-terms-overrides")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "content_overrides", filter: "section_key=eq.key-terms" },
-        () => load(),
-      )
-      .subscribe();
+    window.addEventListener("content-override-applied", onApplied);
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onFocus);
-      supabase.removeChannel(channel);
+      window.removeEventListener("content-override-applied", onApplied);
     };
   }, []);
 

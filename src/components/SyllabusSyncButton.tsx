@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -28,6 +29,9 @@ import {
   Wrench,
   ExternalLink,
   Check,
+  Sparkles,
+  Users,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +47,12 @@ import { cn } from "@/lib/utils";
 interface SyllabusSyncButtonProps {
   /** Stable label shown in the dialog header (e.g. "Exam Checklist"). */
   sectionLabel: string;
+  /** Stable key used in the DB for overrides + update events. */
+  sectionKey: string;
+  /** Item type passed to the AI generator (e.g. "checklist_item", "flashcard"). */
+  itemType: string;
+  /** user_progress.item_type values used to count affected users. */
+  progressItemTypes?: string[];
   /** Strings representing every topic / lesson / card on this page. */
   corpus: string[];
   /** Total content items in the section (for context line). */
@@ -82,8 +92,16 @@ function formatRelative(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+interface PendingFix {
+  match: TopicMatch;
+  isRename: boolean;
+}
+
 export default function SyllabusSyncButton({
   sectionLabel,
+  sectionKey,
+  itemType,
+  progressItemTypes,
   corpus,
   itemCount,
 }: SyllabusSyncButtonProps) {
@@ -109,6 +127,13 @@ export default function SyllabusSyncButton({
       return new Set<string>();
     }
   });
+  const [fixingKey, setFixingKey] = useState<string | null>(null);
+  const [confirmFix, setConfirmFix] = useState<PendingFix | null>(null);
+  const [affectedUsers, setAffectedUsers] = useState<number | null>(null);
+  const [countingUsers, setCountingUsers] = useState(false);
+  const [appliedFixes, setAppliedFixes] = useState<
+    Array<{ topic: string; isRename: boolean; closestMatch?: string }>
+  >([]);
 
   useEffect(() => {
     try {
@@ -134,10 +159,15 @@ export default function SyllabusSyncButton({
     }
   };
 
-  const toggleFixed = (key: string) => {
+  const markFixed = (key: string) => {
     const next = new Set(fixed);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
+    next.add(key);
+    persistFixed(next);
+  };
+
+  const undoFixed = (key: string) => {
+    const next = new Set(fixed);
+    next.delete(key);
     persistFixed(next);
   };
 
@@ -147,6 +177,7 @@ export default function SyllabusSyncButton({
     setLoading(true);
     setReport(null);
     setVersion(null);
+    setAppliedFixes([]);
     try {
       const { data, error } = await supabase
         .from("syllabus_versions")
@@ -236,7 +267,107 @@ export default function SyllabusSyncButton({
     toast({ title: "Report copied", description: "Paste into your notes." });
   };
 
-  // Filter out topics the admin already marked as fixed
+  const requestFix = async (match: TopicMatch, isRename: boolean) => {
+    setConfirmFix({ match, isRename });
+    setAffectedUsers(null);
+    if (progressItemTypes && progressItemTypes.length > 0) {
+      setCountingUsers(true);
+      try {
+        const { count } = await supabase
+          .from("user_progress")
+          .select("user_id", { count: "exact", head: true })
+          .in("item_type", progressItemTypes);
+        setAffectedUsers(count ?? 0);
+      } catch {
+        setAffectedUsers(null);
+      } finally {
+        setCountingUsers(false);
+      }
+    } else {
+      setAffectedUsers(0);
+    }
+  };
+
+  const confirmAndApplyFix = async () => {
+    if (!confirmFix || !version) return;
+    const { match, isRename } = confirmFix;
+    const key = topicKey(match);
+    setFixingKey(key);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-content-fix", {
+        body: {
+          sectionKey,
+          sectionLabel,
+          itemType,
+          topic: match.topic.raw,
+          domainName: match.domainName,
+          domainSection: match.sectionTitle,
+          syllabusVersionId: version.id,
+          closestMatch: match.bestMatch,
+          isRename,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // Track the applied fix (we'll bundle them into one update event when admin closes)
+      setAppliedFixes((prev) => [
+        ...prev,
+        { topic: match.topic.raw, isRename, closestMatch: match.bestMatch },
+      ]);
+      markFixed(key);
+      toast({
+        title: "Fix applied",
+        description: `AI-generated content saved for "${match.topic.raw}".`,
+      });
+      setConfirmFix(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not apply fix";
+      toast({ title: "Fix failed", description: message, variant: "destructive" });
+    } finally {
+      setFixingKey(null);
+    }
+  };
+
+  const publishUpdateEvent = async () => {
+    if (appliedFixes.length === 0 || !version) return;
+    const added = appliedFixes.filter((f) => !f.isRename).length;
+    const renamed = appliedFixes.filter((f) => f.isRename).length;
+    const summaryParts: string[] = [];
+    if (added) summaryParts.push(`${added} added`);
+    if (renamed) summaryParts.push(`${renamed} renamed`);
+    const summary = summaryParts.join(", ");
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in");
+
+      const { error } = await supabase.from("content_update_events").insert({
+        section_key: sectionKey,
+        section_label: sectionLabel,
+        summary,
+        added_count: added,
+        renamed_count: renamed,
+        syllabus_version_label: version.label,
+        syllabus_version_id: version.id,
+        details: appliedFixes,
+        created_by: user.id,
+      });
+      if (error) throw error;
+      toast({
+        title: "Users will be notified",
+        description: `${summary} on next visit to ${sectionLabel}.`,
+      });
+      setAppliedFixes([]);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not publish update";
+      toast({ title: "Notify failed", description: message, variant: "destructive" });
+    }
+  };
+
+  // Filter out topics already fixed
   const visible = useMemo(() => {
     if (!report) return null;
     const keep = (m: TopicMatch) => !fixed.has(topicKey(m));
@@ -319,19 +450,30 @@ export default function SyllabusSyncButton({
                     </Badge>
                     {fixedCount > 0 && (
                       <Badge variant="outline" className="gap-1 border-primary/40 text-primary">
-                        <Check className="w-3 h-3" /> {fixedCount} marked fixed
+                        <Check className="w-3 h-3" /> {fixedCount} fixed
                       </Badge>
                     )}
                   </div>
                 </div>
                 <Progress value={pct} className="h-2" />
-                {fixedCount > 0 && (
-                  <div className="flex justify-end">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  {fixedCount > 0 ? (
                     <Button variant="ghost" size="sm" className="text-xs h-6" onClick={clearFixed}>
                       Reset fixed list
                     </Button>
-                  </div>
-                )}
+                  ) : (
+                    <span />
+                  )}
+                  {appliedFixes.length > 0 && (
+                    <Button
+                      size="sm"
+                      onClick={publishUpdateEvent}
+                      className="gap-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" /> Notify users ({appliedFixes.length})
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <ScrollArea className="flex-1 -mx-6 px-6">
@@ -350,7 +492,9 @@ export default function SyllabusSyncButton({
                             topics={visible.missing}
                             variant="missing"
                             fixed={fixed}
-                            onToggleFixed={toggleFixed}
+                            fixingKey={fixingKey}
+                            onFix={(m) => requestFix(m, false)}
+                            onUndoFix={(k) => undoFixed(k)}
                           />
                         </AccordionContent>
                       </AccordionItem>
@@ -368,7 +512,9 @@ export default function SyllabusSyncButton({
                             topics={visible.partial}
                             variant="partial"
                             fixed={fixed}
-                            onToggleFixed={toggleFixed}
+                            fixingKey={fixingKey}
+                            onFix={(m) => requestFix(m, true)}
+                            onUndoFix={(k) => undoFixed(k)}
                           />
                         </AccordionContent>
                       </AccordionItem>
@@ -386,7 +532,7 @@ export default function SyllabusSyncButton({
                             topics={visible.covered}
                             variant="covered"
                             fixed={fixed}
-                            onToggleFixed={toggleFixed}
+                            fixingKey={fixingKey}
                           />
                         </AccordionContent>
                       </AccordionItem>
@@ -413,6 +559,78 @@ export default function SyllabusSyncButton({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Per-topic Fix confirmation */}
+      <Dialog
+        open={!!confirmFix}
+        onOpenChange={(o) => !o && !fixingKey && setConfirmFix(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wrench className="w-5 h-5" /> Apply AI-generated fix?
+            </DialogTitle>
+            <DialogDescription>
+              The app will use AI to generate content for this {confirmFix?.isRename ? "renamed" : "missing"} topic
+              and save it as a published override on the {sectionLabel} page.
+            </DialogDescription>
+          </DialogHeader>
+
+          {confirmFix && (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border p-3 bg-card">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                  Syllabus topic
+                </div>
+                <div className="font-medium text-foreground">{confirmFix.match.topic.raw}</div>
+                {confirmFix.isRename && confirmFix.match.bestMatch && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Will replace closest existing item:{" "}
+                    <span className="italic">"{confirmFix.match.bestMatch}"</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 flex gap-2">
+                <Users className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <p className="font-medium text-foreground">User impact</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    {countingUsers
+                      ? "Counting affected users…"
+                      : affectedUsers === null
+                        ? "Could not estimate user impact."
+                        : affectedUsers === 0
+                          ? "No users currently track progress in this section."
+                          : `${affectedUsers} user${affectedUsers === 1 ? "" : "s"} have progress in this section. They'll see a banner asking whether to accept the new content or keep their snapshot.`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmFix(null)}
+              disabled={!!fixingKey}
+            >
+              Cancel
+            </Button>
+            <Button onClick={confirmAndApplyFix} disabled={!!fixingKey} className="gap-1">
+              {fixingKey ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" /> Apply fix
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -425,12 +643,16 @@ function TopicList({
   topics,
   variant,
   fixed,
-  onToggleFixed,
+  fixingKey,
+  onFix,
+  onUndoFix,
 }: {
   topics: TopicMatch[];
   variant: "covered" | "partial" | "missing";
   fixed: Set<string>;
-  onToggleFixed: (key: string) => void;
+  fixingKey: string | null;
+  onFix?: (m: TopicMatch) => void;
+  onUndoFix?: (key: string) => void;
 }) {
   const { toast } = useToast();
   const tone =
@@ -450,6 +672,7 @@ function TopicList({
       {topics.map((m, i) => {
         const key = topicKey(m);
         const isFixed = fixed.has(key);
+        const isThisFixing = fixingKey === key;
         return (
           <li key={i} className={cn("rounded-md border p-3 text-sm", tone, isFixed && "opacity-60")}>
             <div className="text-xs text-muted-foreground mb-1 flex items-center justify-between gap-2">
@@ -458,7 +681,7 @@ function TopicList({
               </span>
               {isFixed && (
                 <Badge variant="outline" className="text-[9px] border-primary/40 text-primary">
-                  Marked fixed
+                  Fixed by AI
                 </Badge>
               )}
             </div>
@@ -475,6 +698,34 @@ function TopicList({
 
             {variant !== "covered" && (
               <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+                {!isFixed && onFix && (
+                  <Button
+                    size="sm"
+                    className="h-6 text-[11px] gap-1"
+                    onClick={() => onFix(m)}
+                    disabled={isThisFixing}
+                  >
+                    {isThisFixing ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" /> Fixing…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3" /> Fix issue
+                      </>
+                    )}
+                  </Button>
+                )}
+                {isFixed && onUndoFix && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 text-[11px] gap-1"
+                    onClick={() => onUndoFix(key)}
+                  >
+                    <Check className="w-3 h-3" /> Undo
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -492,22 +743,6 @@ function TopicList({
                   <Link to="/SyllabusAudit">
                     <ExternalLink className="w-3 h-3" /> Open Syllabus Audit
                   </Link>
-                </Button>
-                <Button
-                  variant={isFixed ? "default" : "outline"}
-                  size="sm"
-                  className="h-6 text-[11px] gap-1 ml-auto"
-                  onClick={() => onToggleFixed(key)}
-                >
-                  {isFixed ? (
-                    <>
-                      <Check className="w-3 h-3" /> Undo fix
-                    </>
-                  ) : (
-                    <>
-                      <Wrench className="w-3 h-3" /> Mark as fixed
-                    </>
-                  )}
                 </Button>
               </div>
             )}

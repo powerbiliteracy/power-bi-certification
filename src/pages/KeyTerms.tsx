@@ -483,16 +483,89 @@ export default function KeyTerms() {
       existingByDomain.set(d.domain, set);
     }
 
+    // Curated keyword routes per section title — the term/topic text is matched
+    // against these regexes to pick the right sub-section. First match wins.
+    // Keep keys lowercase. Order within a domain matters: more specific first.
+    const SECTION_ROUTES: Record<string, RegExp[]> = {
+      // Prepare the Data
+      "data connection & setup": [
+        /\b(directlake|directquery|import mode|data ?source|credential|privacy level|gateway|parameter|connector|odata|sharepoint|api)\b/i,
+      ],
+      "data profiling & quality": [
+        /\b(profil|column quality|column distribution|null|cleans|data quality|outlier)\b/i,
+      ],
+      "data transformation \\(power query\\)": [
+        /\b(power query|m language|merge|append|pivot|unpivot|transpose|group by|custom column|conditional column|fuzzy|semi[- ]structured|json|xml|key|fact table|dimension table|surrogate|composite|primary key|foreign key|data type|convert to table|applied steps?|step|aggregat|transform|cleanse|fill|replace value|split column)\b/i,
+      ],
+      "data load configuration": [
+        /\b(query folding|enable load|include in (report )?refresh|staging|reference quer|duplicate quer|incremental refresh|data loading|load)\b/i,
+      ],
+      // Model the Data
+      "data model design": [
+        /\b(star schema|snowflake|fact|dimension|role[- ]playing|hidden|hide|model design|grain)\b/i,
+      ],
+      relationships: [
+        /\b(relationship|cardinality|cross[- ]filter|userelationship|^related$|relatedtable|active|inactive|bidirectional|one[- ]to[- ]many|many[- ]to[- ]many)\b/i,
+      ],
+      "dax fundamentals": [
+        /\b(dax|measure|calculated column|implicit measure|quick measure|calculate|filter context|row context|context transition|iterator|sumx|averagex|var|return|divide|switch|calculation group|statistical|semi[- ]additive|summari[sz]ation|^summari[sz]e$)\b/i,
+      ],
+      "time intelligence dax": [
+        /\b(totalytd|sameperiodlastyear|dateadd|datesytd|datesqtd|datesmtd|parallelperiod|date table|mark as date|time intelligence|year[- ]over[- ]year|ytd|qtd|mtd)\b/i,
+      ],
+      "performance optimization": [
+        /\b(performance|optimi[sz]e|granularity|aggregation|model size|vertipaq|dax studio|query plan|storage engine|formula engine)\b/i,
+      ],
+      // Visualize & Analyze Data
+      "report creation": [
+        /\b(visual type|format pane|page configuration|conditional formatting|slicer|filter pane|theme|visual calculation|paginated|chart|matrix|table visual|card|page background)\b/i,
+      ],
+      "copilot features": [
+        /\b(copilot|narrative|smart narrative|generative|ai assistant)\b/i,
+      ],
+      "interactivity & ux": [
+        /\b(bookmark|drill[- ](down|through|up)|tooltip|button|navigation|edit interactions|sync slicer|selection|cross[- ]highlight|cross[- ]filter visual|page navigation)\b/i,
+      ],
+      "analytics & insights": [
+        /\b(decomposition tree|key influencer|q&a|q and a|anomaly|forecast|cluster|grouping|binning|analy[sz]e|insight|smart insight|trend line|reference line|ai visual|personalized visual|export)\b/i,
+      ],
+      "accessibility & performance": [
+        /\b(accessibility|alt text|tab order|screen reader|colour blind|color blind|contrast|performance analy[sz]er|reduce visuals|page load)\b/i,
+      ],
+      // Manage & Secure Power BI
+      "workspaces & collaboration": [
+        /\b(workspace|app(?: audience)?|deployment pipeline|share|sharing|publish|publishing|dashboard|power bi service|collaborat|item[- ]level access)\b/i,
+      ],
+      "governance & endorsement": [
+        /\b(endorsement|certif|promotion|sensitivity label|govern|lineage|impact analysis|usage metric|audit)\b/i,
+      ],
+      "data connectivity & refresh": [
+        /\b(refresh|gateway|scheduled refresh|incremental|dataflow|datamart|connection)\b/i,
+      ],
+      security: [
+        /\b(rls|row[- ]level security|ols|object[- ]level|dynamic security|userprincipalname|role|permission|secur|encrypt)\b/i,
+      ],
+    };
+
     // Pick the best section within a domain for a given override
     const pickSection = (domain: DomainData, o: OverrideRow): string => {
-      const haystacks: string[] = [
-        o.domain_section ?? "",
+      const haystackText = [
         o.generated_title ?? "",
         o.original_topic ?? "",
-      ];
-      const overrideTokens = tokenize(haystacks.join(" "));
+        o.domain_section ?? "",
+      ].join(" ");
+
+      // 1. Curated keyword routes — only consider sections that exist in this domain
+      for (const s of domain.sections) {
+        const routes = SECTION_ROUTES[s.title.toLowerCase()];
+        if (!routes) continue;
+        if (routes.some((rx) => rx.test(haystackText))) return s.title;
+      }
+
+      // 2. Token-overlap fallback against section titles
+      const overrideTokens = tokenize(haystackText);
       let best = domain.sections[0]?.title ?? "";
-      let bestScore = -1;
+      let bestScore = 0;
       for (const s of domain.sections) {
         const sectionTokens = tokenize(s.title);
         let score = 0;

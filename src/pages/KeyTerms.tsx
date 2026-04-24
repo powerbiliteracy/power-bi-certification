@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import BadgeGrantOnVisit from "@/components/BadgeGrantOnVisit";
 import FavoriteButton from "@/components/FavoriteButton";
 import SyllabusSyncButton from "@/components/SyllabusSyncButton";
 import ContentUpdateBanner from "@/components/ContentUpdateBanner";
-import { Search, ChevronDown, ChevronRight, Lightbulb, CheckCircle, ExternalLink, Zap, ChevronsUpDown } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Lightbulb, CheckCircle, ExternalLink, Zap, ChevronsUpDown, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const msLearnUrl = (term: string) =>
   `https://learn.microsoft.com/en-us/search/?terms=${encodeURIComponent(term + " Power BI")}&category=Ai`;

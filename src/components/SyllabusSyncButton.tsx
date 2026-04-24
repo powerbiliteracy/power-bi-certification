@@ -446,8 +446,8 @@ export default function SyllabusSyncButton({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileSearch className="w-5 h-5" />
               {sectionLabel} — Syllabus Sync Report
@@ -472,7 +472,7 @@ export default function SyllabusSyncButton({
 
           {report && visible && (
             <>
-              <div className="space-y-3">
+              <div className="space-y-3 px-6 pb-3 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -499,16 +499,37 @@ export default function SyllabusSyncButton({
                 </div>
                 <Progress value={pct} className="h-2" />
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  {fixedCount > 0 ? (
-                    <Button variant="ghost" size="sm" className="text-xs h-6" onClick={clearFixed}>
-                      Reset fixed list
-                    </Button>
-                  ) : (
-                    <span />
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(visible.missing.length > 0 || visible.partial.length > 0) && (
+                      <Button
+                        size="sm"
+                        onClick={fixAll}
+                        disabled={fixingAll || !!fixingKey}
+                        className="gap-1 h-7"
+                      >
+                        {fixingAll ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Fixing {fixAllProgress?.done}/{fixAllProgress?.total}…
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Fix all ({visible.missing.length + visible.partial.length})
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {fixedCount > 0 && (
+                      <Button variant="ghost" size="sm" className="text-xs h-6" onClick={clearFixed}>
+                        Reset fixed list
+                      </Button>
+                    )}
+                  </div>
                   {appliedFixes.length > 0 && (
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={publishUpdateEvent}
                       className="gap-1"
                     >
@@ -518,8 +539,8 @@ export default function SyllabusSyncButton({
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="space-y-4">
+              <ScrollArea className="flex-1 min-h-0 px-6">
+                <div className="space-y-4 pb-4">
                   <Accordion type="multiple" defaultValue={["missing", "partial"]}>
                     {visible.missing.length > 0 && (
                       <AccordionItem value="missing">

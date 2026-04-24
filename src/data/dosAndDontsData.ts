@@ -227,6 +227,7 @@ export const DOS_DONTS_DOMAINS: DosDontsDomain[] = [
           { text: "Don't forget to update the app after workspace changes — consumers will keep seeing the old version.", reason: "App content is a snapshot; without Update app, no changes reach end users." },
         ],
       },
+      {
         id: "4.2", title: "Secure and Govern Power BI Items",
         bullets: ["Assign workspace roles", "Configure item-level access", "Configure access to semantic models", "Implement row-level security roles", "Configure RLS group membership", "Apply sensitivity labels"],
         dos: [

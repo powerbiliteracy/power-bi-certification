@@ -41,11 +41,13 @@ export const DOS_DONTS_DOMAINS: DosDontsDomain[] = [
       },
       {
         id: "1.2", title: "Profile and Clean the Data",
-        bullets: ["Evaluate data statistics and column properties", "Resolve inconsistencies, nulls, and data quality issues"],
+        bullets: ["Evaluate data statistics and column properties", "Resolve inconsistencies, nulls, and data quality issues", "Resolve data import errors"],
         dos: [
           { text: "Enable Column Distribution, Quality, and Profile before committing to a load strategy.", reason: "Profiling reveals null percentages, distinct values, and errors before they enter the model." },
           { text: "Replace or remove null values in key columns before establishing relationships.", reason: "Nulls in foreign keys produce blank rows that corrupt aggregations." },
           { text: "Standardise text inconsistencies using Trim, Clean, and Replace steps.", reason: "Inconsistent strings produce duplicate dimension members." },
+          { text: "Investigate the root cause of import errors (type, formula, credentials) before removing them.", reason: "Each error class has a distinct fix; blind removal hides upstream data quality issues." },
+          { text: "Set the profile sample to the entire dataset for production-quality analysis.", reason: "The default 1,000-row sample can miss rare but critical data quality issues." },
         ],
         donts: [
           { text: "Don't skip data profiling and assume source data is clean.", reason: "Unvalidated data silently corrupts the model with duplicate keys and unexpected nulls." },

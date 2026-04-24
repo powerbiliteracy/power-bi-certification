@@ -446,7 +446,7 @@ export default function SyllabusSyncButton({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogContent className="max-w-3xl max-h-[85vh] !flex flex-col p-0 gap-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileSearch className="w-5 h-5" />

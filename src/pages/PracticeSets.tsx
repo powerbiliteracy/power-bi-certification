@@ -103,6 +103,9 @@ export default function PracticeSets() {
           </div>
           <SyllabusSyncButton
             sectionLabel="Exam Simulations"
+            sectionKey="exam-simulations"
+            itemType="scenario"
+            progressItemTypes={["practice_set"]}
             corpus={allSets.flatMap((set, i) => [
               setDescriptions[i]?.title || "",
               setDescriptions[i]?.description || "",

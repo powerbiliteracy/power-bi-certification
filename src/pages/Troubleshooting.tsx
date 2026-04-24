@@ -563,6 +563,9 @@ export default function Troubleshooting() {
         </div>
         <SyllabusSyncButton
           sectionLabel="Troubleshooting"
+          sectionKey="troubleshooting"
+          itemType="troubleshooting"
+          progressItemTypes={["troubleshooting"]}
           corpus={issues.flatMap(i => [i.title, i.description, i.section, ...(i.linkedTopics || []), ...(i.solutions || [])])}
           itemCount={issues.length}
         />

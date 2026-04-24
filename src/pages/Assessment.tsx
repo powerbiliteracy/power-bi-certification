@@ -151,6 +151,9 @@ export default function Assessment() {
           </div>
           <SyllabusSyncButton
             sectionLabel="Topic Assessments"
+            sectionKey="topic-assessments"
+            itemType="topic"
+            progressItemTypes={["assessment"]}
             corpus={(assessmentQuestions as Array<{ topic?: string; section?: string; question?: string }>).flatMap(q => [q.topic, q.section, q.question].filter((s): s is string => Boolean(s)))}
             itemCount={assessmentQuestions.length}
           />

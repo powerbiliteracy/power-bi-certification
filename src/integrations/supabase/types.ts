@@ -77,6 +77,96 @@ export type Database = {
         }
         Relationships: []
       }
+      content_overrides: {
+        Row: {
+          created_at: string
+          created_by: string
+          domain_name: string | null
+          domain_section: string | null
+          generated_body: Json
+          generated_title: string
+          id: string
+          item_type: string
+          original_topic: string
+          section_key: string
+          status: string
+          syllabus_version_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          domain_name?: string | null
+          domain_section?: string | null
+          generated_body?: Json
+          generated_title: string
+          id?: string
+          item_type?: string
+          original_topic: string
+          section_key: string
+          status?: string
+          syllabus_version_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          domain_name?: string | null
+          domain_section?: string | null
+          generated_body?: Json
+          generated_title?: string
+          id?: string
+          item_type?: string
+          original_topic?: string
+          section_key?: string
+          status?: string
+          syllabus_version_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_update_events: {
+        Row: {
+          added_count: number
+          created_at: string
+          created_by: string
+          details: Json
+          id: string
+          renamed_count: number
+          section_key: string
+          section_label: string
+          summary: string
+          syllabus_version_id: string | null
+          syllabus_version_label: string | null
+        }
+        Insert: {
+          added_count?: number
+          created_at?: string
+          created_by: string
+          details?: Json
+          id?: string
+          renamed_count?: number
+          section_key: string
+          section_label: string
+          summary: string
+          syllabus_version_id?: string | null
+          syllabus_version_label?: string | null
+        }
+        Update: {
+          added_count?: number
+          created_at?: string
+          created_by?: string
+          details?: Json
+          id?: string
+          renamed_count?: number
+          section_key?: string
+          section_label?: string
+          summary?: string
+          syllabus_version_id?: string | null
+          syllabus_version_label?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -315,6 +405,41 @@ export type Database = {
             columns: ["badge_id"]
             isOneToOne: false
             referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_content_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          choice: string
+          event_id: string
+          id: string
+          snapshot: Json | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          choice: string
+          event_id: string
+          id?: string
+          snapshot?: Json | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          choice?: string
+          event_id?: string
+          id?: string
+          snapshot?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_content_acknowledgments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "content_update_events"
             referencedColumns: ["id"]
           },
         ]

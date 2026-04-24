@@ -56,6 +56,8 @@ export default function ExamChecklist() {
           <FavoriteButton itemId="exam-checklist" itemType="page" />
           <SyllabusSyncButton
             sectionLabel="Exam Checklist"
+            sectionKey="exam-checklist"
+            itemType="checklist_item"
             corpus={CHECKLIST_DOMAINS.flatMap(d => d.sections.flatMap(s => s.items.map(i => i.label)))}
             itemCount={totalItems}
           />

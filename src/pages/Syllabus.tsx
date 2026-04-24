@@ -193,6 +193,9 @@ export default function Syllabus() {
             </div>
             <SyllabusSyncButton
               sectionLabel="Exam Syllabus"
+              sectionKey="exam-syllabus"
+              itemType="topic"
+              progressItemTypes={["syllabus_topic"]}
               corpus={pl300Syllabus.domains.flatMap(d => d.sections.flatMap(s => s.topics))}
               itemCount={pl300Syllabus.domains.reduce((sum, d) => sum + d.sections.reduce((s, sec) => s + sec.topics.length, 0), 0)}
             />

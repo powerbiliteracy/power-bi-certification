@@ -187,6 +187,8 @@ export default function DecisionFramework() {
         </div>
         <SyllabusSyncButton
           sectionLabel="Decision Framework"
+          sectionKey="decision-framework"
+          itemType="decision_step"
           corpus={phases.flatMap(p => [p.title, p.section, ...p.steps.flatMap(s => [s.action, s.detail, ...s.syllabusTopics])])}
           itemCount={phases.reduce((sum, p) => sum + p.steps.length, 0)}
         />

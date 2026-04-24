@@ -498,7 +498,8 @@ export default function SyllabusSyncButton({
             <DialogDescription>
               {version ? (
                 <>
-                  Comparing <strong>{itemCount}</strong> items in this section against saved
+                  Comparing <strong>{itemCount}</strong> {mode === "key-terms" ? "key terms" : "items"} in this section against
+                  the {mode === "key-terms" ? "AI-extracted Key Terms & Features for " : ""}saved
                   version <strong>{version.label}</strong> (saved{" "}
                   {new Date(version.created_at).toLocaleDateString()}).
                 </>

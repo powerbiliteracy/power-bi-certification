@@ -564,7 +564,7 @@ export default function KeyTerms() {
           itemType="key_term"
           mode="key-terms"
           progressItemTypes={["key_term"]}
-          corpus={keyTermsData.flatMap(d => d.sections.flatMap(s => s.terms.map(t => t.term)))}
+          corpus={mergedData.flatMap(d => d.sections.flatMap(s => s.terms.map(t => t.term)))}
           itemCount={totalTerms}
         />
       </div>

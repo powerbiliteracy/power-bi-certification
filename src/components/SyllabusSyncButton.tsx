@@ -346,12 +346,20 @@ function TopicList({
             {m.domainName} · {m.sectionTitle}
           </div>
           <div className="font-medium text-foreground">{m.topic.raw}</div>
-          {m.bestMatch && variant !== "missing" && (
+          {m.bestMatch ? (
             <div className="text-xs text-muted-foreground mt-1">
-              closest in app: <span className="italic">"{m.bestMatch}"</span> ·{" "}
+              {variant === "missing" ? "weak match" : "closest in app"}:{" "}
+              <span className="italic">"{m.bestMatch}"</span> ·{" "}
               {Math.round(m.bestScore * 100)}% match
             </div>
+          ) : (
+            <div className="text-xs text-muted-foreground mt-1">no match in app content</div>
           )}
+        </li>
+      ))}
+    </ul>
+  );
+}
         </li>
       ))}
     </ul>

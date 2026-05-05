@@ -185,6 +185,14 @@ export default function PageSummariesAdmin() {
       toast({ title: "Missing fields", description: "Title and image are required.", variant: "destructive" });
       return;
     }
+    if (formQC && !formQC.ok && !qcOverride) {
+      toast({
+        title: "Quality check blocking save",
+        description: "Tick \"Save anyway\" to override, or upload a higher-quality image.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     const payload = {
       title: form.title.trim(),

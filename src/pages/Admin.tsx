@@ -11,11 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch, GitCompare } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch, GitCompare, FileImage } from "lucide-react";
 import { Navigate, Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import SortableSectionsTable from "@/components/SortableSectionsTable";
 import ConceptComparisonsAdmin from "@/components/ConceptComparisonsAdmin";
+import PageSummariesAdmin from "@/components/PageSummariesAdmin";
 
 interface SectionRow {
   id: string;
@@ -441,6 +442,7 @@ export default function Admin() {
           <TabsTrigger value="analytics" className="gap-2"><BarChart3 className="w-4 h-4" /> Analytics</TabsTrigger>
           <TabsTrigger value="reviews" className="gap-2"><MessageSquare className="w-4 h-4" /> Reviews</TabsTrigger>
           <TabsTrigger value="comparisons" className="gap-2"><GitCompare className="w-4 h-4" /> Comparisons</TabsTrigger>
+          <TabsTrigger value="summaries" className="gap-2"><FileImage className="w-4 h-4" /> Page Summaries</TabsTrigger>
         </TabsList>
 
         {/* SECTIONS TAB - same as before */}
@@ -877,6 +879,10 @@ export default function Admin() {
         {/* COMPARISONS TAB */}
         <TabsContent value="comparisons" className="mt-6 space-y-6">
           <ConceptComparisonsAdmin />
+        </TabsContent>
+
+        <TabsContent value="summaries" className="mt-6 space-y-6">
+          <PageSummariesAdmin />
         </TabsContent>
       </Tabs>
     </div>

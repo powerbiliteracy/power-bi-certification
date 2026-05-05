@@ -32,9 +32,27 @@ export default function PageSummaries() {
       const { data } = await supabase
         .from("page_summaries")
         .select("*")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true });
-      if (data) setItems(data as any);
+        .eq("is_active", true);
+      if (data) {
+        const domainOrder = [
+          "Prepare the data",
+          "Model the data",
+          "Visualize and analyze the data",
+          "Manage and secure Power BI",
+        ];
+        const sorted = [...(data as Summary[])].sort((a, b) => {
+          const aDomain = domainOrder.indexOf(a.syllabus_domain || "");
+          const bDomain = domainOrder.indexOf(b.syllabus_domain || "");
+          const aRank = aDomain === -1 ? 999 : aDomain;
+          const bRank = bDomain === -1 ? 999 : bDomain;
+          if (aRank !== bRank) return aRank - bRank;
+          if ((a.syllabus_subtopic || "") !== (b.syllabus_subtopic || "")) {
+            return (a.syllabus_subtopic || "").localeCompare(b.syllabus_subtopic || "");
+          }
+          return (a.sort_order || 0) - (b.sort_order || 0);
+        });
+        setItems(sorted);
+      }
       setLoading(false);
     })();
   }, []);

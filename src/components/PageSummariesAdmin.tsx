@@ -58,12 +58,11 @@ export default function PageSummariesAdmin() {
     setLoading(true);
     const { data, error } = await supabase
       .from("page_summaries")
-      .select("*")
-      .order("sort_order", { ascending: true });
+      .select("*");
     if (error) {
       toast({ title: "Failed to load", description: error.message, variant: "destructive" });
     } else if (data) {
-      // Sort by syllabus domain order, then sort_order
+      // Sort by syllabus domain order, then subtopic, then sort_order
       const sorted = [...data].sort((a: any, b: any) => {
         const ai = domainOrder.indexOf(a.syllabus_domain || "");
         const bi = domainOrder.indexOf(b.syllabus_domain || "");

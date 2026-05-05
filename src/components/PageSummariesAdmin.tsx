@@ -16,9 +16,17 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { FileImage, Plus, Pencil, Trash2, Upload } from "lucide-react";
+import { FileImage, Plus, Pencil, Trash2, Upload, ShieldCheck, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { pl300Syllabus } from "@/data/SyllabusData";
+import { runImageQC, type QCResult } from "@/lib/imageQuality";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Summary {
   id: string;
@@ -58,6 +66,10 @@ export default function PageSummariesAdmin() {
   const [form, setForm] = useState<Omit<Summary, "id">>(empty());
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [formQC, setFormQC] = useState<QCResult | null>(null);
+  const [qcOverride, setQcOverride] = useState(false);
+  const [qcResults, setQcResults] = useState<Record<string, QCResult>>({});
+  const [qcRunning, setQcRunning] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -91,6 +103,8 @@ export default function PageSummariesAdmin() {
   const openNew = () => {
     setEditing(null);
     setForm(empty());
+    setFormQC(null);
+    setQcOverride(false);
     setDialogOpen(true);
   };
 
@@ -105,11 +119,22 @@ export default function PageSummariesAdmin() {
       sort_order: s.sort_order,
       is_active: s.is_active,
     });
+    setFormQC(qcResults[s.id] ?? null);
+    setQcOverride(false);
     setDialogOpen(true);
   };
 
   const handleUpload = async (file: File) => {
     setUploading(true);
+    setFormQC(null);
+    setQcOverride(false);
+    let qc: QCResult | null = null;
+    try {
+      qc = await runImageQC(file);
+      setFormQC(qc);
+    } catch (e) {
+      console.warn("QC failed", e);
+    }
     const ext = file.name.split(".").pop() ?? "png";
     const path = `${user?.id ?? "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage.from("page-summaries").upload(path, file, {
@@ -124,12 +149,48 @@ export default function PageSummariesAdmin() {
     const { data } = supabase.storage.from("page-summaries").getPublicUrl(path);
     setForm((f) => ({ ...f, image_url: data.publicUrl }));
     setUploading(false);
-    toast({ title: "Image uploaded" });
+    if (qc && !qc.ok) {
+      toast({
+        title: "Quality check failed",
+        description: "Image may be hard to read. Review issues below before saving.",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Image uploaded" });
+    }
+  };
+
+  const runQCOnAll = async () => {
+    setQcRunning(true);
+    const out: Record<string, QCResult> = {};
+    for (const it of items) {
+      try {
+        out[it.id] = await runImageQC(it.image_url);
+      } catch (e) {
+        // skip
+      }
+    }
+    setQcResults(out);
+    setQcRunning(false);
+    const failed = Object.values(out).filter((r) => !r.ok).length;
+    const warned = Object.values(out).filter((r) => r.ok && r.issues.length).length;
+    toast({
+      title: "Quality check complete",
+      description: `${failed} failing, ${warned} warnings, ${Object.keys(out).length - failed - warned} clean.`,
+    });
   };
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.image_url.trim()) {
       toast({ title: "Missing fields", description: "Title and image are required.", variant: "destructive" });
+      return;
+    }
+    if (formQC && !formQC.ok && !qcOverride) {
+      toast({
+        title: "Quality check blocking save",
+        description: "Tick \"Save anyway\" to override, or upload a higher-quality image.",
+        variant: "destructive",
+      });
       return;
     }
     setSaving(true);
@@ -194,9 +255,15 @@ export default function PageSummariesAdmin() {
             Upload one-pager summary images. Sorted by PL-300 syllabus domain, then by sort order.
           </CardDescription>
         </div>
-        <Button onClick={openNew} size="sm" className="gap-1">
-          <Plus className="w-4 h-4" /> New summary
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={runQCOnAll} size="sm" variant="outline" className="gap-1" disabled={qcRunning || loading}>
+            {qcRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+            Run QC on all
+          </Button>
+          <Button onClick={openNew} size="sm" className="gap-1">
+            <Plus className="w-4 h-4" /> New summary
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -211,42 +278,86 @@ export default function PageSummariesAdmin() {
                 <TableHead>Title</TableHead>
                 <TableHead>Domain / Subtopic</TableHead>
                 <TableHead className="w-20">Order</TableHead>
+                <TableHead className="w-24">Quality</TableHead>
                 <TableHead className="w-20">Active</TableHead>
                 <TableHead className="w-28">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>
-                    <img src={s.image_url} alt="" className="w-16 h-12 object-cover rounded" />
-                  </TableCell>
-                  <TableCell className="font-medium">{s.title}</TableCell>
-                  <TableCell className="text-xs">
-                    <div>{s.syllabus_domain || "—"}</div>
-                    <div className="text-muted-foreground">{s.syllabus_subtopic || ""}</div>
-                  </TableCell>
-                  <TableCell>{s.sort_order}</TableCell>
-                  <TableCell>
-                    <Switch checked={s.is_active} onCheckedChange={(v) => toggleActive(s, v)} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="outline" onClick={() => openEdit(s)} className="h-8 px-2">
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(s)}
-                        className="h-8 px-2 text-destructive"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {items.map((s) => {
+                const qc = qcResults[s.id];
+                return (
+                  <TableRow key={s.id}>
+                    <TableCell>
+                      <img src={s.image_url} alt="" className="w-16 h-12 object-cover rounded" />
+                    </TableCell>
+                    <TableCell className="font-medium">{s.title}</TableCell>
+                    <TableCell className="text-xs">
+                      <div>{s.syllabus_domain || "—"}</div>
+                      <div className="text-muted-foreground">{s.syllabus_subtopic || ""}</div>
+                    </TableCell>
+                    <TableCell>{s.sort_order}</TableCell>
+                    <TableCell>
+                      {!qc ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge
+                                variant={!qc.ok ? "destructive" : qc.issues.length ? "secondary" : "default"}
+                                className="gap-1 cursor-help"
+                              >
+                                {!qc.ok ? (
+                                  <AlertTriangle className="w-3 h-3" />
+                                ) : qc.issues.length ? (
+                                  <AlertTriangle className="w-3 h-3" />
+                                ) : (
+                                  <CheckCircle2 className="w-3 h-3" />
+                                )}
+                                {!qc.ok ? "Fail" : qc.issues.length ? "Warn" : "OK"}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <div className="text-xs space-y-1">
+                                <div>
+                                  {qc.width}×{qc.height} · {(qc.bytes / 1024).toFixed(0)}KB
+                                </div>
+                                <div>
+                                  Sharpness {(qc.sharpnessScore * 100).toFixed(0)}% · Contrast{" "}
+                                  {(qc.contrastScore * 100).toFixed(0)}%
+                                </div>
+                                {qc.issues.length === 0 && <div>No issues detected.</div>}
+                                {qc.issues.map((i, idx) => (
+                                  <div key={idx}>• {i.message}</div>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Switch checked={s.is_active} onCheckedChange={(v) => toggleActive(s, v)} />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="outline" onClick={() => openEdit(s)} className="h-8 px-2">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(s)}
+                          className="h-8 px-2 text-destructive"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
@@ -284,6 +395,69 @@ export default function PageSummariesAdmin() {
                 {form.image_url && (
                   <div className="mt-2">
                     <img src={form.image_url} alt="" className="max-h-40 rounded border" />
+                  </div>
+                )}
+                {form.image_url && !formQC && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 gap-1"
+                    onClick={async () => {
+                      try {
+                        const r = await runImageQC(form.image_url);
+                        setFormQC(r);
+                      } catch (e) {
+                        toast({ title: "QC failed", description: String(e), variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" /> Run quality check
+                  </Button>
+                )}
+                {formQC && (
+                  <div
+                    className={`mt-2 rounded-md border p-3 text-xs space-y-1 ${
+                      !formQC.ok
+                        ? "border-destructive/50 bg-destructive/5"
+                        : formQC.issues.length
+                        ? "border-yellow-500/40 bg-yellow-500/5"
+                        : "border-green-500/40 bg-green-500/5"
+                    }`}
+                  >
+                    <div className="font-medium flex items-center gap-1">
+                      {!formQC.ok ? (
+                        <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+                      ) : formQC.issues.length ? (
+                        <AlertTriangle className="w-3.5 h-3.5 text-yellow-600" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                      )}
+                      {!formQC.ok
+                        ? "Quality check failed"
+                        : formQC.issues.length
+                        ? "Quality warnings"
+                        : "Quality check passed"}
+                    </div>
+                    <div>
+                      {formQC.width}×{formQC.height} ·{" "}
+                      {formQC.bytes ? `${(formQC.bytes / 1024).toFixed(0)}KB · ` : ""}
+                      Sharpness {(formQC.sharpnessScore * 100).toFixed(0)}% · Contrast{" "}
+                      {(formQC.contrastScore * 100).toFixed(0)}%
+                    </div>
+                    {formQC.issues.map((i, idx) => (
+                      <div key={idx}>• {i.message}</div>
+                    ))}
+                    {!formQC.ok && (
+                      <label className="flex items-center gap-2 pt-1">
+                        <input
+                          type="checkbox"
+                          checked={qcOverride}
+                          onChange={(e) => setQcOverride(e.target.checked)}
+                        />
+                        <span>Save anyway (override)</span>
+                      </label>
+                    )}
                   </div>
                 )}
               </div>

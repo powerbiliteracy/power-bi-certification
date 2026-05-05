@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,8 +108,8 @@ export default function PageSummariesAdmin() {
         if (updErr) throw updErr;
       }
       return newUrl;
-    } catch (e: any) {
-      toast({ title: "Fix failed", description: e?.message ?? String(e), variant: "destructive" });
+    } catch (e: unknown) {
+      toast({ title: "Fix failed", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
       return null;
     }
   };
@@ -140,12 +140,14 @@ export default function PageSummariesAdmin() {
         const r = await runImageQC(newUrl);
         setFormQC(r);
         setQcOverride(false);
-      } catch {}
+      } catch (e) {
+        console.warn("QC failed after image enhancement", e);
+      }
       toast({ title: "Image enhanced" });
     }
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("page_summaries")
@@ -154,7 +156,7 @@ export default function PageSummariesAdmin() {
       toast({ title: "Failed to load", description: error.message, variant: "destructive" });
     } else if (data) {
       // Sort by syllabus domain order, then subtopic order, then sort_order
-      const sorted = [...data].sort((a: any, b: any) => {
+      const sorted = [...(data as Summary[])].sort((a, b) => {
         const ai = domainOrder.indexOf(a.syllabus_domain || "");
         const bi = domainOrder.indexOf(b.syllabus_domain || "");
         const aRank = ai === -1 ? 999 : ai;
@@ -165,14 +167,14 @@ export default function PageSummariesAdmin() {
         if (aSub !== bSub) return aSub - bSub;
         return (a.sort_order ?? 0) - (b.sort_order ?? 0);
       });
-      setItems(sorted as any);
+      setItems(sorted);
     }
     setLoading(false);
-  };
+  }, [toast]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const openNew = () => {
     setEditing(null);

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { pl300Syllabus } from "@/data/SyllabusData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -34,21 +35,21 @@ export default function PageSummaries() {
         .select("*")
         .eq("is_active", true);
       if (data) {
-        const domainOrder = [
-          "Prepare the data",
-          "Model the data",
-          "Visualize and analyze the data",
-          "Manage and secure Power BI",
-        ];
+        const domainOrder = pl300Syllabus.domains.map((d) => d.title);
+        const subtopicOrder = new Map(
+          pl300Syllabus.domains.flatMap((domain) =>
+            domain.sections.map((section, index) => [`${domain.title}:::${section.title}`, index] as const)
+          )
+        );
         const sorted = [...(data as Summary[])].sort((a, b) => {
           const aDomain = domainOrder.indexOf(a.syllabus_domain || "");
           const bDomain = domainOrder.indexOf(b.syllabus_domain || "");
           const aRank = aDomain === -1 ? 999 : aDomain;
           const bRank = bDomain === -1 ? 999 : bDomain;
           if (aRank !== bRank) return aRank - bRank;
-          if ((a.syllabus_subtopic || "") !== (b.syllabus_subtopic || "")) {
-            return (a.syllabus_subtopic || "").localeCompare(b.syllabus_subtopic || "");
-          }
+          const aSub = subtopicOrder.get(`${a.syllabus_domain || ""}:::${a.syllabus_subtopic || ""}`) ?? 999;
+          const bSub = subtopicOrder.get(`${b.syllabus_domain || ""}:::${b.syllabus_subtopic || ""}`) ?? 999;
+          if (aSub !== bSub) return aSub - bSub;
           return (a.sort_order || 0) - (b.sort_order || 0);
         });
         setItems(sorted);

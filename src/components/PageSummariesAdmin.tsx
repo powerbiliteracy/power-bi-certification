@@ -42,6 +42,11 @@ const empty = (): Omit<Summary, "id"> => ({
 });
 
 const domainOrder = pl300Syllabus.domains.map((d) => d.title);
+const subtopicOrder = new Map(
+  pl300Syllabus.domains.flatMap((domain) =>
+    domain.sections.map((section, index) => [`${domain.title}:::${section.title}`, index] as const)
+  )
+);
 
 export default function PageSummariesAdmin() {
   const { user } = useAuth();
@@ -62,13 +67,16 @@ export default function PageSummariesAdmin() {
     if (error) {
       toast({ title: "Failed to load", description: error.message, variant: "destructive" });
     } else if (data) {
-      // Sort by syllabus domain order, then subtopic, then sort_order
+      // Sort by syllabus domain order, then subtopic order, then sort_order
       const sorted = [...data].sort((a: any, b: any) => {
         const ai = domainOrder.indexOf(a.syllabus_domain || "");
         const bi = domainOrder.indexOf(b.syllabus_domain || "");
         const aRank = ai === -1 ? 999 : ai;
         const bRank = bi === -1 ? 999 : bi;
         if (aRank !== bRank) return aRank - bRank;
+        const aSub = subtopicOrder.get(`${a.syllabus_domain || ""}:::${a.syllabus_subtopic || ""}`) ?? 999;
+        const bSub = subtopicOrder.get(`${b.syllabus_domain || ""}:::${b.syllabus_subtopic || ""}`) ?? 999;
+        if (aSub !== bSub) return aSub - bSub;
         return (a.sort_order ?? 0) - (b.sort_order ?? 0);
       });
       setItems(sorted as any);

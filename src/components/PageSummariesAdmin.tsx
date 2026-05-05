@@ -390,6 +390,20 @@ export default function PageSummariesAdmin() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleFixRow(s)}
+                          disabled={fixingId === s.id}
+                          className="h-8 px-2"
+                          title="Enhance image (sharpen, upscale, contrast)"
+                        >
+                          {fixingId === s.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Wand2 className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => openEdit(s)} className="h-8 px-2">
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>

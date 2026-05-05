@@ -194,19 +194,24 @@ export async function enhanceImageLocally(
   opts: EnhanceOptions = {}
 ): Promise<Blob> {
   const {
-    scale = 2,
-    minWidth = 1800,
-    sharpenAmount = 0.9,
+    scale = 3,
+    minWidth = 2600,
+    maxWidth = 4200,
+    sharpenAmount = 1.35,
     sharpenRadius = 1,
-    contrast = 0.18,
+    contrast = 0.26,
+    textCrispness = 0.85,
+    autoCrop = true,
   } = opts;
 
   const img = await loadImage(source);
-  let targetW = Math.max(img.width * scale, minWidth);
-  // Cap to avoid huge memory
-  if (targetW > 3200) targetW = 3200;
-  const ratio = targetW / img.width;
-  const targetH = Math.round(img.height * ratio);
+  const crop = autoCrop ? findContentCrop(img) : null;
+  const sourceW = crop?.width ?? img.width;
+  const sourceH = crop?.height ?? img.height;
+  let targetW = Math.max(sourceW * scale, minWidth);
+  targetW = Math.min(targetW, maxWidth);
+  const ratio = targetW / sourceW;
+  const targetH = Math.round(sourceH * ratio);
 
   // High-quality upscale
   const canvas = document.createElement("canvas");
@@ -216,7 +221,17 @@ export async function enhanceImageLocally(
   if (!ctx) throw new Error("Canvas context unavailable");
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(
+    img,
+    crop?.x ?? 0,
+    crop?.y ?? 0,
+    sourceW,
+    sourceH,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
   let imgData: ImageData;
   try {
@@ -227,6 +242,7 @@ export async function enhanceImageLocally(
 
   imgData = unsharpMask(imgData, sharpenRadius, sharpenAmount);
   imgData = applyContrast(imgData, contrast);
+  imgData = applyTextCrispness(imgData, textCrispness);
   ctx.putImageData(imgData, 0, 0);
 
   const blob: Blob = await new Promise((resolve, reject) =>

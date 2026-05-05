@@ -261,7 +261,10 @@ export default function PageSummaries() {
                 src={fullscreen.image_url}
                 alt={fullscreen.title}
                 className="h-auto max-w-none rounded border shadow-lg"
-                style={{ width: `${fullscreenZoom * 100}%` }}
+                style={{
+                  width: `${fullscreenZoom * 100}%`,
+                  imageRendering: fullscreenZoom >= 2 ? "crisp-edges" : "auto",
+                }}
               />
             </div>
           </div>

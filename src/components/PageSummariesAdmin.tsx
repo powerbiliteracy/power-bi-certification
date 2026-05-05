@@ -20,6 +20,7 @@ import { FileImage, Plus, Pencil, Trash2, Upload, ShieldCheck, AlertTriangle, Ch
 import { useAuth } from "@/hooks/useAuth";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { runImageQC, type QCResult } from "@/lib/imageQuality";
+import { enhanceImageLocally } from "@/lib/imageEnhance";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -73,27 +74,49 @@ export default function PageSummariesAdmin() {
   const [fixingId, setFixingId] = useState<string | null>(null);
   const [fixingForm, setFixingForm] = useState(false);
 
-  const enhanceImage = async (image_url: string, summary_id?: string): Promise<string | null> => {
-    const { data, error } = await supabase.functions.invoke("enhance-page-summary", {
-      body: { image_url, summary_id },
-    });
-    if (error) {
-      toast({ title: "Fix failed", description: error.message, variant: "destructive" });
+  const fetchAsBlob = async (url: string): Promise<Blob> => {
+    const r = await fetch(url, { mode: "cors", cache: "no-store" });
+    if (!r.ok) throw new Error(`Fetch failed: ${r.status}`);
+    return r.blob();
+  };
+
+  const enhanceAndUpload = async (image_url: string, summary_id?: string): Promise<string | null> => {
+    try {
+      const blob = await fetchAsBlob(image_url);
+      const enhanced = await enhanceImageLocally(blob, {
+        scale: 2,
+        minWidth: 1800,
+        sharpenAmount: 0.9,
+        sharpenRadius: 1,
+        contrast: 0.18,
+      });
+      const path = `enhanced/${summary_id ?? "img"}-${Date.now()}.png`;
+      const { error: upErr } = await supabase.storage
+        .from("page-summaries")
+        .upload(path, enhanced, { contentType: "image/png", upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("page-summaries").getPublicUrl(path);
+      const newUrl = pub.publicUrl;
+      if (summary_id) {
+        const { error: updErr } = await supabase
+          .from("page_summaries")
+          .update({ image_url: newUrl })
+          .eq("id", summary_id);
+        if (updErr) throw updErr;
+      }
+      return newUrl;
+    } catch (e: any) {
+      toast({ title: "Fix failed", description: e?.message ?? String(e), variant: "destructive" });
       return null;
     }
-    if ((data as any)?.error) {
-      toast({ title: "Fix failed", description: (data as any).error, variant: "destructive" });
-      return null;
-    }
-    return (data as any)?.image_url ?? null;
   };
 
   const handleFixRow = async (s: Summary) => {
     setFixingId(s.id);
-    const newUrl = await enhanceImage(s.image_url, s.id);
+    const newUrl = await enhanceAndUpload(s.image_url, s.id);
     setFixingId(null);
     if (newUrl) {
-      toast({ title: "Image enhanced" });
+      toast({ title: "Image enhanced (upscaled + sharpened)" });
       setQcResults((prev) => {
         const c = { ...prev };
         delete c[s.id];
@@ -106,7 +129,7 @@ export default function PageSummariesAdmin() {
   const handleFixForm = async () => {
     if (!form.image_url) return;
     setFixingForm(true);
-    const newUrl = await enhanceImage(form.image_url, editing?.id);
+    const newUrl = await enhanceAndUpload(form.image_url, editing?.id);
     setFixingForm(false);
     if (newUrl) {
       setForm((f) => ({ ...f, image_url: newUrl }));

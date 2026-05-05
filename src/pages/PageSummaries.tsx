@@ -4,13 +4,14 @@ import { pl300Syllabus } from "@/data/SyllabusData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { FileImage, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileImage, Search, Maximize2, X } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface Summary {
   id: string;
@@ -26,7 +27,7 @@ export default function PageSummaries() {
   const [items, setItems] = useState<Summary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [zoom, setZoom] = useState<Summary | null>(null);
+  const [fullscreen, setFullscreen] = useState<Summary | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -69,14 +70,22 @@ export default function PageSummaries() {
     );
   }, [items, search]);
 
+  // Group: domain -> subtopic -> items[]
   const grouped = useMemo(() => {
-    const map = new Map<string, Summary[]>();
+    const map = new Map<string, Map<string, Summary[]>>();
     for (const i of filtered) {
-      const key = i.syllabus_domain || "Other";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(i);
+      const d = i.syllabus_domain || "Other";
+      const s = i.syllabus_subtopic || "General";
+      if (!map.has(d)) map.set(d, new Map());
+      const sub = map.get(d)!;
+      if (!sub.has(s)) sub.set(s, []);
+      sub.get(s)!.push(i);
     }
-    return Array.from(map.entries());
+    return Array.from(map.entries()).map(([d, subs]) => ({
+      domain: d,
+      subtopics: Array.from(subs.entries()).map(([s, list]) => ({ subtopic: s, list })),
+      total: Array.from(subs.values()).reduce((n, l) => n + l.length, 0),
+    }));
   }, [filtered]);
 
   return (
@@ -86,7 +95,7 @@ export default function PageSummaries() {
           <FileImage className="w-7 h-7 text-primary" /> Summary of a Page
         </h1>
         <p className="text-muted-foreground mt-1">
-          Quick visual one-pager summaries for each PL-300 topic. Click any image to enlarge.
+          Quick visual one-pager summaries for each PL-300 topic. Click an image's expand icon for full screen.
         </p>
       </div>
 
@@ -109,55 +118,109 @@ export default function PageSummaries() {
           </CardContent>
         </Card>
       ) : (
-        grouped.map(([domain, list]) => (
-          <section key={domain} className="space-y-3">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Badge variant="outline">{domain}</Badge>
-              <span className="text-xs text-muted-foreground">{list.length} summaries</span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {list.map((s) => (
-                <Card
-                  key={s.id}
-                  className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setZoom(s)}
-                >
-                  <div className="aspect-video bg-muted overflow-hidden">
-                    <img
-                      src={s.image_url}
-                      alt={s.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm">{s.title}</CardTitle>
-                    {s.syllabus_subtopic && (
-                      <p className="text-xs text-muted-foreground">{s.syllabus_subtopic}</p>
-                    )}
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          </section>
-        ))
+        <Accordion type="multiple" className="space-y-3">
+          {grouped.map(({ domain, subtopics, total }) => (
+            <AccordionItem
+              key={domain}
+              value={`domain-${domain}`}
+              className="border rounded-lg bg-card px-4"
+            >
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{domain}</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {total} summaries · {subtopics.length} modules
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Accordion type="multiple" className="space-y-2 pt-2">
+                  {subtopics.map(({ subtopic, list }) => (
+                    <AccordionItem
+                      key={subtopic}
+                      value={`sub-${domain}-${subtopic}`}
+                      className="border rounded-md px-3 bg-background"
+                    >
+                      <AccordionTrigger className="hover:no-underline py-3">
+                        <div className="flex items-center gap-2 text-left">
+                          <span className="font-medium text-sm">{subtopic}</span>
+                          <span className="text-xs text-muted-foreground">({list.length})</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                          {list.map((s) => (
+                            <Card key={s.id} className="overflow-hidden group">
+                              <div className="relative aspect-video bg-muted overflow-hidden">
+                                <img
+                                  src={s.image_url}
+                                  alt={s.title}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover"
+                                />
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="secondary"
+                                  className="absolute top-2 right-2 h-8 w-8 opacity-90 shadow"
+                                  onClick={() => setFullscreen(s)}
+                                  aria-label="View full screen"
+                                >
+                                  <Maximize2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <CardHeader className="py-3">
+                                <CardTitle className="text-sm">{s.title}</CardTitle>
+                              </CardHeader>
+                            </Card>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       )}
 
-      <Dialog open={!!zoom} onOpenChange={(o) => !o && setZoom(null)}>
-        <DialogContent className="max-w-5xl">
-          <DialogHeader>
-            <DialogTitle>{zoom?.title}</DialogTitle>
-          </DialogHeader>
-          {zoom && (
-            <div className="space-y-2">
-              <img src={zoom.image_url} alt={zoom.title} className="w-full rounded-lg" />
-              {zoom.description && (
-                <p className="text-sm text-muted-foreground">{zoom.description}</p>
+      {fullscreen && (
+        <div
+          className="fixed inset-0 z-50 bg-background/95 backdrop-blur flex flex-col"
+          onClick={() => setFullscreen(null)}
+        >
+          <div className="flex items-center justify-between p-4 border-b">
+            <div>
+              <h3 className="font-semibold">{fullscreen.title}</h3>
+              {fullscreen.syllabus_subtopic && (
+                <p className="text-xs text-muted-foreground">{fullscreen.syllabus_subtopic}</p>
               )}
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFullscreen(null);
+              }}
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          <div
+            className="flex-1 overflow-auto p-4 flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={fullscreen.image_url}
+              alt={fullscreen.title}
+              className="max-w-full max-h-full object-contain rounded"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

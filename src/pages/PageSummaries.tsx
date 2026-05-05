@@ -218,7 +218,7 @@ export default function PageSummaries() {
               <Button
                 size="icon"
                 variant="ghost"
-                onClick={() => setFullscreenZoom((z) => Math.min(4, Number((z + 0.25).toFixed(2))))}
+                onClick={() => setFullscreenZoom((z) => Math.min(8, Number((z + 0.25).toFixed(2))))}
                 aria-label="Zoom in"
               >
                 <ZoomIn className="w-4 h-4" />

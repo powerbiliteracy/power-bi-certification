@@ -266,40 +266,30 @@ export default function PageSummaries() {
               )}
             </div>
             <div className="flex items-center gap-1 rounded-md border bg-card p-1" onClick={(e) => e.stopPropagation()}>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setFullscreenZoom((z) => Math.max(1, Number((z - 0.25).toFixed(2))))}
-                aria-label="Zoom out"
-              >
+              <Button size="icon" variant="ghost" onClick={() => adjustZoom(-0.25)} aria-label="Zoom out">
                 <ZoomOut className="w-4 h-4" />
               </Button>
               <span className="w-14 text-center text-xs tabular-nums text-muted-foreground">
                 {Math.round(fullscreenZoom * 100)}%
               </span>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setFullscreenZoom((z) => Math.min(8, Number((z + 0.25).toFixed(2))))}
-                aria-label="Zoom in"
-              >
+              <Button size="icon" variant="ghost" onClick={() => adjustZoom(0.25)} aria-label="Zoom in">
                 <ZoomIn className="w-4 h-4" />
               </Button>
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={() => setFullscreenZoom(1)}
-                aria-label="Fit to screen"
+                variant={fitMode === "page" ? "secondary" : "ghost"}
+                onClick={() => setFitMode("page")}
+                title="Fit entire page in view"
               >
-                Fit
+                <Maximize className="w-4 h-4 mr-1" /> Page
               </Button>
               <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setFullscreenZoom(1.75)}
-                aria-label="Reset readable zoom"
+                size="sm"
+                variant={fitMode === "width" ? "secondary" : "ghost"}
+                onClick={() => setFitMode("width")}
+                title="Fit image width to view"
               >
-                <RotateCcw className="w-4 h-4" />
+                <MoveHorizontal className="w-4 h-4 mr-1" /> Width
               </Button>
             </div>
             <Button
@@ -315,18 +305,26 @@ export default function PageSummaries() {
             </Button>
           </div>
           <div
+            ref={scrollRef}
             className="flex-1 overflow-auto p-4"
             onClick={(e) => e.stopPropagation()}
+            onWheel={handleWheel}
           >
             <div className="min-h-full min-w-full flex items-start justify-center">
               <img
+                ref={imgRef}
                 src={fullscreen.image_url}
                 alt={fullscreen.title}
-                className="h-auto max-w-none rounded border shadow-lg"
+                onLoad={() => fitMode !== "free" && recomputeFit(fitMode)}
+                onClick={handleImageClick}
+                className="h-auto max-w-none rounded border shadow-lg cursor-zoom-in select-none"
                 style={{
-                  width: `${fullscreenZoom * 100}%`,
+                  width: imgRef.current?.naturalWidth
+                    ? `${imgRef.current.naturalWidth * fullscreenZoom}px`
+                    : `${fullscreenZoom * 100}%`,
                   imageRendering: fullscreenZoom >= 2 ? "crisp-edges" : "auto",
                 }}
+                draggable={false}
               />
             </div>
           </div>

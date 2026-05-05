@@ -194,13 +194,13 @@ export async function enhanceImageLocally(
   opts: EnhanceOptions = {}
 ): Promise<Blob> {
   const {
-    scale = 3,
-    minWidth = 2600,
-    maxWidth = 4200,
-    sharpenAmount = 1.35,
+    scale = 4,
+    minWidth = 3600,
+    maxWidth = 6000,
+    sharpenAmount = 1.5,
     sharpenRadius = 1,
-    contrast = 0.26,
-    textCrispness = 0.85,
+    contrast = 0.28,
+    textCrispness = 0.9,
     autoCrop = true,
   } = opts;
 

@@ -278,42 +278,86 @@ export default function PageSummariesAdmin() {
                 <TableHead>Title</TableHead>
                 <TableHead>Domain / Subtopic</TableHead>
                 <TableHead className="w-20">Order</TableHead>
+                <TableHead className="w-24">Quality</TableHead>
                 <TableHead className="w-20">Active</TableHead>
                 <TableHead className="w-28">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>
-                    <img src={s.image_url} alt="" className="w-16 h-12 object-cover rounded" />
-                  </TableCell>
-                  <TableCell className="font-medium">{s.title}</TableCell>
-                  <TableCell className="text-xs">
-                    <div>{s.syllabus_domain || "—"}</div>
-                    <div className="text-muted-foreground">{s.syllabus_subtopic || ""}</div>
-                  </TableCell>
-                  <TableCell>{s.sort_order}</TableCell>
-                  <TableCell>
-                    <Switch checked={s.is_active} onCheckedChange={(v) => toggleActive(s, v)} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="outline" onClick={() => openEdit(s)} className="h-8 px-2">
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(s)}
-                        className="h-8 px-2 text-destructive"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {items.map((s) => {
+                const qc = qcResults[s.id];
+                return (
+                  <TableRow key={s.id}>
+                    <TableCell>
+                      <img src={s.image_url} alt="" className="w-16 h-12 object-cover rounded" />
+                    </TableCell>
+                    <TableCell className="font-medium">{s.title}</TableCell>
+                    <TableCell className="text-xs">
+                      <div>{s.syllabus_domain || "—"}</div>
+                      <div className="text-muted-foreground">{s.syllabus_subtopic || ""}</div>
+                    </TableCell>
+                    <TableCell>{s.sort_order}</TableCell>
+                    <TableCell>
+                      {!qc ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge
+                                variant={!qc.ok ? "destructive" : qc.issues.length ? "secondary" : "default"}
+                                className="gap-1 cursor-help"
+                              >
+                                {!qc.ok ? (
+                                  <AlertTriangle className="w-3 h-3" />
+                                ) : qc.issues.length ? (
+                                  <AlertTriangle className="w-3 h-3" />
+                                ) : (
+                                  <CheckCircle2 className="w-3 h-3" />
+                                )}
+                                {!qc.ok ? "Fail" : qc.issues.length ? "Warn" : "OK"}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <div className="text-xs space-y-1">
+                                <div>
+                                  {qc.width}×{qc.height} · {(qc.bytes / 1024).toFixed(0)}KB
+                                </div>
+                                <div>
+                                  Sharpness {(qc.sharpnessScore * 100).toFixed(0)}% · Contrast{" "}
+                                  {(qc.contrastScore * 100).toFixed(0)}%
+                                </div>
+                                {qc.issues.length === 0 && <div>No issues detected.</div>}
+                                {qc.issues.map((i, idx) => (
+                                  <div key={idx}>• {i.message}</div>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Switch checked={s.is_active} onCheckedChange={(v) => toggleActive(s, v)} />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="outline" onClick={() => openEdit(s)} className="h-8 px-2">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(s)}
+                          className="h-8 px-2 text-destructive"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}

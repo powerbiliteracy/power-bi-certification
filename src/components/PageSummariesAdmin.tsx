@@ -84,11 +84,14 @@ export default function PageSummariesAdmin() {
     try {
       const blob = await fetchAsBlob(image_url);
       const enhanced = await enhanceImageLocally(blob, {
-        scale: 2,
-        minWidth: 1800,
-        sharpenAmount: 0.9,
+        scale: 3,
+        minWidth: 2600,
+        maxWidth: 4200,
+        sharpenAmount: 1.35,
         sharpenRadius: 1,
-        contrast: 0.18,
+        contrast: 0.26,
+        textCrispness: 0.85,
+        autoCrop: true,
       });
       const path = `enhanced/${summary_id ?? "img"}-${Date.now()}.png`;
       const { error: upErr } = await supabase.storage

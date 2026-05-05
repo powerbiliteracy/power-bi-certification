@@ -17,11 +17,12 @@ export interface QCResult {
   issues: QCIssue[];
 }
 
-const MIN_WIDTH = 1400; // dense text needs high resolution
-const RECOMMENDED_WIDTH = 1600;
-const MIN_BYTES = 250 * 1024; // <250KB likely heavily compressed
-const MIN_SHARPNESS = 0.05;
-const MIN_CONTRAST = 0.18;
+const MIN_WIDTH = 1800; // dense text needs high resolution
+const RECOMMENDED_WIDTH = 2400;
+const MIN_BYTES = 450 * 1024; // <450KB likely heavily compressed for dense text
+const MIN_SHARPNESS = 0.08;
+const MIN_CONTRAST = 0.2;
+const MIN_PIXELS_PER_DETAIL = 2_600_000;
 
 async function loadImage(src: string | Blob): Promise<HTMLImageElement> {
   const url = typeof src === "string" ? src : URL.createObjectURL(src);
@@ -137,6 +138,14 @@ export async function runImageQC(input: string | Blob, knownBytes?: number): Pro
       code: "below_recommended",
       severity: "warn",
       message: `Resolution ${width}×${height} is below recommended ${RECOMMENDED_WIDTH}px width.`,
+    });
+  }
+
+  if (width * height < MIN_PIXELS_PER_DETAIL) {
+    issues.push({
+      code: "low_detail_budget",
+      severity: "fail",
+      message: `Image has too few total pixels for dense small text; upload/export a larger original.`,
     });
   }
 

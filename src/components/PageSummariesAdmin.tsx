@@ -255,6 +255,10 @@ export default function PageSummariesAdmin() {
             Upload one-pager summary images. Sorted by PL-300 syllabus domain, then by sort order.
           </CardDescription>
         </div>
+        <Button onClick={runQCOnAll} size="sm" variant="outline" className="gap-1" disabled={qcRunning || loading}>
+          {qcRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+          Run QC on all
+        </Button>
         <Button onClick={openNew} size="sm" className="gap-1">
           <Plus className="w-4 h-4" /> New summary
         </Button>

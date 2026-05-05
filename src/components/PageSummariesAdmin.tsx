@@ -397,6 +397,69 @@ export default function PageSummariesAdmin() {
                     <img src={form.image_url} alt="" className="max-h-40 rounded border" />
                   </div>
                 )}
+                {form.image_url && !formQC && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 gap-1"
+                    onClick={async () => {
+                      try {
+                        const r = await runImageQC(form.image_url);
+                        setFormQC(r);
+                      } catch (e) {
+                        toast({ title: "QC failed", description: String(e), variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" /> Run quality check
+                  </Button>
+                )}
+                {formQC && (
+                  <div
+                    className={`mt-2 rounded-md border p-3 text-xs space-y-1 ${
+                      !formQC.ok
+                        ? "border-destructive/50 bg-destructive/5"
+                        : formQC.issues.length
+                        ? "border-yellow-500/40 bg-yellow-500/5"
+                        : "border-green-500/40 bg-green-500/5"
+                    }`}
+                  >
+                    <div className="font-medium flex items-center gap-1">
+                      {!formQC.ok ? (
+                        <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+                      ) : formQC.issues.length ? (
+                        <AlertTriangle className="w-3.5 h-3.5 text-yellow-600" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                      )}
+                      {!formQC.ok
+                        ? "Quality check failed"
+                        : formQC.issues.length
+                        ? "Quality warnings"
+                        : "Quality check passed"}
+                    </div>
+                    <div>
+                      {formQC.width}×{formQC.height} ·{" "}
+                      {formQC.bytes ? `${(formQC.bytes / 1024).toFixed(0)}KB · ` : ""}
+                      Sharpness {(formQC.sharpnessScore * 100).toFixed(0)}% · Contrast{" "}
+                      {(formQC.contrastScore * 100).toFixed(0)}%
+                    </div>
+                    {formQC.issues.map((i, idx) => (
+                      <div key={idx}>• {i.message}</div>
+                    ))}
+                    {!formQC.ok && (
+                      <label className="flex items-center gap-2 pt-1">
+                        <input
+                          type="checkbox"
+                          checked={qcOverride}
+                          onChange={(e) => setQcOverride(e.target.checked)}
+                        />
+                        <span>Save anyway (override)</span>
+                      </label>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

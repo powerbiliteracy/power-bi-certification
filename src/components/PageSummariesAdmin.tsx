@@ -70,6 +70,54 @@ export default function PageSummariesAdmin() {
   const [qcOverride, setQcOverride] = useState(false);
   const [qcResults, setQcResults] = useState<Record<string, QCResult>>({});
   const [qcRunning, setQcRunning] = useState(false);
+  const [fixingId, setFixingId] = useState<string | null>(null);
+  const [fixingForm, setFixingForm] = useState(false);
+
+  const enhanceImage = async (image_url: string, summary_id?: string): Promise<string | null> => {
+    const { data, error } = await supabase.functions.invoke("enhance-page-summary", {
+      body: { image_url, summary_id },
+    });
+    if (error) {
+      toast({ title: "Fix failed", description: error.message, variant: "destructive" });
+      return null;
+    }
+    if ((data as any)?.error) {
+      toast({ title: "Fix failed", description: (data as any).error, variant: "destructive" });
+      return null;
+    }
+    return (data as any)?.image_url ?? null;
+  };
+
+  const handleFixRow = async (s: Summary) => {
+    setFixingId(s.id);
+    const newUrl = await enhanceImage(s.image_url, s.id);
+    setFixingId(null);
+    if (newUrl) {
+      toast({ title: "Image enhanced" });
+      setQcResults((prev) => {
+        const c = { ...prev };
+        delete c[s.id];
+        return c;
+      });
+      load();
+    }
+  };
+
+  const handleFixForm = async () => {
+    if (!form.image_url) return;
+    setFixingForm(true);
+    const newUrl = await enhanceImage(form.image_url, editing?.id);
+    setFixingForm(false);
+    if (newUrl) {
+      setForm((f) => ({ ...f, image_url: newUrl }));
+      try {
+        const r = await runImageQC(newUrl);
+        setFormQC(r);
+        setQcOverride(false);
+      } catch {}
+      toast({ title: "Image enhanced" });
+    }
+  };
 
   const load = async () => {
     setLoading(true);

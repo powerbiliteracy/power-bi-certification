@@ -477,6 +477,24 @@ export default function PageSummariesAdmin() {
                     <ShieldCheck className="w-3.5 h-3.5" /> Run quality check
                   </Button>
                 )}
+                {form.image_url && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 ml-2 gap-1"
+                    onClick={handleFixForm}
+                    disabled={fixingForm}
+                    title="AI-enhance: sharpen, upscale, boost contrast"
+                  >
+                    {fixingForm ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-3.5 h-3.5" />
+                    )}
+                    {fixingForm ? "Enhancing…" : "Fix image"}
+                  </Button>
+                )}
                 {formQC && (
                   <div
                     className={`mt-2 rounded-md border p-3 text-xs space-y-1 ${

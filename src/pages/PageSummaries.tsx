@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileImage, Search, Maximize2, X } from "lucide-react";
+import { FileImage, Search, Maximize2, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -28,6 +28,12 @@ export default function PageSummaries() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [fullscreen, setFullscreen] = useState<Summary | null>(null);
+  const [fullscreenZoom, setFullscreenZoom] = useState(1.75);
+
+  const openFullscreen = (summary: Summary) => {
+    setFullscreen(summary);
+    setFullscreenZoom(1.75);
+  };
 
   useEffect(() => {
     (async () => {
@@ -163,7 +169,7 @@ export default function PageSummaries() {
                                   size="icon"
                                   variant="secondary"
                                   className="absolute top-2 right-2 h-8 w-8 opacity-90 shadow"
-                                  onClick={() => setFullscreen(s)}
+                                  onClick={() => openFullscreen(s)}
                                   aria-label="View full screen"
                                 >
                                   <Maximize2 className="w-4 h-4" />
@@ -190,12 +196,49 @@ export default function PageSummaries() {
           className="fixed inset-0 z-50 bg-background/95 backdrop-blur flex flex-col"
           onClick={() => setFullscreen(null)}
         >
-          <div className="flex items-center justify-between p-4 border-b">
-            <div>
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
+            <div className="min-w-0">
               <h3 className="font-semibold">{fullscreen.title}</h3>
               {fullscreen.syllabus_subtopic && (
                 <p className="text-xs text-muted-foreground">{fullscreen.syllabus_subtopic}</p>
               )}
+            </div>
+            <div className="flex items-center gap-1 rounded-md border bg-card p-1" onClick={(e) => e.stopPropagation()}>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setFullscreenZoom((z) => Math.max(1, Number((z - 0.25).toFixed(2))))}
+                aria-label="Zoom out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <span className="w-14 text-center text-xs tabular-nums text-muted-foreground">
+                {Math.round(fullscreenZoom * 100)}%
+              </span>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setFullscreenZoom((z) => Math.min(4, Number((z + 0.25).toFixed(2))))}
+                aria-label="Zoom in"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setFullscreenZoom(1)}
+                aria-label="Fit to screen"
+              >
+                Fit
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setFullscreenZoom(1.75)}
+                aria-label="Reset readable zoom"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
             </div>
             <Button
               size="icon"
@@ -210,14 +253,17 @@ export default function PageSummaries() {
             </Button>
           </div>
           <div
-            className="flex-1 overflow-auto p-4 flex items-center justify-center"
+            className="flex-1 overflow-auto p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={fullscreen.image_url}
-              alt={fullscreen.title}
-              className="max-w-full max-h-full object-contain rounded"
-            />
+            <div className="min-h-full min-w-full flex items-start justify-center">
+              <img
+                src={fullscreen.image_url}
+                alt={fullscreen.title}
+                className="h-auto max-w-none rounded border shadow-lg"
+                style={{ width: `${fullscreenZoom * 100}%` }}
+              />
+            </div>
           </div>
         </div>
       )}

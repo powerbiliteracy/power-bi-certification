@@ -66,6 +66,10 @@ export default function PageSummariesAdmin() {
   const [form, setForm] = useState<Omit<Summary, "id">>(empty());
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [formQC, setFormQC] = useState<QCResult | null>(null);
+  const [qcOverride, setQcOverride] = useState(false);
+  const [qcResults, setQcResults] = useState<Record<string, QCResult>>({});
+  const [qcRunning, setQcRunning] = useState(false);
 
   const load = async () => {
     setLoading(true);

@@ -20,6 +20,7 @@ import { FileImage, Plus, Pencil, Trash2, Upload, ShieldCheck, AlertTriangle, Ch
 import { useAuth } from "@/hooks/useAuth";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { runImageQC, type QCResult } from "@/lib/imageQuality";
+import { enhanceImageLocally } from "@/lib/imageEnhance";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,

@@ -103,6 +103,8 @@ export default function PageSummariesAdmin() {
   const openNew = () => {
     setEditing(null);
     setForm(empty());
+    setFormQC(null);
+    setQcOverride(false);
     setDialogOpen(true);
   };
 
@@ -117,11 +119,22 @@ export default function PageSummariesAdmin() {
       sort_order: s.sort_order,
       is_active: s.is_active,
     });
+    setFormQC(qcResults[s.id] ?? null);
+    setQcOverride(false);
     setDialogOpen(true);
   };
 
   const handleUpload = async (file: File) => {
     setUploading(true);
+    setFormQC(null);
+    setQcOverride(false);
+    let qc: QCResult | null = null;
+    try {
+      qc = await runImageQC(file);
+      setFormQC(qc);
+    } catch (e) {
+      console.warn("QC failed", e);
+    }
     const ext = file.name.split(".").pop() ?? "png";
     const path = `${user?.id ?? "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage.from("page-summaries").upload(path, file, {
@@ -136,7 +149,35 @@ export default function PageSummariesAdmin() {
     const { data } = supabase.storage.from("page-summaries").getPublicUrl(path);
     setForm((f) => ({ ...f, image_url: data.publicUrl }));
     setUploading(false);
-    toast({ title: "Image uploaded" });
+    if (qc && !qc.ok) {
+      toast({
+        title: "Quality check failed",
+        description: "Image may be hard to read. Review issues below before saving.",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Image uploaded" });
+    }
+  };
+
+  const runQCOnAll = async () => {
+    setQcRunning(true);
+    const out: Record<string, QCResult> = {};
+    for (const it of items) {
+      try {
+        out[it.id] = await runImageQC(it.image_url);
+      } catch (e) {
+        // skip
+      }
+    }
+    setQcResults(out);
+    setQcRunning(false);
+    const failed = Object.values(out).filter((r) => !r.ok).length;
+    const warned = Object.values(out).filter((r) => r.ok && r.issues.length).length;
+    toast({
+      title: "Quality check complete",
+      description: `${failed} failing, ${warned} warnings, ${Object.keys(out).length - failed - warned} clean.`,
+    });
   };
 
   const handleSave = async () => {

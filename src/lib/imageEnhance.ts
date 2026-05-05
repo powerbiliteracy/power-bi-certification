@@ -4,9 +4,12 @@
 export interface EnhanceOptions {
   scale?: number; // upscale factor, e.g. 2
   minWidth?: number; // ensure final width >= this
+  maxWidth?: number; // cap final width to avoid excessive memory
   sharpenAmount?: number; // 0..2 typical
   sharpenRadius?: number; // pixels (1 typical)
   contrast?: number; // 0..1, e.g. 0.15 = +15%
+  textCrispness?: number; // 0..1 darkens text edges and cleans light backgrounds
+  autoCrop?: boolean; // remove blank outer margins before upscaling
 }
 
 async function loadImage(src: string | Blob): Promise<HTMLImageElement> {
@@ -100,6 +103,90 @@ function applyContrast(img: ImageData, contrast: number): ImageData {
 
 function clamp(v: number) {
   return v < 0 ? 0 : v > 255 ? 255 : v;
+}
+
+function isBlankMarginPixel(r: number, g: number, b: number) {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  return lum > 238 && max - min < 24;
+}
+
+function findContentCrop(img: HTMLImageElement) {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(img, 0, 0);
+
+  let data: Uint8ClampedArray;
+  try {
+    data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  } catch {
+    return null;
+  }
+
+  const step = Math.max(1, Math.floor(Math.max(canvas.width, canvas.height) / 1400));
+  let minX = canvas.width;
+  let minY = canvas.height;
+  let maxX = 0;
+  let maxY = 0;
+
+  for (let y = 0; y < canvas.height; y += step) {
+    for (let x = 0; x < canvas.width; x += step) {
+      const i = (y * canvas.width + x) * 4;
+      if (!isBlankMarginPixel(data[i], data[i + 1], data[i + 2])) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  if (minX >= maxX || minY >= maxY) return null;
+
+  const pad = Math.round(Math.max(canvas.width, canvas.height) * 0.008);
+  const x = Math.max(0, minX - pad);
+  const y = Math.max(0, minY - pad);
+  const width = Math.min(canvas.width - x, maxX - minX + pad * 2);
+  const height = Math.min(canvas.height - y, maxY - minY + pad * 2);
+
+  const removedX = 1 - width / canvas.width;
+  const removedY = 1 - height / canvas.height;
+  if (removedX < 0.025 && removedY < 0.025) return null;
+
+  return { x, y, width, height };
+}
+
+function applyTextCrispness(img: ImageData, strength: number): ImageData {
+  const d = img.data;
+  const s = Math.max(0, Math.min(1, strength));
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i];
+    const g = d[i + 1];
+    const b = d[i + 2];
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+
+    if (lum < 96) {
+      const factor = 1 - 0.28 * s;
+      d[i] = clamp(r * factor);
+      d[i + 1] = clamp(g * factor);
+      d[i + 2] = clamp(b * factor);
+    } else if (lum < 170 && saturation > 18) {
+      const factor = 1 - 0.14 * s;
+      d[i] = clamp(r * factor);
+      d[i + 1] = clamp(g * factor);
+      d[i + 2] = clamp(b * factor);
+    } else if (lum > 224 && saturation < 30) {
+      d[i] = clamp(r + (255 - r) * 0.42 * s);
+      d[i + 1] = clamp(g + (255 - g) * 0.42 * s);
+      d[i + 2] = clamp(b + (255 - b) * 0.42 * s);
+    }
+  }
+  return img;
 }
 
 export async function enhanceImageLocally(

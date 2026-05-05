@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { FileImage, Plus, Pencil, Trash2, Upload, ShieldCheck, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { FileImage, Plus, Pencil, Trash2, Upload, ShieldCheck, AlertTriangle, CheckCircle2, Loader2, Wand2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { runImageQC, type QCResult } from "@/lib/imageQuality";

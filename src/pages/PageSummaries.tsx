@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { pl300Syllabus } from "@/data/SyllabusData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileImage, Search, Maximize2, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { FileImage, Search, Maximize2, X, ZoomIn, ZoomOut, Maximize, MoveHorizontal } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -28,11 +28,73 @@ export default function PageSummaries() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [fullscreen, setFullscreen] = useState<Summary | null>(null);
-  const [fullscreenZoom, setFullscreenZoom] = useState(1.75);
+  const [fullscreenZoom, setFullscreenZoom] = useState(1);
+  const [fitMode, setFitMode] = useState<"page" | "width" | "free">("width");
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   const openFullscreen = (summary: Summary) => {
     setFullscreen(summary);
-    setFullscreenZoom(1.75);
+    setFitMode("width");
+  };
+
+  const recomputeFit = (mode: "page" | "width") => {
+    const c = scrollRef.current;
+    const img = imgRef.current;
+    if (!c || !img || !img.naturalWidth) return;
+    if (mode === "width") {
+      setFullscreenZoom(c.clientWidth / img.naturalWidth);
+    } else {
+      const z = Math.min(c.clientWidth / img.naturalWidth, c.clientHeight / img.naturalHeight);
+      setFullscreenZoom(z);
+    }
+  };
+
+  useEffect(() => {
+    if (!fullscreen || fitMode === "free") return;
+    const handler = () => recomputeFit(fitMode);
+    handler();
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, [fullscreen, fitMode]);
+
+  const adjustZoom = (delta: number, focal?: { x: number; y: number }) => {
+    const c = scrollRef.current;
+    const img = imgRef.current;
+    if (!c || !img) return;
+    const oldZoom = fullscreenZoom;
+    const newZoom = Math.min(8, Math.max(0.1, Number((oldZoom + delta).toFixed(3))));
+    if (newZoom === oldZoom) return;
+    // Focal point in image-natural coordinates
+    const fx = focal ? (c.scrollLeft + focal.x) / oldZoom : (c.scrollLeft + c.clientWidth / 2) / oldZoom;
+    const fy = focal ? (c.scrollTop + focal.y) / oldZoom : (c.scrollTop + c.clientHeight / 2) / oldZoom;
+    setFitMode("free");
+    setFullscreenZoom(newZoom);
+    requestAnimationFrame(() => {
+      if (!scrollRef.current) return;
+      const targetX = focal ? focal.x : c.clientWidth / 2;
+      const targetY = focal ? focal.y : c.clientHeight / 2;
+      scrollRef.current.scrollLeft = fx * newZoom - targetX;
+      scrollRef.current.scrollTop = fy * newZoom - targetY;
+    });
+  };
+
+  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    const c = scrollRef.current;
+    if (!c) return;
+    const rect = c.getBoundingClientRect();
+    const focal = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    adjustZoom(e.altKey ? -0.5 : 0.5, focal);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    const c = scrollRef.current;
+    if (!c) return;
+    const rect = c.getBoundingClientRect();
+    const focal = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    adjustZoom(e.deltaY < 0 ? 0.2 : -0.2, focal);
   };
 
   useEffect(() => {
@@ -204,40 +266,30 @@ export default function PageSummaries() {
               )}
             </div>
             <div className="flex items-center gap-1 rounded-md border bg-card p-1" onClick={(e) => e.stopPropagation()}>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setFullscreenZoom((z) => Math.max(1, Number((z - 0.25).toFixed(2))))}
-                aria-label="Zoom out"
-              >
+              <Button size="icon" variant="ghost" onClick={() => adjustZoom(-0.25)} aria-label="Zoom out">
                 <ZoomOut className="w-4 h-4" />
               </Button>
               <span className="w-14 text-center text-xs tabular-nums text-muted-foreground">
                 {Math.round(fullscreenZoom * 100)}%
               </span>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setFullscreenZoom((z) => Math.min(8, Number((z + 0.25).toFixed(2))))}
-                aria-label="Zoom in"
-              >
+              <Button size="icon" variant="ghost" onClick={() => adjustZoom(0.25)} aria-label="Zoom in">
                 <ZoomIn className="w-4 h-4" />
               </Button>
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={() => setFullscreenZoom(1)}
-                aria-label="Fit to screen"
+                variant={fitMode === "page" ? "secondary" : "ghost"}
+                onClick={() => setFitMode("page")}
+                title="Fit entire page in view"
               >
-                Fit
+                <Maximize className="w-4 h-4 mr-1" /> Page
               </Button>
               <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setFullscreenZoom(1.75)}
-                aria-label="Reset readable zoom"
+                size="sm"
+                variant={fitMode === "width" ? "secondary" : "ghost"}
+                onClick={() => setFitMode("width")}
+                title="Fit image width to view"
               >
-                <RotateCcw className="w-4 h-4" />
+                <MoveHorizontal className="w-4 h-4 mr-1" /> Width
               </Button>
             </div>
             <Button
@@ -253,18 +305,26 @@ export default function PageSummaries() {
             </Button>
           </div>
           <div
+            ref={scrollRef}
             className="flex-1 overflow-auto p-4"
             onClick={(e) => e.stopPropagation()}
+            onWheel={handleWheel}
           >
             <div className="min-h-full min-w-full flex items-start justify-center">
               <img
+                ref={imgRef}
                 src={fullscreen.image_url}
                 alt={fullscreen.title}
-                className="h-auto max-w-none rounded border shadow-lg"
+                onLoad={() => fitMode !== "free" && recomputeFit(fitMode)}
+                onClick={handleImageClick}
+                className="h-auto max-w-none rounded border shadow-lg cursor-zoom-in select-none"
                 style={{
-                  width: `${fullscreenZoom * 100}%`,
+                  width: imgRef.current?.naturalWidth
+                    ? `${imgRef.current.naturalWidth * fullscreenZoom}px`
+                    : `${fullscreenZoom * 100}%`,
                   imageRendering: fullscreenZoom >= 2 ? "crisp-edges" : "auto",
                 }}
+                draggable={false}
               />
             </div>
           </div>

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileImage, Search, Maximize2, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { FileImage, Search, Maximize2, X, ZoomIn, ZoomOut, Maximize, MoveHorizontal } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -28,11 +28,73 @@ export default function PageSummaries() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [fullscreen, setFullscreen] = useState<Summary | null>(null);
-  const [fullscreenZoom, setFullscreenZoom] = useState(1.75);
+  const [fullscreenZoom, setFullscreenZoom] = useState(1);
+  const [fitMode, setFitMode] = useState<"page" | "width" | "free">("width");
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   const openFullscreen = (summary: Summary) => {
     setFullscreen(summary);
-    setFullscreenZoom(1.75);
+    setFitMode("width");
+  };
+
+  const recomputeFit = (mode: "page" | "width") => {
+    const c = scrollRef.current;
+    const img = imgRef.current;
+    if (!c || !img || !img.naturalWidth) return;
+    if (mode === "width") {
+      setFullscreenZoom(c.clientWidth / img.naturalWidth);
+    } else {
+      const z = Math.min(c.clientWidth / img.naturalWidth, c.clientHeight / img.naturalHeight);
+      setFullscreenZoom(z);
+    }
+  };
+
+  useEffect(() => {
+    if (!fullscreen || fitMode === "free") return;
+    const handler = () => recomputeFit(fitMode);
+    handler();
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, [fullscreen, fitMode]);
+
+  const adjustZoom = (delta: number, focal?: { x: number; y: number }) => {
+    const c = scrollRef.current;
+    const img = imgRef.current;
+    if (!c || !img) return;
+    const oldZoom = fullscreenZoom;
+    const newZoom = Math.min(8, Math.max(0.1, Number((oldZoom + delta).toFixed(3))));
+    if (newZoom === oldZoom) return;
+    // Focal point in image-natural coordinates
+    const fx = focal ? (c.scrollLeft + focal.x) / oldZoom : (c.scrollLeft + c.clientWidth / 2) / oldZoom;
+    const fy = focal ? (c.scrollTop + focal.y) / oldZoom : (c.scrollTop + c.clientHeight / 2) / oldZoom;
+    setFitMode("free");
+    setFullscreenZoom(newZoom);
+    requestAnimationFrame(() => {
+      if (!scrollRef.current) return;
+      const targetX = focal ? focal.x : c.clientWidth / 2;
+      const targetY = focal ? focal.y : c.clientHeight / 2;
+      scrollRef.current.scrollLeft = fx * newZoom - targetX;
+      scrollRef.current.scrollTop = fy * newZoom - targetY;
+    });
+  };
+
+  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    const c = scrollRef.current;
+    if (!c) return;
+    const rect = c.getBoundingClientRect();
+    const focal = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    adjustZoom(e.altKey ? -0.5 : 0.5, focal);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    const c = scrollRef.current;
+    if (!c) return;
+    const rect = c.getBoundingClientRect();
+    const focal = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    adjustZoom(e.deltaY < 0 ? 0.2 : -0.2, focal);
   };
 
   useEffect(() => {

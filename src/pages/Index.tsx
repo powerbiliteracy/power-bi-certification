@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import PricingCards from "@/components/PricingCards";
 import { Badge } from "@/components/ui/badge";
-import { Zap, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
+import { Zap, CheckCircle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { FEATURE_META } from "@/data/featureMeta";

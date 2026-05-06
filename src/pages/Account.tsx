@@ -107,6 +107,14 @@ export default function Account() {
                     {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "—"}
                   </p>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Last signed in</label>
+                  <p className="text-foreground mt-1">
+                    {user?.last_sign_in_at
+                      ? new Date(user.last_sign_in_at).toLocaleString()
+                      : "—"}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

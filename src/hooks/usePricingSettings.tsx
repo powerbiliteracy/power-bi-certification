@@ -7,6 +7,9 @@ export interface PricingSettings {
   pro_monthly_price: number;
   premium_monthly_price: number;
   annual_discount_percent: number;
+  explorer_trial_days: number;
+  pro_trial_days: number;
+  premium_trial_days: number;
 }
 
 const DEFAULTS: PricingSettings = {
@@ -15,6 +18,9 @@ const DEFAULTS: PricingSettings = {
   pro_monthly_price: 19,
   premium_monthly_price: 39,
   annual_discount_percent: 20,
+  explorer_trial_days: 0,
+  pro_trial_days: 7,
+  premium_trial_days: 7,
 };
 
 export function usePricingSettings() {
@@ -25,7 +31,7 @@ export function usePricingSettings() {
     setLoading(true);
     const { data } = await supabase
       .from("pricing_settings" as any)
-      .select("id, explorer_price, pro_monthly_price, premium_monthly_price, annual_discount_percent")
+      .select("id, explorer_price, pro_monthly_price, premium_monthly_price, annual_discount_percent, explorer_trial_days, pro_trial_days, premium_trial_days")
       .limit(1)
       .maybeSingle();
     if (data) setSettings(data as unknown as PricingSettings);

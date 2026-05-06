@@ -287,7 +287,14 @@ export default function PageSummariesAdmin() {
     }
     setSaving(false);
     if (error) {
-      toast({ title: "Save failed", description: error.message, variant: "destructive" });
+      const isDuplicate = error.message?.toLowerCase().includes("page_summaries_unique_topic_idx");
+      toast({
+        title: isDuplicate ? "Duplicate summary blocked" : "Save failed",
+        description: isDuplicate
+          ? "A summary with the same title, domain, and subtopic already exists. Edit the existing one instead."
+          : error.message,
+        variant: "destructive",
+      });
       return;
     }
     toast({ title: editing ? "Updated" : "Created" });

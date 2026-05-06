@@ -93,21 +93,25 @@ export const FEATURE_META: Record<string, FeatureMeta> = {
   flashcards: {
     icon: Sparkles,
     description: "Spaced-repetition flashcards for fast recall of key concepts.",
+    image: imgKeyTerms,
     count: 92,
   },
   cheatsheets: {
     icon: FileText,
     description: "Printable one-page references for quick review.",
+    image: imgLearnModules,
     count: 5,
   },
   "dos-and-donts": {
     icon: ListChecks,
     description: "Best practices and common pitfalls to avoid on the exam.",
+    image: imgTroubleshooting,
     count: 122,
   },
   "dax-templates": {
     icon: FileText,
     description: "Ready-to-use DAX patterns for common report needs.",
+    image: imgDecisionFramework,
     count: 12,
   },
   troubleshooting: {
@@ -137,25 +141,30 @@ export const FEATURE_META: Record<string, FeatureMeta> = {
   "page-summaries": {
     icon: FileText,
     description: "Visual summary cards covering key exam topics at a glance.",
+    image: imgLearnModules,
     count: 60,
   },
   "interactive-lessons": {
     icon: BookOpen,
     description: "Hands-on interactive lessons with built-in practice.",
+    image: imgLearnModules,
     count: 73,
   },
   "concept-comparisons": {
     icon: GitCompare,
     description: "Side-by-side comparisons of similar Power BI concepts.",
+    image: imgDecisionFramework,
     count: 60,
   },
   "study-plan": {
     icon: Calendar,
     description: "A personalized study schedule based on your goals.",
+    image: imgDashboard,
   },
   "exam-checklist": {
     icon: ListChecks,
     description: "A final pre-exam checklist to make sure you're ready.",
+    image: imgSyllabus,
   },
   badges: {
     icon: Trophy,
@@ -166,10 +175,12 @@ export const FEATURE_META: Record<string, FeatureMeta> = {
   reviews: {
     icon: Star,
     description: "See what other learners say about the platform.",
+    image: imgBadges,
   },
   "my-list": {
     icon: Heart,
     description: "Your saved favorites for quick access.",
+    image: imgDashboard,
   },
 };
 

@@ -357,6 +357,22 @@ export default function Layout({ children }: LayoutProps) {
           )}
         </nav>
 
+        {/* Disclaimer link */}
+        <div className="px-3 pb-2">
+          <Link
+            to="/Disclaimer"
+            onClick={() => setSidebarOpen(false)}
+            className={cn(
+              "flex items-center gap-2 rounded-lg text-[hsl(var(--indigo-light)/0.7)] hover:text-[hsl(0,0%,100%)] hover:bg-[hsl(0,0%,100%/0.08)] transition-colors",
+              collapsed ? "justify-center p-2.5" : "px-3 py-2 text-xs"
+            )}
+            title="Disclaimer"
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            {!collapsed && <span>Disclaimer · Cancel anytime · Not endorsed by Microsoft</span>}
+          </Link>
+        </div>
+
         {/* User section */}
         <div className="p-3 border-t border-[hsl(var(--indigo-light)/0.15)]">
           {user ? (

@@ -634,6 +634,7 @@ export default function Admin() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Tier</TableHead>
+                    <TableHead>Expiry</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
@@ -660,6 +661,26 @@ export default function Admin() {
                               <SelectItem value="premium">Premium</SelectItem>
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="date"
+                            className="h-8 w-36 text-xs"
+                            value={u.subscription_expires_at ? new Date(u.subscription_expires_at).toISOString().slice(0, 10) : ""}
+                            onChange={async (e) => {
+                              const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                              const { error } = await supabase
+                                .from("profiles")
+                                .update({ subscription_expires_at: val } as any)
+                                .eq("user_id", u.user_id);
+                              if (!error) {
+                                setUsers((prev) => prev.map((x) => x.user_id === u.user_id ? { ...x, subscription_expires_at: val } : x));
+                                toast({ title: val ? "Expiry set" : "Expiry cleared" });
+                              } else {
+                                toast({ title: "Error", description: error.message, variant: "destructive" });
+                              }
+                            }}
+                          />
                         </TableCell>
                         <TableCell>
                           <Switch checked={userIsAdmin} onCheckedChange={(c) => toggleAdminRole(u.user_id, c)} />

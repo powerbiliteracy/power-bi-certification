@@ -132,10 +132,21 @@ export default function Layout({ children }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     profile: true,
-    free: true,
-    pro: true,
-    premium: true,
+    explorer: false,
+    pro: false,
+    premium: false,
   });
+
+  // When the sidebar is re-expanded after being collapsed, reset groups so only Profile is open
+  const handleToggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      if (!next) {
+        setOpenGroups({ profile: true, explorer: false, pro: false, premium: false });
+      }
+      return next;
+    });
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const currentPage = location.pathname.replace("/", "") || "Dashboard";
@@ -221,7 +232,7 @@ export default function Layout({ children }: LayoutProps) {
         {/* Collapse toggle - desktop only */}
         <div className="hidden lg:flex justify-end px-2 py-1">
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={handleToggleCollapsed}
             className="p-1.5 rounded-lg text-[hsl(var(--indigo-light)/0.6)] hover:text-[hsl(0,0%,100%)] hover:bg-[hsl(0,0%,100%/0.08)] transition-colors"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >

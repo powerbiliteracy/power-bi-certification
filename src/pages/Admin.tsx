@@ -579,15 +579,45 @@ export default function Admin() {
               <CardTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5" /> Invite / Add User</CardTitle>
               <CardDescription>Send an invite email or manually add a user to the platform.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-4 gap-3">
+            <CardContent className="space-y-3">
+              <div className="grid sm:grid-cols-3 gap-3">
                 <Input placeholder="First Name" value={inviteFirst} onChange={(e) => setInviteFirst(e.target.value)} />
                 <Input placeholder="Last Name" value={inviteLast} onChange={(e) => setInviteLast(e.target.value)} />
                 <Input placeholder="Email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
-                <Button onClick={handleInvite} disabled={inviteLoading || !inviteEmail} className="gap-2">
-                  <UserPlus className="w-4 h-4" /> {inviteLoading ? "Sending..." : "Send Invite"}
-                </Button>
               </div>
+              <div className="grid sm:grid-cols-4 gap-3 items-end">
+                <div>
+                  <label className="text-xs text-muted-foreground">Subscription Tier</label>
+                  <Select value={inviteTier} onValueChange={(v) => setInviteTier(v as any)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="explorer">Explorer (Free)</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="premium">Premium</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2 h-10 mt-5">
+                  <Switch checked={inviteAdmin} onCheckedChange={setInviteAdmin} />
+                  <label className="text-sm flex items-center gap-1"><Crown className="w-3.5 h-3.5 text-amber-500" /> Make Admin</label>
+                </div>
+                <div className="flex items-center gap-2 h-10 mt-5">
+                  <Switch checked={inviteExpiryEnabled} onCheckedChange={setInviteExpiryEnabled} />
+                  <label className="text-sm">Set Expiry</label>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Expiry Date {inviteExpiryEnabled ? "" : "(off)"}</label>
+                  <Input
+                    type="date"
+                    value={inviteExpiryDate}
+                    disabled={!inviteExpiryEnabled}
+                    onChange={(e) => setInviteExpiryDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button onClick={handleInvite} disabled={inviteLoading || !inviteEmail} className="gap-2">
+                <UserPlus className="w-4 h-4" /> {inviteLoading ? "Sending..." : "Send Invite & Assign"}
+              </Button>
             </CardContent>
           </Card>
 

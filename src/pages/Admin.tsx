@@ -25,6 +25,7 @@ interface SectionRow {
   required_tier: "explorer" | "pro" | "premium";
   is_locked: boolean;
   admin_only: boolean;
+  is_hidden: boolean;
   sort_order: number;
 }
 
@@ -206,6 +207,19 @@ export default function Admin() {
     } else {
       setSections((prev) => prev.map((s) => (s.id === id ? { ...s, admin_only: adminOnly } : s)));
       toast({ title: "Updated", description: adminOnly ? "Section set to admin-only." : "Section visible to all." });
+      notifySectionUpdate();
+    }
+    setSaving(null);
+  };
+
+  const toggleHidden = async (id: string, hidden: boolean) => {
+    setSaving(id);
+    const { error } = await supabase.from("section_access").update({ is_hidden: hidden } as any).eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setSections((prev) => prev.map((s) => (s.id === id ? { ...s, is_hidden: hidden } : s)));
+      toast({ title: "Updated", description: hidden ? "Section hidden from non-admins." : "Section visible." });
       notifySectionUpdate();
     }
     setSaving(null);
@@ -471,6 +485,7 @@ export default function Admin() {
                 onTierChange={updateSectionTier}
                 onAdminOnlyChange={toggleAdminOnly}
                 onLockChange={toggleSectionLock}
+                onHideChange={toggleHidden}
                 tierColor={tierColor}
               />
             </CardContent>
@@ -489,7 +504,7 @@ export default function Admin() {
                 </CardHeader>
                 <CardContent>
                   <Table>
-                    <TableHeader><TableRow><TableHead>Domain</TableHead><TableHead>Required Tier</TableHead><TableHead>Admin Only</TableHead><TableHead>Locked</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Domain</TableHead><TableHead>Required Tier</TableHead><TableHead>Admin Only</TableHead><TableHead>Locked</TableHead><TableHead>Hide</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {subs.map((section) => (
                         <TableRow key={section.id}>
@@ -497,8 +512,10 @@ export default function Admin() {
                           <TableCell><Select value={section.required_tier} onValueChange={(val) => updateSectionTier(section.id, val as any)} disabled={saving === section.id}><SelectTrigger className="w-32"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="explorer">Explorer</SelectItem><SelectItem value="pro">Pro</SelectItem><SelectItem value="premium">Premium</SelectItem></SelectContent></Select></TableCell>
                           <TableCell><Switch checked={section.admin_only} onCheckedChange={(c) => toggleAdminOnly(section.id, c)} disabled={saving === section.id} /></TableCell>
                           <TableCell><Switch checked={section.is_locked} onCheckedChange={(c) => toggleSectionLock(section.id, c)} disabled={saving === section.id} /></TableCell>
+                          <TableCell><Switch checked={!!section.is_hidden} onCheckedChange={(c) => toggleHidden(section.id, c)} disabled={saving === section.id} /></TableCell>
                           <TableCell>
-                            {section.admin_only ? <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" /> Admin Only</Badge>
+                            {section.is_hidden ? <Badge variant="destructive" className="gap-1"><EyeOff className="w-3 h-3" /> Hidden</Badge>
+                              : section.admin_only ? <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" /> Admin Only</Badge>
                               : section.is_locked ? <Badge variant="destructive" className="gap-1"><Lock className="w-3 h-3" /> Locked</Badge>
                               : <Badge variant={tierColor(section.required_tier) as any} className="gap-1"><Unlock className="w-3 h-3" /> {section.required_tier}</Badge>}
                           </TableCell>

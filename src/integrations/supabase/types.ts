@@ -375,6 +375,7 @@ export type Database = {
         Row: {
           admin_only: boolean
           id: string
+          is_hidden: boolean
           is_locked: boolean
           required_tier: Database["public"]["Enums"]["subscription_tier"]
           section_key: string
@@ -385,6 +386,7 @@ export type Database = {
         Insert: {
           admin_only?: boolean
           id?: string
+          is_hidden?: boolean
           is_locked?: boolean
           required_tier?: Database["public"]["Enums"]["subscription_tier"]
           section_key: string
@@ -395,6 +397,7 @@ export type Database = {
         Update: {
           admin_only?: boolean
           id?: string
+          is_hidden?: boolean
           is_locked?: boolean
           required_tier?: Database["public"]["Enums"]["subscription_tier"]
           section_key?: string

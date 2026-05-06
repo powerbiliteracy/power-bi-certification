@@ -8,6 +8,7 @@ interface SectionAccess {
   required_tier: "explorer" | "pro" | "premium";
   is_locked: boolean;
   admin_only: boolean;
+  is_hidden: boolean;
   sort_order: number;
 }
 
@@ -22,7 +23,7 @@ export function useSectionAccess() {
     setLoading(true);
     supabase
       .from("section_access")
-      .select("section_key, section_label, required_tier, is_locked, admin_only, sort_order")
+      .select("section_key, section_label, required_tier, is_locked, admin_only, is_hidden, sort_order")
       .then(({ data }) => {
         if (data) setSections(data as SectionAccess[]);
         setLoading(false);
@@ -46,6 +47,7 @@ export function useSectionAccess() {
     if (isAdmin) return true;
     const section = sections.find((s) => s.section_key === sectionKey);
     if (!section) return true;
+    if (section.is_hidden) return false;
     if (section.admin_only) return false;
     if (section.is_locked) return false;
     const userTier = simulatedTier || profile?.subscription_tier || "explorer";
@@ -56,6 +58,7 @@ export function useSectionAccess() {
     if (isAdmin) return true;
     const section = sections.find((s) => s.section_key === sectionKey);
     if (!section) return true;
+    if (section.is_hidden) return false;
     return !section.admin_only;
   };
 

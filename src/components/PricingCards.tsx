@@ -133,7 +133,7 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
     if (!priceId) return;
     setLoadingTier(tierId);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", { body: { priceId } });
+      const { data, error } = await supabase.functions.invoke("create-checkout", { body: { priceId, tier: tierId } });
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {
@@ -256,6 +256,16 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
               >
                 {loadingTier === tier.id ? "Loading..." : tier.cta}
               </Button>
+              {(() => {
+                const days = tier.id === "pro" ? settings.pro_trial_days
+                  : tier.id === "premium" ? settings.premium_trial_days
+                  : settings.explorer_trial_days;
+                return days > 0 ? (
+                  <p className="text-xs text-center text-muted-foreground mt-2">
+                    {days}-day free trial — cancel anytime
+                  </p>
+                ) : null;
+              })()}
             </div>
           );
         })}

@@ -78,8 +78,38 @@ interface PricingCardsProps {
 export default function PricingCards({ compact = false }: PricingCardsProps) {
   const [isAnnual, setIsAnnual] = useState(false);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [sections, setSections] = useState<{ section_label: string; required_tier: Tier; sort_order: number }[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  useEffect(() => {
+    supabase
+      .from("section_access")
+      .select("section_label, required_tier, sort_order, admin_only, is_hidden")
+      .then(({ data }) => {
+        if (!data) return;
+        const visible = (data as any[])
+          .filter((s) => !s.admin_only && !s.is_hidden)
+          .map((s) => ({
+            section_label: s.section_label as string,
+            required_tier: s.required_tier as Tier,
+            sort_order: s.sort_order as number,
+          }))
+          .sort((a, b) => a.sort_order - b.sort_order);
+        setSections(visible);
+      });
+  }, []);
+
+  const featuresByTier = useMemo(() => {
+    const explorer = sections.filter((s) => s.required_tier === "explorer").map((s) => s.section_label);
+    const pro = sections.filter((s) => s.required_tier === "pro").map((s) => s.section_label);
+    const premium = sections.filter((s) => s.required_tier === "premium").map((s) => s.section_label);
+    return {
+      explorer: [...explorer, ...STATIC_PERKS.explorer],
+      pro: ["Everything in Explorer", ...pro, ...STATIC_PERKS.pro],
+      premium: ["Everything in Pro", ...premium, ...STATIC_PERKS.premium],
+    } as Record<Tier, string[]>;
+  }, [sections]);
 
   const handleSubscribe = async (tierId: string) => {
     if (tierId === "free") {

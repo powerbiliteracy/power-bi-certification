@@ -261,9 +261,12 @@ export type Database = {
         Row: {
           annual_discount_percent: number
           explorer_price: number
+          explorer_trial_days: number
           id: string
           premium_monthly_price: number
+          premium_trial_days: number
           pro_monthly_price: number
+          pro_trial_days: number
           singleton: boolean
           updated_at: string
           updated_by: string | null
@@ -271,9 +274,12 @@ export type Database = {
         Insert: {
           annual_discount_percent?: number
           explorer_price?: number
+          explorer_trial_days?: number
           id?: string
           premium_monthly_price?: number
+          premium_trial_days?: number
           pro_monthly_price?: number
+          pro_trial_days?: number
           singleton?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -281,9 +287,12 @@ export type Database = {
         Update: {
           annual_discount_percent?: number
           explorer_price?: number
+          explorer_trial_days?: number
           id?: string
           premium_monthly_price?: number
+          premium_trial_days?: number
           pro_monthly_price?: number
+          pro_trial_days?: number
           singleton?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -293,6 +302,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          cancel_at_period_end: boolean
           created_at: string
           display_name: string | null
           email: string | null
@@ -301,12 +311,15 @@ export type Database = {
           id: string
           last_name: string | null
           status: string
+          subscription_current_period_end: string | null
+          subscription_expires_at: string | null
           subscription_tier: Database["public"]["Enums"]["subscription_tier"]
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -315,12 +328,15 @@ export type Database = {
           id?: string
           last_name?: string | null
           status?: string
+          subscription_current_period_end?: string | null
+          subscription_expires_at?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -329,6 +345,8 @@ export type Database = {
           id?: string
           last_name?: string | null
           status?: string
+          subscription_current_period_end?: string | null
+          subscription_expires_at?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           updated_at?: string
           user_id?: string
@@ -621,18 +639,21 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string
+          expires_at: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
+          expires_at?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
+          expires_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string

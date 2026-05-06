@@ -218,7 +218,7 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
               </div>
 
               <ul className={cn("space-y-3 mb-6 flex-1", compact && "space-y-2")}>
-                {tier.features.map((feature) => (
+                {featuresByTier[tier.tierKey].map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm">
                     <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                     <span className="text-foreground">{feature}</span>

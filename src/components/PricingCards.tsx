@@ -11,6 +11,25 @@ import { toast } from "@/hooks/use-toast";
 type Tier = "explorer" | "pro" | "premium";
 
 // Short feature descriptions keyed by section_label (from section_access table)
+// Approximate item counts per feature (shown as badge next to feature name)
+const FEATURE_COUNTS: Record<string, number> = {
+  "Exam Syllabus": 74,
+  "Learn Modules": 73,
+  "Key Terms & Features": 120,
+  "Exam Scenarios": 41,
+  "Flashcards": 92,
+  "Cheat Sheets": 5,
+  "Dos & Don'ts": 122,
+  "DAX Templates": 12,
+  "Troubleshooting": 30,
+  "Decision Framework": 11,
+  "Topic Assessments": 21,
+  "Exam Questions": 84,
+  "Page Summaries": 60,
+  "Concept Comparisons": 60,
+  "Interactive Lessons": 73,
+};
+
 const FEATURE_DESCRIPTIONS: Record<string, string> = {
   "Dashboard": "Your personalized study home with progress, streaks, and quick links.",
   "Exam Syllabus": "Official PL-300 exam outline with every domain and subtopic.",
@@ -56,7 +75,7 @@ const tiers = [
     name: "Explorer",
     price: "$0",
     period: "forever",
-    description: "Get started with essential PL-300 study materials",
+    description: "Free essentials to explore the PL-300 syllabus and core lessons",
     icon: Zap,
     gradient: "from-blue-500 to-cyan-400",
     popular: false,
@@ -68,7 +87,7 @@ const tiers = [
     name: "Pro",
     price: "$19",
     period: "/month",
-    description: "Full access to all study tools and practice exams",
+    description: "Deeper study tools — key terms, scenarios, DAX templates and more",
     icon: Crown,
     gradient: "from-primary to-accent",
     popular: true,
@@ -80,7 +99,7 @@ const tiers = [
     name: "Premium",
     price: "$39",
     period: "/month",
-    description: "Premium coaching with AI-powered exam preparation",
+    description: "Full exam prep — flashcards, cheat sheets, full question banks & more",
     icon: Rocket,
     gradient: "from-violet-500 to-pink-400",
     popular: false,
@@ -241,10 +260,18 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
               <ul className={cn("space-y-3 mb-6 flex-1", compact && "space-y-2")}>
                 {featuresByTier[tier.tierKey].map((feature) => {
                   const desc = FEATURE_DESCRIPTIONS[feature];
+                  const count = FEATURE_COUNTS[feature];
                   return (
                     <li key={feature} className="flex items-start gap-2 text-sm">
                       <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-foreground flex-1">{feature}</span>
+                      <span className="text-foreground flex-1">
+                        {feature}
+                        {count !== undefined && (
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-semibold">
+                            {count}
+                          </span>
+                        )}
+                      </span>
                       {desc && (
                         <Popover>
                           <PopoverTrigger asChild>

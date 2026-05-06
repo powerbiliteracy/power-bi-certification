@@ -47,6 +47,7 @@ export function useSectionAccess() {
     if (isAdmin) return true;
     const section = sections.find((s) => s.section_key === sectionKey);
     if (!section) return true;
+    if (section.is_hidden) return false;
     if (section.admin_only) return false;
     if (section.is_locked) return false;
     const userTier = simulatedTier || profile?.subscription_tier || "explorer";
@@ -57,6 +58,7 @@ export function useSectionAccess() {
     if (isAdmin) return true;
     const section = sections.find((s) => s.section_key === sectionKey);
     if (!section) return true;
+    if (section.is_hidden) return false;
     return !section.admin_only;
   };
 

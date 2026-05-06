@@ -289,9 +289,12 @@ export default function Admin() {
   const handleInvite = async () => {
     if (!inviteEmail) return;
     setInviteLoading(true);
-    // Generate a random temp password for the invited user
     const tempPassword = crypto.randomUUID().slice(0, 12);
-    const { error } = await supabase.auth.signUp({
+    const expiresAtIso = inviteExpiryEnabled && inviteExpiryDate
+      ? new Date(inviteExpiryDate).toISOString()
+      : null;
+
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: inviteEmail,
       password: tempPassword,
       options: {
@@ -301,13 +304,45 @@ export default function Admin() {
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Invite sent!", description: `Confirmation email sent to ${inviteEmail}. They'll need to verify and reset their password.` });
-      setInviteEmail("");
-      setInviteFirst("");
-      setInviteLast("");
-      setTimeout(fetchUsers, 2000);
+      setInviteLoading(false);
+      return;
     }
+
+    const newUserId = signUpData.user?.id;
+    if (newUserId) {
+      // Wait briefly for the trigger-created profile, then update tier + expiry
+      setTimeout(async () => {
+        await supabase
+          .from("profiles")
+          .update({
+            subscription_tier: inviteTier,
+            subscription_expires_at: expiresAtIso,
+          } as any)
+          .eq("user_id", newUserId);
+
+        if (inviteAdmin) {
+          await supabase.from("user_roles").insert({
+            user_id: newUserId,
+            role: "admin" as const,
+            ...(expiresAtIso ? { expires_at: expiresAtIso } : {}),
+          } as any);
+        }
+        fetchUsers();
+        fetchRoles();
+      }, 1500);
+    }
+
+    toast({
+      title: "Invite sent!",
+      description: `Confirmation email sent to ${inviteEmail}. ${inviteAdmin ? "Admin role assigned. " : ""}${expiresAtIso ? `Expires ${new Date(expiresAtIso).toLocaleDateString()}.` : ""}`,
+    });
+    setInviteEmail("");
+    setInviteFirst("");
+    setInviteLast("");
+    setInviteTier("explorer");
+    setInviteAdmin(false);
+    setInviteExpiryEnabled(false);
+    setInviteExpiryDate("");
     setInviteLoading(false);
   };
 

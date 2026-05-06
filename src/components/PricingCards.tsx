@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Check, Zap, Crown, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+
+type Tier = "explorer" | "pro" | "premium";
+
+// Static perks that aren't represented as sections in the DB
+const STATIC_PERKS: Record<Tier, string[]> = {
+  explorer: ["Community support"],
+  pro: ["Progress tracking & analytics", "Email support"],
+  premium: ["Personalized study plan", "Priority support", "Certificate of completion"],
+};
 
 const STRIPE_PRICES = {
   pro: {
@@ -21,6 +30,7 @@ const STRIPE_PRICES = {
 const tiers = [
   {
     id: "free",
+    tierKey: "explorer" as Tier,
     name: "Explorer",
     price: "$0",
     period: "forever",
@@ -28,18 +38,11 @@ const tiers = [
     icon: Zap,
     gradient: "from-blue-500 to-cyan-400",
     popular: false,
-    features: [
-      "Exam syllabus browser",
-      "Dashboard overview",
-      "Exam prep video links",
-      "Microsoft Learn module links",
-      "5 sample assessment questions",
-      "Community support",
-    ],
     cta: "Get Started Free",
   },
   {
     id: "pro",
+    tierKey: "pro" as Tier,
     name: "Pro",
     price: "$19",
     period: "/month",
@@ -47,20 +50,11 @@ const tiers = [
     icon: Crown,
     gradient: "from-primary to-accent",
     popular: true,
-    features: [
-      "Everything in Explorer",
-      "200+ practice assessment questions",
-      "All 4 domain question banks",
-      "Key Terms & Features glossary",
-      "Detailed answer explanations",
-      "Progress tracking & analytics",
-      "Topic-by-topic study content",
-      "Email support",
-    ],
     cta: "Start Pro Trial",
   },
   {
     id: "premium",
+    tierKey: "premium" as Tier,
     name: "Premium",
     price: "$39",
     period: "/month",
@@ -68,17 +62,6 @@ const tiers = [
     icon: Rocket,
     gradient: "from-violet-500 to-pink-400",
     popular: false,
-    features: [
-      "Everything in Pro",
-      "AI coaching assistant",
-      "Exam scenario simulations",
-      "Decision framework trainer",
-      "Troubleshooting lab exercises",
-      "Performance analytics dashboard",
-      "Personalized study plan",
-      "Priority support",
-      "Certificate of completion",
-    ],
     cta: "Start Premium Trial",
   },
 ];
@@ -95,8 +78,38 @@ interface PricingCardsProps {
 export default function PricingCards({ compact = false }: PricingCardsProps) {
   const [isAnnual, setIsAnnual] = useState(false);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [sections, setSections] = useState<{ section_label: string; required_tier: Tier; sort_order: number }[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  useEffect(() => {
+    supabase
+      .from("section_access")
+      .select("section_label, required_tier, sort_order, admin_only, is_hidden")
+      .then(({ data }) => {
+        if (!data) return;
+        const visible = (data as any[])
+          .filter((s) => !s.admin_only && !s.is_hidden)
+          .map((s) => ({
+            section_label: s.section_label as string,
+            required_tier: s.required_tier as Tier,
+            sort_order: s.sort_order as number,
+          }))
+          .sort((a, b) => a.sort_order - b.sort_order);
+        setSections(visible);
+      });
+  }, []);
+
+  const featuresByTier = useMemo(() => {
+    const explorer = sections.filter((s) => s.required_tier === "explorer").map((s) => s.section_label);
+    const pro = sections.filter((s) => s.required_tier === "pro").map((s) => s.section_label);
+    const premium = sections.filter((s) => s.required_tier === "premium").map((s) => s.section_label);
+    return {
+      explorer: [...explorer, ...STATIC_PERKS.explorer],
+      pro: ["Everything in Explorer", ...pro, ...STATIC_PERKS.pro],
+      premium: ["Everything in Pro", ...premium, ...STATIC_PERKS.premium],
+    } as Record<Tier, string[]>;
+  }, [sections]);
 
   const handleSubscribe = async (tierId: string) => {
     if (tierId === "free") {
@@ -205,7 +218,7 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
               </div>
 
               <ul className={cn("space-y-3 mb-6 flex-1", compact && "space-y-2")}>
-                {tier.features.map((feature) => (
+                {featuresByTier[tier.tierKey].map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm">
                     <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                     <span className="text-foreground">{feature}</span>

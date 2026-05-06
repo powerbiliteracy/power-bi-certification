@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch, GitCompare, FileImage, DollarSign } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch, GitCompare, FileImage, DollarSign, Home } from "lucide-react";
 import { Navigate, Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import SortableSectionsTable from "@/components/SortableSectionsTable";

@@ -1,26 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import PricingCards from "@/components/PricingCards";
 import { Badge } from "@/components/ui/badge";
-import {
-  Zap,
-  BookOpen,
-  Brain,
-  CheckCircle,
-  ArrowRight,
-  Video,
-  GraduationCap,
-  AlertTriangle,
-  Lightbulb,
-  GitBranch,
-  Youtube,
-  Trophy,
-  LayoutDashboard,
-  BookMarked,
-} from "lucide-react";
+import { Zap, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { FEATURE_META } from "@/data/featureMeta";
+
+type Tier = "explorer" | "pro" | "premium";
+
+interface DynamicSection {
+  section_key: string;
+  section_label: string;
+  required_tier: Tier;
+  sort_order: number;
+}
 
 import imgDashboard from "@/assets/features/dashboard.jpg";
 import imgSyllabus from "@/assets/features/syllabus.jpg";

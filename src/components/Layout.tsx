@@ -132,10 +132,21 @@ export default function Layout({ children }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     profile: true,
-    free: true,
-    pro: true,
-    premium: true,
+    explorer: false,
+    pro: false,
+    premium: false,
   });
+
+  // When the sidebar is re-expanded after being collapsed, reset groups so only Profile is open
+  const handleToggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      if (!next) {
+        setOpenGroups({ profile: true, explorer: false, pro: false, premium: false });
+      }
+      return next;
+    });
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const currentPage = location.pathname.replace("/", "") || "Dashboard";

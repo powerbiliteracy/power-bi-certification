@@ -37,105 +37,6 @@ const stats = [
   { value: "100%", label: "Syllabus Coverage" },
 ];
 
-const appSections = [
-  {
-    icon: LayoutDashboard,
-    name: "Dashboard",
-    description: "Track your study progress, view completion stats, and see your overall readiness.",
-    tier: "explorer",
-    image: imgDashboard,
-    metric: "Real-time progress tracking",
-  },
-  {
-    icon: BookOpen,
-    name: "Exam Syllabus",
-    description: "Browse every PL-300 exam topic organized by the four official domains with detailed content.",
-    tier: "explorer",
-    image: imgSyllabus,
-    metric: "21 topics across 4 domains",
-  },
-  {
-    icon: BookMarked,
-    name: "Key Terms & Features",
-    description: "Searchable glossary of essential Power BI terms, DAX functions, and exam-relevant features.",
-    tier: "pro",
-    image: imgKeyTerms,
-    metric: "80+ terms & features explained",
-  },
-  {
-    icon: Video,
-    name: "Exam Prep Videos",
-    description: "Curated Microsoft Exam Readiness Zone videos with embedded player for each domain.",
-    tier: "explorer",
-    image: imgExamVideos,
-    metric: "4 official readiness videos",
-  },
-  {
-    icon: GraduationCap,
-    name: "Learn Modules",
-    description: "Direct links to official Microsoft Learn modules mapped to PL-300 exam objectives.",
-    tier: "explorer",
-    image: imgLearnModules,
-    metric: "10 Microsoft Learn modules",
-  },
-  {
-    icon: AlertTriangle,
-    name: "Troubleshooting",
-    description: "Real-world troubleshooting scenarios with step-by-step solutions and progress tracking.",
-    tier: "premium",
-    image: imgTroubleshooting,
-    metric: "30+ troubleshooting scenarios",
-  },
-  {
-    icon: Lightbulb,
-    name: "Exam Scenarios",
-    description: "Scenario-based practice that simulates real exam case studies with completion tracking.",
-    tier: "premium",
-    image: imgExamScenarios,
-    metric: "40+ case study scenarios",
-  },
-  {
-    icon: GitBranch,
-    name: "Decision Framework",
-    description: "Learn how to choose between Power BI tools, visuals, and approaches for exam questions.",
-    tier: "premium",
-    image: imgDecisionFramework,
-    metric: "14 decision frameworks",
-  },
-  {
-    icon: Youtube,
-    name: "YouTube Playlists",
-    description: "Curated YouTube playlists from top Power BI educators organized by exam domain.",
-    tier: "explorer",
-    image: imgYoutubePlaylists,
-    metric: "4 curated playlists",
-  },
-  {
-    icon: Brain,
-    name: "Topic Assessments",
-    description: "Domain-specific quizzes with explanations and a full results history to track improvement.",
-    tier: "pro",
-    image: imgTopicAssessments,
-    metric: "315 domain-specific questions",
-  },
-  {
-    icon: Brain,
-    name: "Exam Simulations",
-    description: "200+ practice questions in timed sets simulating the real PL-300 exam experience.",
-    tier: "pro",
-    image: imgExamQuestions,
-    metric: "7 timed practice sets",
-  },
-  {
-    icon: Trophy,
-    name: "Badges",
-    description: "Earn achievement badges as you complete sections and hit study milestones.",
-    tier: "explorer",
-    image: imgBadges,
-    metric: "Achievement milestones",
-  },
-];
-
 const tierConfig = {
   explorer: { label: "Free", className: "text-muted-foreground border-border" },
   pro: { label: "Pro", className: "text-primary border-primary/30" },
@@ -146,10 +47,60 @@ type TierFilter = "all" | "explorer" | "pro" | "premium";
 
 export default function LandingPage() {
   const [tierFilter, setTierFilter] = useState<TierFilter>("all");
+  const [sections, setSections] = useState<DynamicSection[]>([]);
+
+  useEffect(() => {
+    const load = () => {
+      supabase
+        .from("section_access")
+        .select("section_key, section_label, required_tier, sort_order, admin_only, is_hidden")
+        .then(({ data }) => {
+          if (!data) return;
+          const visible = (data as any[])
+            .filter((s) => !s.admin_only && !s.is_hidden && FEATURE_META[s.section_key])
+            .map((s) => ({
+              section_key: s.section_key as string,
+              section_label: s.section_label as string,
+              required_tier: s.required_tier as Tier,
+              sort_order: s.sort_order as number,
+            }))
+            .sort((a, b) => a.sort_order - b.sort_order);
+          setSections(visible);
+        });
+    };
+    load();
+    window.addEventListener("section-access-updated", load);
+    return () => window.removeEventListener("section-access-updated", load);
+  }, []);
+
+  const appSections = useMemo(
+    () =>
+      sections.map((s) => {
+        const meta = FEATURE_META[s.section_key];
+        return {
+          key: s.section_key,
+          icon: meta.icon,
+          name: s.section_label,
+          description: meta.description,
+          tier: s.required_tier,
+          image: meta.image,
+          metric:
+            meta.countLabel ||
+            (meta.count !== undefined ? `${meta.count} items` : ""),
+        };
+      }),
+    [sections]
+  );
 
   const filteredSections = tierFilter === "all"
     ? appSections
     : appSections.filter((s) => s.tier === tierFilter);
+
+  const counts = {
+    explorer: appSections.filter((s) => s.tier === "explorer").length,
+    pro: appSections.filter((s) => s.tier === "pro").length,
+    premium: appSections.filter((s) => s.tier === "premium").length,
+  };
 
   return (
     <div className="min-h-screen bg-background">

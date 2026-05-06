@@ -11,12 +11,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch, GitCompare, FileImage } from "lucide-react";
+import { Shield, Users, Settings, Lock, Unlock, Crown, BarChart3, Eye, EyeOff, UserPlus, Tag, Megaphone, AlertTriangle, Pause, XCircle, Flag, Star, MessageSquare, CheckCircle2, FileSearch, GitCompare, FileImage, DollarSign } from "lucide-react";
 import { Navigate, Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import SortableSectionsTable from "@/components/SortableSectionsTable";
 import ConceptComparisonsAdmin from "@/components/ConceptComparisonsAdmin";
 import PageSummariesAdmin from "@/components/PageSummariesAdmin";
+import PricingAdmin from "@/components/PricingAdmin";
 
 interface SectionRow {
   id: string;
@@ -450,6 +451,7 @@ export default function Admin() {
       <Tabs defaultValue="sections">
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="sections" className="gap-2"><Settings className="w-4 h-4" /> Sections</TabsTrigger>
+          <TabsTrigger value="pricing" className="gap-2"><DollarSign className="w-4 h-4" /> Pricing</TabsTrigger>
           <TabsTrigger value="users" className="gap-2"><Users className="w-4 h-4" /> Users</TabsTrigger>
           <TabsTrigger value="promos" className="gap-2"><Tag className="w-4 h-4" /> Promo Codes</TabsTrigger>
           <TabsTrigger value="announcements" className="gap-2"><Megaphone className="w-4 h-4" /> Announcements</TabsTrigger>
@@ -900,6 +902,10 @@ export default function Admin() {
 
         <TabsContent value="summaries" className="mt-6 space-y-6">
           <PageSummariesAdmin />
+        </TabsContent>
+
+        <TabsContent value="pricing" className="mt-6 space-y-6">
+          <PricingAdmin />
         </TabsContent>
       </Tabs>
     </div>

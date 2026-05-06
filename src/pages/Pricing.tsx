@@ -24,8 +24,8 @@ export default function Pricing() {
       <div className="max-w-2xl mx-auto text-center bg-secondary/30 rounded-2xl border border-border p-6">
         <h3 className="font-semibold text-foreground mb-2">🎯 Which plan is right for me?</h3>
         <p className="text-sm text-muted-foreground">
-          <strong>Explorer</strong> is perfect for getting an overview. <strong>Pro</strong> is ideal for serious exam prep with full question banks. 
-          <strong> Premium</strong> adds AI coaching and simulation tools for the most thorough preparation.
+          <strong>Explorer</strong> is great for browsing the syllabus and core lessons. <strong>Pro</strong> unlocks deeper study tools — key terms, exam scenarios and DAX templates.
+          <strong> Premium</strong> gives you everything: flashcards, cheat sheets, full question banks, decision frameworks and topic assessments.
         </p>
       </div>
     </div>

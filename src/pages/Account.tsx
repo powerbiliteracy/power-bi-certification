@@ -206,8 +206,21 @@ export default function Account() {
                 <ExternalLink className="w-4 h-4" />
                 {portalLoading ? "Opening…" : "Manage Billing & Payment History"}
               </Button>
+
+              {profile?.subscription_tier && profile.subscription_tier !== "explorer" && (
+                <Button
+                  onClick={handleCancelSubscription}
+                  disabled={cancelLoading}
+                  variant="outline"
+                  className="w-full gap-2 text-destructive hover:text-destructive"
+                >
+                  <XCircle className="w-4 h-4" />
+                  {cancelLoading ? "Cancelling…" : "Cancel Subscription"}
+                </Button>
+              )}
+
               <p className="text-xs text-muted-foreground text-center">
-                View invoices, update payment method, and manage your subscription in the billing portal.
+                Cancel anytime — your access continues until the end of your current 30-day billing period from your last payment date.
               </p>
             </CardContent>
           </Card>

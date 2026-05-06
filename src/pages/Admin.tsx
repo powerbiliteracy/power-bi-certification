@@ -41,6 +41,7 @@ interface ProfileRow {
   status: string;
   flag_reason: string | null;
   created_at: string;
+  subscription_expires_at: string | null;
 }
 
 interface RoleRow {
@@ -84,6 +85,10 @@ export default function Admin() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteFirst, setInviteFirst] = useState("");
   const [inviteLast, setInviteLast] = useState("");
+  const [inviteTier, setInviteTier] = useState<"explorer" | "pro" | "premium">("explorer");
+  const [inviteAdmin, setInviteAdmin] = useState(false);
+  const [inviteExpiryEnabled, setInviteExpiryEnabled] = useState(false);
+  const [inviteExpiryDate, setInviteExpiryDate] = useState<string>("");
   const [inviteLoading, setInviteLoading] = useState(false);
 
   // Promo form
@@ -284,9 +289,12 @@ export default function Admin() {
   const handleInvite = async () => {
     if (!inviteEmail) return;
     setInviteLoading(true);
-    // Generate a random temp password for the invited user
     const tempPassword = crypto.randomUUID().slice(0, 12);
-    const { error } = await supabase.auth.signUp({
+    const expiresAtIso = inviteExpiryEnabled && inviteExpiryDate
+      ? new Date(inviteExpiryDate).toISOString()
+      : null;
+
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: inviteEmail,
       password: tempPassword,
       options: {
@@ -296,13 +304,45 @@ export default function Admin() {
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Invite sent!", description: `Confirmation email sent to ${inviteEmail}. They'll need to verify and reset their password.` });
-      setInviteEmail("");
-      setInviteFirst("");
-      setInviteLast("");
-      setTimeout(fetchUsers, 2000);
+      setInviteLoading(false);
+      return;
     }
+
+    const newUserId = signUpData.user?.id;
+    if (newUserId) {
+      // Wait briefly for the trigger-created profile, then update tier + expiry
+      setTimeout(async () => {
+        await supabase
+          .from("profiles")
+          .update({
+            subscription_tier: inviteTier,
+            subscription_expires_at: expiresAtIso,
+          } as any)
+          .eq("user_id", newUserId);
+
+        if (inviteAdmin) {
+          await supabase.from("user_roles").insert({
+            user_id: newUserId,
+            role: "admin" as const,
+            ...(expiresAtIso ? { expires_at: expiresAtIso } : {}),
+          } as any);
+        }
+        fetchUsers();
+        fetchRoles();
+      }, 1500);
+    }
+
+    toast({
+      title: "Invite sent!",
+      description: `Confirmation email sent to ${inviteEmail}. ${inviteAdmin ? "Admin role assigned. " : ""}${expiresAtIso ? `Expires ${new Date(expiresAtIso).toLocaleDateString()}.` : ""}`,
+    });
+    setInviteEmail("");
+    setInviteFirst("");
+    setInviteLast("");
+    setInviteTier("explorer");
+    setInviteAdmin(false);
+    setInviteExpiryEnabled(false);
+    setInviteExpiryDate("");
     setInviteLoading(false);
   };
 
@@ -539,15 +579,45 @@ export default function Admin() {
               <CardTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5" /> Invite / Add User</CardTitle>
               <CardDescription>Send an invite email or manually add a user to the platform.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-4 gap-3">
+            <CardContent className="space-y-3">
+              <div className="grid sm:grid-cols-3 gap-3">
                 <Input placeholder="First Name" value={inviteFirst} onChange={(e) => setInviteFirst(e.target.value)} />
                 <Input placeholder="Last Name" value={inviteLast} onChange={(e) => setInviteLast(e.target.value)} />
                 <Input placeholder="Email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
-                <Button onClick={handleInvite} disabled={inviteLoading || !inviteEmail} className="gap-2">
-                  <UserPlus className="w-4 h-4" /> {inviteLoading ? "Sending..." : "Send Invite"}
-                </Button>
               </div>
+              <div className="grid sm:grid-cols-4 gap-3 items-end">
+                <div>
+                  <label className="text-xs text-muted-foreground">Subscription Tier</label>
+                  <Select value={inviteTier} onValueChange={(v) => setInviteTier(v as any)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="explorer">Explorer (Free)</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="premium">Premium</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2 h-10 mt-5">
+                  <Switch checked={inviteAdmin} onCheckedChange={setInviteAdmin} />
+                  <label className="text-sm flex items-center gap-1"><Crown className="w-3.5 h-3.5 text-amber-500" /> Make Admin</label>
+                </div>
+                <div className="flex items-center gap-2 h-10 mt-5">
+                  <Switch checked={inviteExpiryEnabled} onCheckedChange={setInviteExpiryEnabled} />
+                  <label className="text-sm">Set Expiry</label>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Expiry Date {inviteExpiryEnabled ? "" : "(off)"}</label>
+                  <Input
+                    type="date"
+                    value={inviteExpiryDate}
+                    disabled={!inviteExpiryEnabled}
+                    onChange={(e) => setInviteExpiryDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button onClick={handleInvite} disabled={inviteLoading || !inviteEmail} className="gap-2">
+                <UserPlus className="w-4 h-4" /> {inviteLoading ? "Sending..." : "Send Invite & Assign"}
+              </Button>
             </CardContent>
           </Card>
 
@@ -564,6 +634,7 @@ export default function Admin() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Tier</TableHead>
+                    <TableHead>Expiry</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
@@ -590,6 +661,26 @@ export default function Admin() {
                               <SelectItem value="premium">Premium</SelectItem>
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="date"
+                            className="h-8 w-36 text-xs"
+                            value={u.subscription_expires_at ? new Date(u.subscription_expires_at).toISOString().slice(0, 10) : ""}
+                            onChange={async (e) => {
+                              const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                              const { error } = await supabase
+                                .from("profiles")
+                                .update({ subscription_expires_at: val } as any)
+                                .eq("user_id", u.user_id);
+                              if (!error) {
+                                setUsers((prev) => prev.map((x) => x.user_id === u.user_id ? { ...x, subscription_expires_at: val } : x));
+                                toast({ title: val ? "Expiry set" : "Expiry cleared" });
+                              } else {
+                                toast({ title: "Error", description: error.message, variant: "destructive" });
+                              }
+                            }}
+                          />
                         </TableCell>
                         <TableCell>
                           <Switch checked={userIsAdmin} onCheckedChange={(c) => toggleAdminRole(u.user_id, c)} />
@@ -634,7 +725,7 @@ export default function Admin() {
                     );
                   })}
                   {users.length === 0 && (
-                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No users yet</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No users yet</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

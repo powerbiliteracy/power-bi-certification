@@ -18,6 +18,9 @@ export default function PricingAdmin() {
   const [pro, setPro] = useState(0);
   const [premium, setPremium] = useState(0);
   const [discount, setDiscount] = useState(0);
+  const [explorerTrial, setExplorerTrial] = useState(0);
+  const [proTrial, setProTrial] = useState(7);
+  const [premiumTrial, setPremiumTrial] = useState(7);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -25,6 +28,9 @@ export default function PricingAdmin() {
     setPro(Number(settings.pro_monthly_price));
     setPremium(Number(settings.premium_monthly_price));
     setDiscount(Number(settings.annual_discount_percent));
+    setExplorerTrial(Number(settings.explorer_trial_days || 0));
+    setProTrial(Number(settings.pro_trial_days || 0));
+    setPremiumTrial(Number(settings.premium_trial_days || 0));
   }, [settings]);
 
   const save = async () => {
@@ -34,6 +40,9 @@ export default function PricingAdmin() {
       pro_monthly_price: pro,
       premium_monthly_price: premium,
       annual_discount_percent: discount,
+      explorer_trial_days: explorerTrial,
+      pro_trial_days: proTrial,
+      premium_trial_days: premiumTrial,
       updated_by: user?.id,
     };
     let error;
@@ -74,7 +83,25 @@ export default function PricingAdmin() {
           <div className="space-y-1.5">
             <Label>Pro — $/month</Label>
             <Input type="number" min={0} step="0.01" value={pro} onChange={(e) => setPro(Number(e.target.value))} />
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-foreground mb-2">Trial period (days) — applied to new subscriptions</p>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label>Explorer trial (days)</Label>
+              <Input type="number" min={0} value={explorerTrial} onChange={(e) => setExplorerTrial(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Pro trial (days)</Label>
+              <Input type="number" min={0} value={proTrial} onChange={(e) => setProTrial(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Premium trial (days)</Label>
+              <Input type="number" min={0} value={premiumTrial} onChange={(e) => setPremiumTrial(Number(e.target.value))} />
+            </div>
           </div>
+        </div>
           <div className="space-y-1.5">
             <Label>Premium — $/month</Label>
             <Input type="number" min={0} step="0.01" value={premium} onChange={(e) => setPremium(Number(e.target.value))} />

@@ -12,18 +12,23 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
+  const supabaseAnon = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_ANON_KEY") ?? ""
   );
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
 
   try {
-    const { priceId } = await req.json();
+    const { priceId, tier } = await req.json();
     if (!priceId) throw new Error("priceId is required");
 
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
+    const { data } = await supabaseAnon.auth.getUser(token);
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
 
@@ -37,11 +42,26 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    // Resolve trial period from admin-managed pricing_settings
+    let trialDays = 0;
+    try {
+      const { data: ps } = await supabaseAdmin
+        .from("pricing_settings")
+        .select("pro_trial_days, premium_trial_days")
+        .limit(1)
+        .maybeSingle();
+      if (ps && tier === "pro") trialDays = ps.pro_trial_days || 0;
+      if (ps && tier === "premium") trialDays = ps.premium_trial_days || 0;
+    } catch (_) { /* ignore */ }
+
+    const subscription_data = trialDays > 0 ? { trial_period_days: trialDays } : undefined;
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
+      ...(subscription_data ? { subscription_data } : {}),
       success_url: `${req.headers.get("origin")}/Dashboard?checkout=success`,
       cancel_url: `${req.headers.get("origin")}/#pricing`,
     });
@@ -53,7 +73,6 @@ serve(async (req) => {
   } catch (error) {
     console.error("create-checkout error:", error);
     const message = error instanceof Error ? error.message : String(error);
-    // Only surface known safe validation messages; otherwise return a generic error.
     const safeMessages = ["priceId is required", "User not authenticated or email not available"];
     const clientMessage = safeMessages.includes(message)
       ? message

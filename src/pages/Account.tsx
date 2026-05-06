@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { User, Lock, CreditCard, ExternalLink } from "lucide-react";
+import { User, Lock, CreditCard, ExternalLink, XCircle } from "lucide-react";
 
 export default function Account() {
   const { user, profile } = useAuth();
@@ -17,6 +17,26 @@ export default function Account() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+
+  const handleCancelSubscription = async () => {
+    if (!confirm("Cancel your subscription? You'll keep access until the end of your current billing period.")) return;
+    setCancelLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-subscription");
+      if (error) throw error;
+      toast({
+        title: "Subscription cancelled",
+        description: data?.period_end
+          ? `Access continues until ${new Date(data.period_end).toLocaleDateString()}.`
+          : "You will retain access until your renewal date.",
+      });
+    } catch (err: any) {
+      toast({ title: "Could not cancel", description: err?.message || "Try again later.", variant: "destructive" });
+    } finally {
+      setCancelLoading(false);
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,8 +206,21 @@ export default function Account() {
                 <ExternalLink className="w-4 h-4" />
                 {portalLoading ? "Opening…" : "Manage Billing & Payment History"}
               </Button>
+
+              {profile?.subscription_tier && profile.subscription_tier !== "explorer" && (
+                <Button
+                  onClick={handleCancelSubscription}
+                  disabled={cancelLoading}
+                  variant="outline"
+                  className="w-full gap-2 text-destructive hover:text-destructive"
+                >
+                  <XCircle className="w-4 h-4" />
+                  {cancelLoading ? "Cancelling…" : "Cancel Subscription"}
+                </Button>
+              )}
+
               <p className="text-xs text-muted-foreground text-center">
-                View invoices, update payment method, and manage your subscription in the billing portal.
+                Cancel anytime — your access continues until the end of your current 30-day billing period from your last payment date.
               </p>
             </CardContent>
           </Card>

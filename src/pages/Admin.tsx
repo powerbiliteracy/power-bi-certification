@@ -41,6 +41,7 @@ interface ProfileRow {
   status: string;
   flag_reason: string | null;
   created_at: string;
+  subscription_expires_at: string | null;
 }
 
 interface RoleRow {
@@ -84,6 +85,10 @@ export default function Admin() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteFirst, setInviteFirst] = useState("");
   const [inviteLast, setInviteLast] = useState("");
+  const [inviteTier, setInviteTier] = useState<"explorer" | "pro" | "premium">("explorer");
+  const [inviteAdmin, setInviteAdmin] = useState(false);
+  const [inviteExpiryEnabled, setInviteExpiryEnabled] = useState(false);
+  const [inviteExpiryDate, setInviteExpiryDate] = useState<string>("");
   const [inviteLoading, setInviteLoading] = useState(false);
 
   // Promo form

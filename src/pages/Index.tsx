@@ -1,144 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import PricingCards from "@/components/PricingCards";
 import { Badge } from "@/components/ui/badge";
-import {
-  Zap,
-  BookOpen,
-  Brain,
-  CheckCircle,
-  ArrowRight,
-  Video,
-  GraduationCap,
-  AlertTriangle,
-  Lightbulb,
-  GitBranch,
-  Youtube,
-  Trophy,
-  LayoutDashboard,
-  BookMarked,
-} from "lucide-react";
+import { Zap, CheckCircle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { FEATURE_META } from "@/data/featureMeta";
 
-import imgDashboard from "@/assets/features/dashboard.jpg";
-import imgSyllabus from "@/assets/features/syllabus.jpg";
-import imgKeyTerms from "@/assets/features/key-terms.jpg";
-import imgExamVideos from "@/assets/features/exam-videos.jpg";
-import imgLearnModules from "@/assets/features/learn-modules.jpg";
-import imgTroubleshooting from "@/assets/features/troubleshooting.jpg";
-import imgExamScenarios from "@/assets/features/exam-scenarios.jpg";
-import imgDecisionFramework from "@/assets/features/decision-framework.jpg";
-import imgYoutubePlaylists from "@/assets/features/youtube-playlists.jpg";
-import imgTopicAssessments from "@/assets/features/topic-assessments.jpg";
-import imgExamQuestions from "@/assets/features/exam-questions.jpg";
-import imgBadges from "@/assets/features/badges.jpg";
+type Tier = "explorer" | "pro" | "premium";
+
+interface DynamicSection {
+  section_key: string;
+  section_label: string;
+  required_tier: Tier;
+  sort_order: number;
+}
+
 
 const stats = [
   { value: "200+", label: "Practice Questions" },
   { value: "45+", label: "Exam Topics" },
   { value: "4", label: "Exam Domains" },
   { value: "100%", label: "Syllabus Coverage" },
-];
-
-const appSections = [
-  {
-    icon: LayoutDashboard,
-    name: "Dashboard",
-    description: "Track your study progress, view completion stats, and see your overall readiness.",
-    tier: "explorer",
-    image: imgDashboard,
-    metric: "Real-time progress tracking",
-  },
-  {
-    icon: BookOpen,
-    name: "Exam Syllabus",
-    description: "Browse every PL-300 exam topic organized by the four official domains with detailed content.",
-    tier: "explorer",
-    image: imgSyllabus,
-    metric: "21 topics across 4 domains",
-  },
-  {
-    icon: BookMarked,
-    name: "Key Terms & Features",
-    description: "Searchable glossary of essential Power BI terms, DAX functions, and exam-relevant features.",
-    tier: "pro",
-    image: imgKeyTerms,
-    metric: "80+ terms & features explained",
-  },
-  {
-    icon: Video,
-    name: "Exam Prep Videos",
-    description: "Curated Microsoft Exam Readiness Zone videos with embedded player for each domain.",
-    tier: "explorer",
-    image: imgExamVideos,
-    metric: "4 official readiness videos",
-  },
-  {
-    icon: GraduationCap,
-    name: "Learn Modules",
-    description: "Direct links to official Microsoft Learn modules mapped to PL-300 exam objectives.",
-    tier: "explorer",
-    image: imgLearnModules,
-    metric: "10 Microsoft Learn modules",
-  },
-  {
-    icon: AlertTriangle,
-    name: "Troubleshooting",
-    description: "Real-world troubleshooting scenarios with step-by-step solutions and progress tracking.",
-    tier: "premium",
-    image: imgTroubleshooting,
-    metric: "30+ troubleshooting scenarios",
-  },
-  {
-    icon: Lightbulb,
-    name: "Exam Scenarios",
-    description: "Scenario-based practice that simulates real exam case studies with completion tracking.",
-    tier: "premium",
-    image: imgExamScenarios,
-    metric: "40+ case study scenarios",
-  },
-  {
-    icon: GitBranch,
-    name: "Decision Framework",
-    description: "Learn how to choose between Power BI tools, visuals, and approaches for exam questions.",
-    tier: "premium",
-    image: imgDecisionFramework,
-    metric: "14 decision frameworks",
-  },
-  {
-    icon: Youtube,
-    name: "YouTube Playlists",
-    description: "Curated YouTube playlists from top Power BI educators organized by exam domain.",
-    tier: "explorer",
-    image: imgYoutubePlaylists,
-    metric: "4 curated playlists",
-  },
-  {
-    icon: Brain,
-    name: "Topic Assessments",
-    description: "Domain-specific quizzes with explanations and a full results history to track improvement.",
-    tier: "pro",
-    image: imgTopicAssessments,
-    metric: "315 domain-specific questions",
-  },
-  {
-    icon: Brain,
-    name: "Exam Simulations",
-    description: "200+ practice questions in timed sets simulating the real PL-300 exam experience.",
-    tier: "pro",
-    image: imgExamQuestions,
-    metric: "7 timed practice sets",
-  },
-  {
-    icon: Trophy,
-    name: "Badges",
-    description: "Earn achievement badges as you complete sections and hit study milestones.",
-    tier: "explorer",
-    image: imgBadges,
-    metric: "Achievement milestones",
-  },
 ];
 
 const tierConfig = {
@@ -151,10 +35,56 @@ type TierFilter = "all" | "explorer" | "pro" | "premium";
 
 export default function LandingPage() {
   const [tierFilter, setTierFilter] = useState<TierFilter>("all");
+  const [sections, setSections] = useState<DynamicSection[]>([]);
+
+  useEffect(() => {
+    const load = () => {
+      supabase
+        .from("section_access")
+        .select("section_key, section_label, required_tier, sort_order, admin_only, is_hidden")
+        .then(({ data }) => {
+          if (!data) return;
+          const visible = (data as any[])
+            .filter((s) => !s.admin_only && !s.is_hidden && FEATURE_META[s.section_key])
+            .map((s) => ({
+              section_key: s.section_key as string,
+              section_label: s.section_label as string,
+              required_tier: s.required_tier as Tier,
+              sort_order: s.sort_order as number,
+            }))
+            .sort((a, b) => a.sort_order - b.sort_order);
+          setSections(visible);
+        });
+    };
+    load();
+    window.addEventListener("section-access-updated", load);
+    return () => window.removeEventListener("section-access-updated", load);
+  }, []);
+
+  const appSections = useMemo(
+    () =>
+      sections.map((s) => {
+        const meta = FEATURE_META[s.section_key];
+        return {
+          key: s.section_key,
+          icon: meta.icon,
+          name: s.section_label,
+          description: meta.description,
+          tier: s.required_tier,
+          image: meta.image,
+          metric:
+            meta.countLabel ||
+            (meta.count !== undefined ? `${meta.count} items` : ""),
+        };
+      }),
+    [sections]
+  );
 
   const filteredSections = tierFilter === "all"
     ? appSections
     : appSections.filter((s) => s.tier === tierFilter);
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -275,15 +205,19 @@ export default function LandingPage() {
                   key={section.name}
                   className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all duration-200 flex flex-col"
                 >
-                  <div className="relative h-40 overflow-hidden">
-                    <img
-                      src={section.image}
-                      alt={section.name}
-                      loading="lazy"
-                      width={768}
-                      height={512}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative h-40 overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                    {section.image ? (
+                      <img
+                        src={section.image}
+                        alt={section.name}
+                        loading="lazy"
+                        width={768}
+                        height={512}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <section.icon className="w-12 h-12 text-primary/40" />
+                    )}
                     <Badge
                       variant="outline"
                       className={cn(

@@ -257,6 +257,39 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_settings: {
+        Row: {
+          annual_discount_percent: number
+          explorer_price: number
+          id: string
+          premium_monthly_price: number
+          pro_monthly_price: number
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          annual_discount_percent?: number
+          explorer_price?: number
+          id?: string
+          premium_monthly_price?: number
+          pro_monthly_price?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          annual_discount_percent?: number
+          explorer_price?: number
+          id?: string
+          premium_monthly_price?: number
+          pro_monthly_price?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

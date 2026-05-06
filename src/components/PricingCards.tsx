@@ -7,55 +7,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { FEATURE_META } from "@/data/featureMeta";
+import { usePricingSettings } from "@/hooks/usePricingSettings";
 
 type Tier = "explorer" | "pro" | "premium";
 
-// Short feature descriptions keyed by section_label (from section_access table)
-// Approximate item counts per feature (shown as badge next to feature name)
-const FEATURE_COUNTS: Record<string, number> = {
-  "Exam Syllabus": 74,
-  "Learn Modules": 73,
-  "Key Terms & Features": 120,
-  "Exam Scenarios": 41,
-  "Flashcards": 92,
-  "Cheat Sheets": 5,
-  "Dos & Don'ts": 122,
-  "DAX Templates": 12,
-  "Troubleshooting": 30,
-  "Decision Framework": 11,
-  "Topic Assessments": 21,
-  "Exam Questions": 84,
-  "Page Summaries": 60,
-  "Concept Comparisons": 60,
-  "Interactive Lessons": 73,
-};
-
-const FEATURE_DESCRIPTIONS: Record<string, string> = {
-  "Dashboard": "Your personalized study home with progress, streaks, and quick links.",
-  "Exam Syllabus": "Official PL-300 exam outline with every domain and subtopic.",
-  "Learn Modules": "Structured lessons covering each PL-300 topic in depth.",
-  "YouTube Playlists": "Curated YouTube playlists organized by exam domain.",
-  "Exam Prep Videos": "Focused video walkthroughs for tricky exam concepts.",
-  "Key Terms & Features": "Glossary of must-know Power BI terms and features.",
-  "Exam Scenarios": "Real-world scenario questions that mirror the exam style.",
-  "Flashcards": "Spaced-repetition flashcards for fast recall of key concepts.",
-  "Cheat Sheets": "Printable one-page references for quick review.",
-  "Dos & Don'ts": "Best practices and common pitfalls to avoid on the exam.",
-  "DAX Templates": "Ready-to-use DAX patterns for common report needs.",
-  "Troubleshooting": "Fixes for the most frequent Power BI and DAX errors.",
-  "Decision Framework": "Guides to choose the right visual, model, or DAX approach.",
-  "Topic Assessments": "Topic-by-topic quizzes to validate your understanding.",
-  "Exam Questions": "Full-length practice question sets with detailed explanations.",
-  "Page Summaries": "Visual summary cards covering key exam topics at a glance.",
-  "Concept Comparisons": "Side-by-side comparisons of similar Power BI concepts.",
-  "Study Plan": "A personalized study schedule based on your goals.",
-  "My List": "Your saved favorites for quick access.",
-  "Badges": "Earn achievements as you progress through the material.",
-  "Reviews": "See what other learners say about the platform.",
-  "Account": "Manage your profile and subscription.",
-  "Exam Checklist": "A final pre-exam checklist to make sure you're ready.",
-  "Interactive Lessons": "Hands-on interactive lessons with built-in practice.",
-};
+interface SectionRow {
+  section_key: string;
+  section_label: string;
+  required_tier: Tier;
+  sort_order: number;
+}
 
 const STRIPE_PRICES = {
   pro: {
@@ -68,50 +30,6 @@ const STRIPE_PRICES = {
   },
 };
 
-const tiers = [
-  {
-    id: "free",
-    tierKey: "explorer" as Tier,
-    name: "Explorer",
-    price: "$0",
-    period: "forever",
-    description: "Free essentials to explore the PL-300 syllabus and core lessons",
-    icon: Zap,
-    gradient: "from-blue-500 to-cyan-400",
-    popular: false,
-    cta: "Get Started Free",
-  },
-  {
-    id: "pro",
-    tierKey: "pro" as Tier,
-    name: "Pro",
-    price: "$19",
-    period: "/month",
-    description: "Deeper study tools — key terms, scenarios, DAX templates and more",
-    icon: Crown,
-    gradient: "from-primary to-accent",
-    popular: true,
-    cta: "Start Pro Trial",
-  },
-  {
-    id: "premium",
-    tierKey: "premium" as Tier,
-    name: "Premium",
-    price: "$39",
-    period: "/month",
-    description: "Full exam prep — flashcards, cheat sheets, full question banks & more",
-    icon: Rocket,
-    gradient: "from-violet-500 to-pink-400",
-    popular: false,
-    cta: "Start Premium Trial",
-  },
-];
-
-const annualSavings = {
-  pro: { monthly: "$19", annual: "$15", save: "21%" },
-  premium: { monthly: "$39", annual: "$29", save: "26%" },
-};
-
 interface PricingCardsProps {
   compact?: boolean;
 }
@@ -119,74 +37,107 @@ interface PricingCardsProps {
 export default function PricingCards({ compact = false }: PricingCardsProps) {
   const [isAnnual, setIsAnnual] = useState(false);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
-  const [sections, setSections] = useState<{ section_label: string; required_tier: Tier; sort_order: number }[]>([]);
+  const [sections, setSections] = useState<SectionRow[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { settings } = usePricingSettings();
 
   useEffect(() => {
-    supabase
-      .from("section_access")
-      .select("section_label, required_tier, sort_order, admin_only, is_hidden")
-      .then(({ data }) => {
-        if (!data) return;
-        const visible = (data as any[])
-          .filter((s) => !s.admin_only && !s.is_hidden)
-          .map((s) => ({
-            section_label: s.section_label as string,
-            required_tier: s.required_tier as Tier,
-            sort_order: s.sort_order as number,
-          }))
-          .sort((a, b) => a.sort_order - b.sort_order);
-        setSections(visible);
-      });
+    const load = () => {
+      supabase
+        .from("section_access")
+        .select("section_key, section_label, required_tier, sort_order, admin_only, is_hidden")
+        .then(({ data }) => {
+          if (!data) return;
+          const visible = (data as any[])
+            .filter((s) => !s.admin_only && !s.is_hidden)
+            .map((s) => ({
+              section_key: s.section_key as string,
+              section_label: s.section_label as string,
+              required_tier: s.required_tier as Tier,
+              sort_order: s.sort_order as number,
+            }))
+            .sort((a, b) => a.sort_order - b.sort_order);
+          setSections(visible);
+        });
+    };
+    load();
+    window.addEventListener("section-access-updated", load);
+    return () => window.removeEventListener("section-access-updated", load);
   }, []);
 
+  const fmt = (n: number) => `$${Number.isInteger(n) ? n : n.toFixed(2)}`;
+  const annualMultiplier = (100 - (settings.annual_discount_percent || 0)) / 100;
+  const proAnnualMonthly = settings.pro_monthly_price * annualMultiplier;
+  const premiumAnnualMonthly = settings.premium_monthly_price * annualMultiplier;
+
+  const tiers = [
+    {
+      id: "free",
+      tierKey: "explorer" as Tier,
+      name: "Explorer",
+      price: fmt(settings.explorer_price),
+      description: "Free essentials to explore the PL-300 syllabus and core lessons",
+      icon: Zap,
+      gradient: "from-blue-500 to-cyan-400",
+      popular: false,
+      cta: "Get Started Free",
+    },
+    {
+      id: "pro",
+      tierKey: "pro" as Tier,
+      name: "Pro",
+      price: fmt(settings.pro_monthly_price),
+      description: "Deeper study tools — key terms, scenarios, DAX templates and more",
+      icon: Crown,
+      gradient: "from-primary to-accent",
+      popular: true,
+      cta: "Start Pro Trial",
+    },
+    {
+      id: "premium",
+      tierKey: "premium" as Tier,
+      name: "Premium",
+      price: fmt(settings.premium_monthly_price),
+      description: "Full exam prep — flashcards, cheat sheets, full question banks & more",
+      icon: Rocket,
+      gradient: "from-violet-500 to-pink-400",
+      popular: false,
+      cta: "Start Premium Trial",
+    },
+  ];
+
   const featuresByTier = useMemo(() => {
-    const explorer = sections.filter((s) => s.required_tier === "explorer").map((s) => s.section_label);
-    const pro = sections.filter((s) => s.required_tier === "pro").map((s) => s.section_label);
-    const premium = sections.filter((s) => s.required_tier === "premium").map((s) => s.section_label);
+    const explorer = sections.filter((s) => s.required_tier === "explorer");
+    const pro = sections.filter((s) => s.required_tier === "pro");
+    const premium = sections.filter((s) => s.required_tier === "premium");
     return {
-      explorer,
-      pro: ["Everything in Explorer", ...pro],
-      premium: ["Everything in Pro", ...premium],
-    } as Record<Tier, string[]>;
+      explorer: [...explorer.map((s) => ({ key: s.section_key, label: s.section_label }))],
+      pro: [{ key: "__roll", label: "Everything in Explorer" }, ...pro.map((s) => ({ key: s.section_key, label: s.section_label }))],
+      premium: [{ key: "__roll", label: "Everything in Pro" }, ...premium.map((s) => ({ key: s.section_key, label: s.section_label }))],
+    } as Record<Tier, { key: string; label: string }[]>;
   }, [sections]);
 
   const handleSubscribe = async (tierId: string) => {
     if (tierId === "free") {
-      if (!user) {
-        navigate("/auth");
-      } else {
-        navigate("/Dashboard");
-      }
+      if (!user) navigate("/auth"); else navigate("/Dashboard");
       return;
     }
-
     if (!user) {
       const priceId = STRIPE_PRICES[tierId as keyof typeof STRIPE_PRICES]?.[isAnnual ? "annual" : "monthly"];
       sessionStorage.setItem("pending_checkout_price", priceId);
       navigate("/auth");
       return;
     }
-
     const priceId = STRIPE_PRICES[tierId as keyof typeof STRIPE_PRICES]?.[isAnnual ? "annual" : "monthly"];
     if (!priceId) return;
-
     setLoadingTier(tierId);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId },
-      });
+      const { data, error } = await supabase.functions.invoke("create-checkout", { body: { priceId } });
       if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
+      if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {
-      toast({
-        title: "Checkout Error",
-        description: err.message || "Failed to start checkout",
-        variant: "destructive",
-      });
+      toast({ title: "Checkout Error", description: err.message || "Failed to start checkout", variant: "destructive" });
     } finally {
       setLoadingTier(null);
     }
@@ -211,17 +162,19 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
         </button>
         <span className={cn("text-sm font-medium", isAnnual ? "text-foreground" : "text-muted-foreground")}>
           Annual
-          <span className="ml-1 text-xs text-primary font-semibold">Save up to 26%</span>
+          {settings.annual_discount_percent > 0 && (
+            <span className="ml-1 text-xs text-primary font-semibold">Save {settings.annual_discount_percent}%</span>
+          )}
         </span>
       </div>
 
       {/* Pricing cards */}
       <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {tiers.map((tier) => {
-          const price = isAnnual && tier.id !== "free"
-            ? annualSavings[tier.id as keyof typeof annualSavings]?.annual || tier.price
-            : tier.price;
-          const period = tier.id === "free" ? "forever" : isAnnual ? "/month, billed annually" : "/month";
+          let displayPrice = tier.price;
+          let period = tier.id === "free" ? "forever" : isAnnual ? "/month, billed annually" : "/month";
+          if (isAnnual && tier.id === "pro") displayPrice = fmt(Math.round(proAnnualMonthly * 100) / 100);
+          if (isAnnual && tier.id === "premium") displayPrice = fmt(Math.round(premiumAnnualMonthly * 100) / 100);
 
           return (
             <div
@@ -248,24 +201,25 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
               </div>
 
               <div className="mb-5">
-                <span className="text-4xl font-bold text-foreground">{price}</span>
+                <span className="text-4xl font-bold text-foreground">{displayPrice}</span>
                 <span className="text-sm text-muted-foreground ml-1">{period}</span>
-                {isAnnual && tier.id !== "free" && (
+                {isAnnual && tier.id !== "free" && settings.annual_discount_percent > 0 && (
                   <p className="text-xs text-primary font-medium mt-1">
-                    Save {annualSavings[tier.id as keyof typeof annualSavings]?.save}
+                    Save {settings.annual_discount_percent}%
                   </p>
                 )}
               </div>
 
               <ul className={cn("space-y-3 mb-6 flex-1", compact && "space-y-2")}>
-                {featuresByTier[tier.tierKey].map((feature) => {
-                  const desc = FEATURE_DESCRIPTIONS[feature];
-                  const count = FEATURE_COUNTS[feature];
+                {featuresByTier[tier.tierKey].map(({ key, label }) => {
+                  const meta = FEATURE_META[key];
+                  const desc = meta?.description;
+                  const count = meta?.count;
                   return (
-                    <li key={feature} className="flex items-start gap-2 text-sm">
+                    <li key={key + label} className="flex items-start gap-2 text-sm">
                       <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                       <span className="text-foreground flex-1">
-                        {feature}
+                        {label}
                         {count !== undefined && (
                           <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-semibold">
                             {count}
@@ -277,14 +231,14 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
                           <PopoverTrigger asChild>
                             <button
                               type="button"
-                              aria-label={`More info about ${feature}`}
+                              aria-label={`More info about ${label}`}
                               className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full border border-border text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary flex items-center justify-center transition-colors"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
                           </PopoverTrigger>
                           <PopoverContent side="top" className="w-64 text-xs">
-                            <p className="font-semibold text-foreground mb-1">{feature}</p>
+                            <p className="font-semibold text-foreground mb-1">{label}</p>
                             <p className="text-muted-foreground">{desc}</p>
                           </PopoverContent>
                         </Popover>
@@ -296,10 +250,7 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
 
               <Button
                 variant={tier.popular ? "default" : "outline"}
-                className={cn(
-                  "w-full rounded-xl font-semibold",
-                  tier.popular && "shadow-lg shadow-primary/20"
-                )}
+                className={cn("w-full rounded-xl font-semibold", tier.popular && "shadow-lg shadow-primary/20")}
                 disabled={loadingTier === tier.id}
                 onClick={() => handleSubscribe(tier.id)}
               >

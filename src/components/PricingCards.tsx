@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Check, Zap, Crown, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+
+type Tier = "explorer" | "pro" | "premium";
+
+// Static perks that aren't represented as sections in the DB
+const STATIC_PERKS: Record<Tier, string[]> = {
+  explorer: ["Community support"],
+  pro: ["Progress tracking & analytics", "Email support"],
+  premium: ["Personalized study plan", "Priority support", "Certificate of completion"],
+};
 
 const STRIPE_PRICES = {
   pro: {

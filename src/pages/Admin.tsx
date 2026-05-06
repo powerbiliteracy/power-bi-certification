@@ -437,6 +437,9 @@ export default function Admin() {
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" className="gap-2">
+            <Link to="/"><Home className="w-4 h-4" /> View Home Page</Link>
+          </Button>
+          <Button asChild variant="outline" className="gap-2">
             <Link to="/SyllabusAudit"><FileSearch className="w-4 h-4" /> Syllabus Audit</Link>
           </Button>
           <Button

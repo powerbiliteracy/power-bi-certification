@@ -260,10 +260,18 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
               <ul className={cn("space-y-3 mb-6 flex-1", compact && "space-y-2")}>
                 {featuresByTier[tier.tierKey].map((feature) => {
                   const desc = FEATURE_DESCRIPTIONS[feature];
+                  const count = FEATURE_COUNTS[feature];
                   return (
                     <li key={feature} className="flex items-start gap-2 text-sm">
                       <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-foreground flex-1">{feature}</span>
+                      <span className="text-foreground flex-1">
+                        {feature}
+                        {count !== undefined && (
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-semibold">
+                            {count}
+                          </span>
+                        )}
+                      </span>
                       {desc && (
                         <Popover>
                           <PopoverTrigger asChild>

@@ -83,7 +83,25 @@ export default function PricingAdmin() {
           <div className="space-y-1.5">
             <Label>Pro — $/month</Label>
             <Input type="number" min={0} step="0.01" value={pro} onChange={(e) => setPro(Number(e.target.value))} />
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-foreground mb-2">Trial period (days) — applied to new subscriptions</p>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label>Explorer trial (days)</Label>
+              <Input type="number" min={0} value={explorerTrial} onChange={(e) => setExplorerTrial(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Pro trial (days)</Label>
+              <Input type="number" min={0} value={proTrial} onChange={(e) => setProTrial(Number(e.target.value))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Premium trial (days)</Label>
+              <Input type="number" min={0} value={premiumTrial} onChange={(e) => setPremiumTrial(Number(e.target.value))} />
+            </div>
           </div>
+        </div>
           <div className="space-y-1.5">
             <Label>Premium — $/month</Label>
             <Input type="number" min={0} step="0.01" value={premium} onChange={(e) => setPremium(Number(e.target.value))} />

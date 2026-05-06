@@ -165,6 +165,8 @@ export default function Auth() {
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
+              <GoogleButton />
+              <Divider />
               <form onSubmit={handleLogin} className="space-y-4 mt-4">
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
@@ -183,6 +185,8 @@ export default function Auth() {
               </form>
             </TabsContent>
             <TabsContent value="signup">
+              <GoogleButton />
+              <Divider />
               <form onSubmit={handleSignup} className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">

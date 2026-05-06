@@ -14,7 +14,7 @@ interface SectionRow {
   required_tier: "explorer" | "pro" | "premium";
   is_locked: boolean;
   admin_only: boolean;
-  is_hidden?: boolean;
+  is_hidden: boolean;
   sort_order: number;
 }
 

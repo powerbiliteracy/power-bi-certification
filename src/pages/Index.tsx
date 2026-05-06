@@ -84,11 +84,7 @@ export default function LandingPage() {
     ? appSections
     : appSections.filter((s) => s.tier === tierFilter);
 
-  const counts = {
-    explorer: appSections.filter((s) => s.tier === "explorer").length,
-    pro: appSections.filter((s) => s.tier === "pro").length,
-    premium: appSections.filter((s) => s.tier === "premium").length,
-  };
+
 
   return (
     <div className="min-h-screen bg-background">

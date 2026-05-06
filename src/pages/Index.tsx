@@ -205,15 +205,19 @@ export default function LandingPage() {
                   key={section.name}
                   className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:border-primary/20 transition-all duration-200 flex flex-col"
                 >
-                  <div className="relative h-40 overflow-hidden">
-                    <img
-                      src={section.image}
-                      alt={section.name}
-                      loading="lazy"
-                      width={768}
-                      height={512}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative h-40 overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                    {section.image ? (
+                      <img
+                        src={section.image}
+                        alt={section.name}
+                        loading="lazy"
+                        width={768}
+                        height={512}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <section.icon className="w-12 h-12 text-primary/40" />
+                    )}
                     <Badge
                       variant="outline"
                       className={cn(

@@ -17,6 +17,7 @@ interface AuthContextType {
     email: string | null;
     first_name: string | null;
     last_name: string | null;
+    subscription_expires_at?: string | null;
   } | null;
   signOut: () => Promise<void>;
 }
@@ -48,12 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const [profileResult, adminResult] = await Promise.all([
         supabase
           .from("profiles")
-          .select("display_name, subscription_tier, email, first_name, last_name")
+          .select("display_name, subscription_tier, email, first_name, last_name, subscription_expires_at")
           .eq("user_id", userId)
           .maybeSingle(),
         supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
       ]);
-      setProfile(profileResult.data);
+      const p = profileResult.data as any;
+      // Auto-downgrade if expiry has passed
+      if (p?.subscription_expires_at && new Date(p.subscription_expires_at) < new Date() && p.subscription_tier !== "explorer") {
+        p.subscription_tier = "explorer";
+      }
+      setProfile(p);
       setIsAdmin(!!adminResult.data);
     } catch {
       // ignore errors

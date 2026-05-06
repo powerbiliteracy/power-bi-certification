@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Check, Zap, Crown, Rocket } from "lucide-react";
+import { Check, Zap, Crown, Rocket, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,11 +10,32 @@ import { toast } from "@/hooks/use-toast";
 
 type Tier = "explorer" | "pro" | "premium";
 
-// Static perks that aren't represented as sections in the DB
-const STATIC_PERKS: Record<Tier, string[]> = {
-  explorer: ["Community support"],
-  pro: ["Progress tracking & analytics", "Email support"],
-  premium: ["Personalized study plan", "Priority support", "Certificate of completion"],
+// Short feature descriptions keyed by section_label (from section_access table)
+const FEATURE_DESCRIPTIONS: Record<string, string> = {
+  "Dashboard": "Your personalized study home with progress, streaks, and quick links.",
+  "Exam Syllabus": "Official PL-300 exam outline with every domain and subtopic.",
+  "Learn Modules": "Structured lessons covering each PL-300 topic in depth.",
+  "YouTube Playlists": "Curated YouTube playlists organized by exam domain.",
+  "Exam Prep Videos": "Focused video walkthroughs for tricky exam concepts.",
+  "Key Terms & Features": "Glossary of must-know Power BI terms and features.",
+  "Exam Scenarios": "Real-world scenario questions that mirror the exam style.",
+  "Flashcards": "Spaced-repetition flashcards for fast recall of key concepts.",
+  "Cheat Sheets": "Printable one-page references for quick review.",
+  "Dos & Don'ts": "Best practices and common pitfalls to avoid on the exam.",
+  "DAX Templates": "Ready-to-use DAX patterns for common report needs.",
+  "Troubleshooting": "Fixes for the most frequent Power BI and DAX errors.",
+  "Decision Framework": "Guides to choose the right visual, model, or DAX approach.",
+  "Topic Assessments": "Topic-by-topic quizzes to validate your understanding.",
+  "Exam Questions": "Full-length practice question sets with detailed explanations.",
+  "Page Summaries": "Visual summary cards covering key exam topics at a glance.",
+  "Concept Comparisons": "Side-by-side comparisons of similar Power BI concepts.",
+  "Study Plan": "A personalized study schedule based on your goals.",
+  "My List": "Your saved favorites for quick access.",
+  "Badges": "Earn achievements as you progress through the material.",
+  "Reviews": "See what other learners say about the platform.",
+  "Account": "Manage your profile and subscription.",
+  "Exam Checklist": "A final pre-exam checklist to make sure you're ready.",
+  "Interactive Lessons": "Hands-on interactive lessons with built-in practice.",
 };
 
 const STRIPE_PRICES = {
@@ -105,9 +127,9 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
     const pro = sections.filter((s) => s.required_tier === "pro").map((s) => s.section_label);
     const premium = sections.filter((s) => s.required_tier === "premium").map((s) => s.section_label);
     return {
-      explorer: [...explorer, ...STATIC_PERKS.explorer],
-      pro: ["Everything in Explorer", ...pro, ...STATIC_PERKS.pro],
-      premium: ["Everything in Pro", ...premium, ...STATIC_PERKS.premium],
+      explorer,
+      pro: ["Everything in Explorer", ...pro],
+      premium: ["Everything in Pro", ...premium],
     } as Record<Tier, string[]>;
   }, [sections]);
 
@@ -122,7 +144,6 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
     }
 
     if (!user) {
-      // Store intended plan in sessionStorage so we can redirect after auth
       const priceId = STRIPE_PRICES[tierId as keyof typeof STRIPE_PRICES]?.[isAnnual ? "annual" : "monthly"];
       sessionStorage.setItem("pending_checkout_price", priceId);
       navigate("/auth");
@@ -218,12 +239,32 @@ export default function PricingCards({ compact = false }: PricingCardsProps) {
               </div>
 
               <ul className={cn("space-y-3 mb-6 flex-1", compact && "space-y-2")}>
-                {featuresByTier[tier.tierKey].map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">{feature}</span>
-                  </li>
-                ))}
+                {featuresByTier[tier.tierKey].map((feature) => {
+                  const desc = FEATURE_DESCRIPTIONS[feature];
+                  return (
+                    <li key={feature} className="flex items-start gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-foreground flex-1">{feature}</span>
+                      {desc && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label={`More info about ${feature}`}
+                              className="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full border border-border text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary flex items-center justify-center transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent side="top" className="w-64 text-xs">
+                            <p className="font-semibold text-foreground mb-1">{feature}</p>
+                            <p className="text-muted-foreground">{desc}</p>
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
 
               <Button

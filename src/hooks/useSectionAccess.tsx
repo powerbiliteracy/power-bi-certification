@@ -23,7 +23,7 @@ export function useSectionAccess() {
     setLoading(true);
     supabase
       .from("section_access")
-      .select("section_key, section_label, required_tier, is_locked, admin_only, sort_order")
+      .select("section_key, section_label, required_tier, is_locked, admin_only, is_hidden, sort_order")
       .then(({ data }) => {
         if (data) setSections(data as SectionAccess[]);
         setLoading(false);

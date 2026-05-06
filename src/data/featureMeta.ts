@@ -21,6 +21,7 @@ import {
   Calendar,
   Star,
   Heart,
+  GitCompare,
   type LucideIcon,
 } from "lucide-react";
 
@@ -144,7 +145,7 @@ export const FEATURE_META: Record<string, FeatureMeta> = {
     count: 73,
   },
   "concept-comparisons": {
-    icon: GitCompareIconShim,
+    icon: GitCompare,
     description: "Side-by-side comparisons of similar Power BI concepts.",
     count: 60,
   },
@@ -172,7 +173,3 @@ export const FEATURE_META: Record<string, FeatureMeta> = {
   },
 };
 
-// Avoid extra import — alias GitBranch as comparisons icon
-function GitCompareIconShim(props: React.ComponentProps<LucideIcon>) {
-  return GitBranch(props as any);
-}

@@ -17,18 +17,6 @@ interface DynamicSection {
   sort_order: number;
 }
 
-import imgDashboard from "@/assets/features/dashboard.jpg";
-import imgSyllabus from "@/assets/features/syllabus.jpg";
-import imgKeyTerms from "@/assets/features/key-terms.jpg";
-import imgExamVideos from "@/assets/features/exam-videos.jpg";
-import imgLearnModules from "@/assets/features/learn-modules.jpg";
-import imgTroubleshooting from "@/assets/features/troubleshooting.jpg";
-import imgExamScenarios from "@/assets/features/exam-scenarios.jpg";
-import imgDecisionFramework from "@/assets/features/decision-framework.jpg";
-import imgYoutubePlaylists from "@/assets/features/youtube-playlists.jpg";
-import imgTopicAssessments from "@/assets/features/topic-assessments.jpg";
-import imgExamQuestions from "@/assets/features/exam-questions.jpg";
-import imgBadges from "@/assets/features/badges.jpg";
 
 const stats = [
   { value: "200+", label: "Practice Questions" },

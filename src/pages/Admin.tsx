@@ -485,6 +485,7 @@ export default function Admin() {
                 onTierChange={updateSectionTier}
                 onAdminOnlyChange={toggleAdminOnly}
                 onLockChange={toggleSectionLock}
+                onHideChange={toggleHidden}
                 tierColor={tierColor}
               />
             </CardContent>

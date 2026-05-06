@@ -504,7 +504,7 @@ export default function Admin() {
                 </CardHeader>
                 <CardContent>
                   <Table>
-                    <TableHeader><TableRow><TableHead>Domain</TableHead><TableHead>Required Tier</TableHead><TableHead>Admin Only</TableHead><TableHead>Locked</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Domain</TableHead><TableHead>Required Tier</TableHead><TableHead>Admin Only</TableHead><TableHead>Locked</TableHead><TableHead>Hide</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {subs.map((section) => (
                         <TableRow key={section.id}>
@@ -512,8 +512,10 @@ export default function Admin() {
                           <TableCell><Select value={section.required_tier} onValueChange={(val) => updateSectionTier(section.id, val as any)} disabled={saving === section.id}><SelectTrigger className="w-32"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="explorer">Explorer</SelectItem><SelectItem value="pro">Pro</SelectItem><SelectItem value="premium">Premium</SelectItem></SelectContent></Select></TableCell>
                           <TableCell><Switch checked={section.admin_only} onCheckedChange={(c) => toggleAdminOnly(section.id, c)} disabled={saving === section.id} /></TableCell>
                           <TableCell><Switch checked={section.is_locked} onCheckedChange={(c) => toggleSectionLock(section.id, c)} disabled={saving === section.id} /></TableCell>
+                          <TableCell><Switch checked={!!section.is_hidden} onCheckedChange={(c) => toggleHidden(section.id, c)} disabled={saving === section.id} /></TableCell>
                           <TableCell>
-                            {section.admin_only ? <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" /> Admin Only</Badge>
+                            {section.is_hidden ? <Badge variant="destructive" className="gap-1"><EyeOff className="w-3 h-3" /> Hidden</Badge>
+                              : section.admin_only ? <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" /> Admin Only</Badge>
                               : section.is_locked ? <Badge variant="destructive" className="gap-1"><Lock className="w-3 h-3" /> Locked</Badge>
                               : <Badge variant={tierColor(section.required_tier) as any} className="gap-1"><Unlock className="w-3 h-3" /> {section.required_tier}</Badge>}
                           </TableCell>

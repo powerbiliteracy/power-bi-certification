@@ -212,6 +212,19 @@ export default function Admin() {
     setSaving(null);
   };
 
+  const toggleHidden = async (id: string, hidden: boolean) => {
+    setSaving(id);
+    const { error } = await supabase.from("section_access").update({ is_hidden: hidden } as any).eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setSections((prev) => prev.map((s) => (s.id === id ? { ...s, is_hidden: hidden } : s)));
+      toast({ title: "Updated", description: hidden ? "Section hidden from non-admins." : "Section visible." });
+      notifySectionUpdate();
+    }
+    setSaving(null);
+  };
+
   const updateUserTier = async (userId: string, tier: "explorer" | "pro" | "premium") => {
     setSaving(userId);
     const { error } = await supabase.from("profiles").update({ subscription_tier: tier }).eq("user_id", userId);
